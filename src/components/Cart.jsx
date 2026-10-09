@@ -1,9 +1,10 @@
 import { Button, ListGroup, Alert } from 'react-bootstrap'
 
 function Cart({ carrito, onVaciar, onEliminar }) {
-  const total = carrito.reduce((suma, producto) => {
-    return suma + producto.precio
-  }, 0)
+  const total = carrito.reduce(
+    (suma, producto) => suma + producto.precio * producto.cantidad,
+    0
+  )
 
   return (
     <section>
@@ -15,20 +16,21 @@ function Cart({ carrito, onVaciar, onEliminar }) {
         </Alert>
       ) : (
         <ListGroup className="mb-3">
-          {carrito.map((producto, indice) => (
+          {carrito.map(producto => (
             <ListGroup.Item
-              key={indice}
+              key={producto.id}
               className="d-flex justify-content-between align-items-center gap-3"
             >
               <span>
-                {producto.nombre} — $
-                {producto.precio.toLocaleString('es-CL')}
+                {producto.nombre} × {producto.cantidad}
+                {' — $'}
+                {(producto.precio * producto.cantidad).toLocaleString('es-CL')}
               </span>
 
               <Button
                 variant="outline-danger"
                 size="sm"
-                onClick={() => onEliminar(indice)}
+                onClick={() => onEliminar(producto.id)}
               >
                 Eliminar
               </Button>

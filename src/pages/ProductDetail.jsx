@@ -1,12 +1,10 @@
-import { Link, useParams } from 'react-router-dom'
-import productos from '../data/productos'
+import { Link, useParams } from "react-router-dom";
+import productos from "../data/productos";
 
 function ProductDetail({ onAgregar }) {
-  const { id } = useParams()
+  const { id } = useParams();
 
-  const producto = productos.find(
-    (producto) => producto.id === Number(id)
-  )
+  const producto = productos.find((producto) => producto.id === Number(id));
 
   if (!producto) {
     return (
@@ -14,7 +12,7 @@ function ProductDetail({ onAgregar }) {
         <h2>Producto no encontrado</h2>
         <Link to="/productos">Volver al catálogo</Link>
       </section>
-    )
+    );
   }
 
   return (
@@ -28,17 +26,22 @@ function ProductDetail({ onAgregar }) {
       />
 
       <p>{producto.descripcion}</p>
-      <p>Precio: ${producto.precio.toLocaleString('es-CL')}</p>
+      <p>Precio: ${producto.precio.toLocaleString("es-CL")}</p>
 
-      <button onClick={() => onAgregar(producto)}>
-        Agregar al carrito
+      <p>Stock disponible: {producto.stock} unidades</p>
+
+      <button
+        onClick={() => onAgregar(producto)}
+        disabled={producto.stock === 0}
+      >
+        {producto.stock === 0 ? "Agotado" : "Agregar al carrito"}
       </button>
 
       <p>
         <Link to="/productos">Volver al catálogo</Link>
       </p>
     </section>
-  )
+  );
 }
 
-export default ProductDetail
+export default ProductDetail;

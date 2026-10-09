@@ -1,16 +1,73 @@
-# React + Vite
+# Pastelería 1000 Sabores
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Proyecto académico de Desarrollo Fullstack II, basado en el caso
+Pastelería 1000 Sabores.
 
-Currently, two official plugins are available:
+Este avance migra parte del proyecto original, desarrollado en HTML,
+CSS y JavaScript, a React.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Tecnologías
 
-## React Compiler
+- React y Vite.
+- React Bootstrap y Bootstrap.
+- React Router.
+- localStorage para conservar el carrito.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Funcionalidades implementadas
 
-## Expanding the ESLint configuration
+- Página de inicio.
+- Catálogo con los 16 productos del proyecto original.
+- Búsqueda por nombre y filtro por categoría.
+- Filtros guardados en la URL.
+- Detalle de producto mediante una ruta con parámetro.
+- Botones de compra deshabilitados para productos agotados.
+- Carrito con productos agrupados por cantidad.
+- Eliminación de productos y vaciado del carrito.
+- Cálculo de subtotales y total.
+- Persistencia del carrito al recargar.
+- Página 404 y mensaje para productos inexistentes.
+- Menú colapsable y catálogo adaptable a pantallas pequeñas.
+- Layout compartido mediante Outlet.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Organización
+
+- `src/components`: componentes reutilizables y layout.
+- `src/pages`: inicio, detalle de producto y página 404.
+- `src/data`: datos del catálogo.
+- `public/images/productos`: imágenes de los productos.
+
+## Instalación y ejecución
+
+Después de clonar o descargar el repositorio, abrir una terminal
+dentro de la carpeta del proyecto y ejecutar:
+
+```bash
+npm install
+npm run dev
+```
+
+Abrir la dirección indicada por Vite.
+
+## Versión de producción
+
+```bash
+npm run build
+npm run preview
+```
+
+## Validaciones realizadas
+
+- Compilación de producción completada sin errores.
+- Navegación, filtros y detalle probados en la vista previa.
+- Persistencia y total del carrito comprobados.
+- Menú y catálogo comprobados en pantalla pequeña.
+
+## Pendientes de la migración
+
+- Registro e inicio de sesión.
+- Perfiles y beneficios de usuarios.
+- Administración de productos y usuarios.
+- Control de cantidades del carrito según el stock disponible.
+
+El proyecto continúa en desarrollo. Este avance corresponde a
+la base de componentes, estado, efectos y navegación.

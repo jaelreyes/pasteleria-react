@@ -1,26 +1,28 @@
-import { Card, Button } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
+import { Card, Button } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
-function ProductCard({ id, nombre, descripcion, precio, imagen, onAgregar }) {
+function ProductCard({
+  id,
+  nombre,
+  descripcion,
+  precio,
+  imagen,
+  stock,
+  onAgregar,
+}) {
   return (
     <Card className="product-card h-100">
-      <Card.Img
-        variant="top"
-        src={imagen}
-        alt={nombre}
-      />
+      <Card.Img variant="top" src={imagen} alt={nombre} />
 
       <Card.Body>
         <Card.Title as="h3">{nombre}</Card.Title>
 
         <Card.Text>{descripcion}</Card.Text>
 
-        <Card.Text>
-          Precio: ${precio.toLocaleString('es-CL')}
-        </Card.Text>
+        <Card.Text>Precio: ${precio.toLocaleString("es-CL")}</Card.Text>
 
-        <Button variant="primary" onClick={onAgregar}>
-          Agregar al carrito
+        <Button variant="primary" onClick={onAgregar} disabled={stock === 0}>
+          {stock === 0 ? "Agotado" : "Agregar al carrito"}
         </Button>
 
         <Button
@@ -33,7 +35,7 @@ function ProductCard({ id, nombre, descripcion, precio, imagen, onAgregar }) {
         </Button>
       </Card.Body>
     </Card>
-  )
+  );
 }
 
-export default ProductCard
+export default ProductCard;
