@@ -1,30 +1,29 @@
-import { Button, ListGroup, Alert } from 'react-bootstrap'
+import { Button, ListGroup, Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
 
-function Cart({ carrito, onVaciar, onEliminar }) {
+function Cart({ carrito, onVaciar, onEliminar, onContinuar }) {
   const total = carrito.reduce(
     (suma, producto) => suma + producto.precio * producto.cantidad,
-    0
-  )
+    0,
+  );
 
   return (
     <section>
       <h2>Tu carrito</h2>
 
       {carrito.length === 0 ? (
-        <Alert variant="info">
-          Tu carrito está vacío.
-        </Alert>
+        <Alert variant="info">Tu carrito está vacío.</Alert>
       ) : (
         <ListGroup className="mb-3">
-          {carrito.map(producto => (
+          {carrito.map((producto) => (
             <ListGroup.Item
               key={producto.id}
               className="d-flex justify-content-between align-items-center gap-3"
             >
               <span>
                 {producto.nombre} × {producto.cantidad}
-                {' — $'}
-                {(producto.precio * producto.cantidad).toLocaleString('es-CL')}
+                {" — $"}
+                {(producto.precio * producto.cantidad).toLocaleString("es-CL")}
               </span>
 
               <Button
@@ -40,7 +39,7 @@ function Cart({ carrito, onVaciar, onEliminar }) {
       )}
 
       <p>
-        <strong>Total: ${total.toLocaleString('es-CL')}</strong>
+        <strong>Total: ${total.toLocaleString("es-CL")}</strong>
       </p>
 
       <Button
@@ -50,8 +49,19 @@ function Cart({ carrito, onVaciar, onEliminar }) {
       >
         Vaciar carrito
       </Button>
+
+      <Button
+        as={Link}
+        to="/checkout"
+        variant="success"
+        className="ms-2"
+        disabled={carrito.length === 0}
+        onClick={onContinuar}
+      >
+        Continuar compra
+      </Button>
     </section>
-  )
+  );
 }
 
-export default Cart
+export default Cart;

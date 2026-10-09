@@ -1,10 +1,18 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 function NotFound() {
+  const ubicacion = useLocation()
+
   return (
     <section>
       <h2>404 — Página no encontrada</h2>
-      <p>La dirección que visitaste no existe.</p>
+
+      <p>
+        No encontramos una página en:
+        {' '}
+        <code>{ubicacion.pathname}</code>
+      </p>
+
       <Link to="/productos">Volver al catálogo</Link>
     </section>
   )

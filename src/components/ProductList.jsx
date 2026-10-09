@@ -1,6 +1,6 @@
 import ProductCard from "./ProductCard";
 import { useSearchParams } from "react-router-dom";
-import { Form } from "react-bootstrap";
+import { Form, Row, Col } from "react-bootstrap";
 
 function ProductList({ productos, onAgregar }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -72,20 +72,21 @@ function ProductList({ productos, onAgregar }) {
       {productosFiltrados.length === 0 ? (
         <p>No encontramos productos con ese nombre.</p>
       ) : (
-        <div className="product-grid">
+        <Row xs={1} sm={2} lg={3} className="g-4">
           {productosFiltrados.map((producto) => (
-            <ProductCard
-              key={producto.id}
-              nombre={producto.nombre}
-              descripcion={producto.descripcion}
-              precio={producto.precio}
-              imagen={producto.imagen}
-              onAgregar={() => onAgregar(producto)}
-              id={producto.id}
-              stock={producto.stock}
-            />
+            <Col key={producto.id}>
+              <ProductCard
+                id={producto.id}
+                nombre={producto.nombre}
+                descripcion={producto.descripcion}
+                precio={producto.precio}
+                imagen={producto.imagen}
+                stock={producto.stock}
+                onAgregar={() => onAgregar(producto)}
+              />
+            </Col>
           ))}
-        </div>
+        </Row>
       )}
     </section>
   );

@@ -40,12 +40,6 @@ footer {
   border-radius: 8px;
 }
 
-.product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-}
-
 .product-detail-image {
   width: 100%;
   max-width: 500px;
@@ -56,4 +50,10 @@ footer {
 
 .navigation {
   background-color: #ffe0e6;
+}
+
+.navigation .nav-link.active {
+  font-weight: bold;
+  color: #8b4513;
+  text-decoration: underline;
 }

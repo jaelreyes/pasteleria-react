@@ -28,6 +28,13 @@ CSS y JavaScript, a React.
 - Página 404 y mensaje para productos inexistentes.
 - Menú colapsable y catálogo adaptable a pantallas pequeñas.
 - Layout compartido mediante Outlet.
+- Menú con NavLink que identifica la página activa.
+- Navegación al carrito desde el detalle mediante useNavigate.
+- Página 404 que muestra la ruta visitada mediante useLocation.
+- Resumen de compra en /checkout, con redirección si el carrito está vacío.
+- Panel lateral del carrito con Offcanvas.
+- Catálogo responsivo con Row y Col de React Bootstrap.
+- Título de la pestaña actualizado mediante useEffect.
 
 ## Organización
 

@@ -1,9 +1,9 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from 'react-router-dom'
 import productos from "../data/productos";
 
 function ProductDetail({ onAgregar }) {
   const { id } = useParams();
-
+  const navegar = useNavigate()
   const producto = productos.find((producto) => producto.id === Number(id));
 
   if (!producto) {
@@ -14,6 +14,11 @@ function ProductDetail({ onAgregar }) {
       </section>
     );
   }
+
+  function agregarYVerCarrito() {
+  onAgregar(producto)
+  navegar('/carrito')
+}
 
   return (
     <section>
@@ -31,7 +36,7 @@ function ProductDetail({ onAgregar }) {
       <p>Stock disponible: {producto.stock} unidades</p>
 
       <button
-        onClick={() => onAgregar(producto)}
+        onClick={agregarYVerCarrito}
         disabled={producto.stock === 0}
       >
         {producto.stock === 0 ? "Agotado" : "Agregar al carrito"}
