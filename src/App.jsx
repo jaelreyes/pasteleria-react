@@ -11,6 +11,8 @@ import ProductDetail from "./pages/ProductDetail";
 import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
 import CartPanel from './components/CartPanel'
+import Nosotros from './pages/Nosotros'
+import Contacto from './pages/Contacto'
 
 function App() {
   // Recupera el carrito guardado al iniciar la aplicación.
@@ -107,6 +109,10 @@ return (
           path="checkout"
           element={<Checkout carrito={carrito} />}
         />
+
+        <Route path="nosotros" element={<Nosotros />} />
+
+        <Route path="contacto" element={<Contacto />} />
 
         <Route path="*" element={<NotFound />} />
       </Route>

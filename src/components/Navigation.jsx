@@ -1,5 +1,5 @@
-import { Container, Nav, Navbar, Button } from 'react-bootstrap'
-import { Link, NavLink } from 'react-router-dom'
+import { Container, Nav, Navbar, Button } from "react-bootstrap";
+import { Link, NavLink } from "react-router-dom";
 
 function Navigation({ cantidad, onVerCarrito }) {
   return (
@@ -17,20 +17,20 @@ function Navigation({ cantidad, onVerCarrito }) {
               Inicio
             </Nav.Link>
 
-            <Nav.Link
-              as={NavLink}
-              to="/productos"
-              eventKey="productos"
-            >
+            <Nav.Link as={NavLink} to="/productos" eventKey="productos">
               Productos
             </Nav.Link>
 
-            <Nav.Link
-              as={NavLink}
-              to="/carrito"
-              eventKey="carrito"
-            >
+            <Nav.Link as={NavLink} to="/carrito" eventKey="carrito">
               Carrito ({cantidad})
+            </Nav.Link>
+
+            <Nav.Link as={NavLink} to="/nosotros" eventKey="nosotros">
+              Nosotros
+            </Nav.Link>
+
+            <Nav.Link as={NavLink} to="/contacto" eventKey="contacto">
+              Contacto
             </Nav.Link>
           </Nav>
 
@@ -44,7 +44,7 @@ function Navigation({ cantidad, onVerCarrito }) {
         </Navbar.Collapse>
       </Container>
     </Navbar>
-  )
+  );
 }
 
-export default Navigation
+export default Navigation;

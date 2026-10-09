@@ -35,6 +35,10 @@ CSS y JavaScript, a React.
 - Panel lateral del carrito con Offcanvas.
 - Catálogo responsivo con Row y Col de React Bootstrap.
 - Título de la pestaña actualizado mediante useEffect.
+- Página Nosotros con historia, misión, visión y valores del proyecto original.
+- Página Contacto con formulario controlado, validaciones y envío simulado.
+- Secciones requeridas: Inicio, Nosotros, Contacto y Carrito.
+
 
 ## Organización
 
