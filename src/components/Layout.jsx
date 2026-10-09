@@ -1,20 +1,19 @@
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Header from './Header'
-import Navigation from './Navigation'
 import Footer from './Footer'
 
 function Layout({ cantidad, onVerCarrito }) {
-  return (
-    <div>
-      <Header />
+  const ubicacion = useLocation()
+  const esInicio = ubicacion.pathname === '/'
 
-      <Navigation
+  return (
+    <div className="site-layout">
+      <Header
         cantidad={cantidad}
         onVerCarrito={onVerCarrito}
       />
 
-      <main>
-        {/* Aquí se muestra la página de la ruta seleccionada */}
+      <main className={`site-main${esInicio ? ' site-main-home' : ''}`}>
         <Outlet />
       </main>
 

@@ -1,8 +1,12 @@
-function Header() {
+import Navigation from './Navigation'
+
+function Header({ cantidad, onVerCarrito }) {
   return (
-    <header>
-      <h1>Pastelería 1000 Sabores</h1>
-      <p>Un sabor especial para cada ocasión</p>
+    <header className="site-header">
+      <Navigation
+        cantidad={cantidad}
+        onVerCarrito={onVerCarrito}
+      />
     </header>
   )
 }
