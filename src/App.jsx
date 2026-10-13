@@ -4,20 +4,20 @@ import { Routes, Route } from "react-router-dom";
 import ProductList from "./components/ProductList";
 import Cart from "./components/Cart";
 import Layout from "./components/Layout";
+import CartPanel from "./components/CartPanel";
 import productos from "./data/productos";
 
 import NotFound from "./pages/NotFound";
 import ProductDetail from "./pages/ProductDetail";
 import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
-import CartPanel from "./components/CartPanel";
 import Nosotros from "./pages/Nosotros";
 import Contacto from "./pages/Contacto";
-import Registro from './pages/Registro'
-
+import Registro from "./pages/Registro";
+import Login from "./pages/Login";
 
 function App() {
-  // Recupera el carrito guardado al iniciar la aplicación.
+  // Recupera el carrito guardado al iniciar.
   const [carrito, setCarrito] = useState(() => {
     const carritoGuardado = localStorage.getItem("carrito");
     return carritoGuardado ? JSON.parse(carritoGuardado) : [];
@@ -25,16 +25,29 @@ function App() {
 
   const [mostrarCarrito, setMostrarCarrito] = useState(false);
 
+  // Recupera la sesión con la misma clave del proyecto original.
+  const [usuarioActivo, setUsuarioActivo] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("usuarioActivo") || "null");
+    } catch {
+      return null;
+    }
+  });
+
   // Guarda el carrito cada vez que cambia.
   useEffect(() => {
     localStorage.setItem("carrito", JSON.stringify(carrito));
   }, [carrito]);
 
   function agregarProducto(producto, cantidad = 1) {
+    if (!Number.isInteger(cantidad) || cantidad < 1) {
+      return;
+    }
+
     setCarrito((carritoActual) => {
       const existe = carritoActual.find((item) => item.id === producto.id);
-      const cantidadActual = existe ? existe.cantidad : 0;
 
+      const cantidadActual = existe ? existe.cantidad : 0;
       const disponibles = Math.max(0, producto.stock - cantidadActual);
       const cantidadAgregar = Math.min(cantidad, disponibles);
 
@@ -45,7 +58,10 @@ function App() {
       if (existe) {
         return carritoActual.map((item) =>
           item.id === producto.id
-            ? { ...item, cantidad: item.cantidad + cantidadAgregar }
+            ? {
+                ...item,
+                cantidad: item.cantidad + cantidadAgregar,
+              }
             : item,
         );
       }
@@ -58,20 +74,12 @@ function App() {
     setCarrito([]);
   }
 
-  // Elimina el producto identificado por su id.
+  // Elimina todas las unidades del producto seleccionado.
   function eliminarProducto(idAEliminar) {
     setCarrito((carritoActual) =>
       carritoActual.filter((item) => item.id !== idAEliminar),
     );
   }
-
-  // Suma las unidades de todos los productos.
-  const cantidadTotal = carrito.reduce((suma, item) => suma + item.cantidad, 0);
-
-  // Actualiza el título de la pestaña cuando cambia la cantidad.
-  useEffect(() => {
-    document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
-  }, [cantidadTotal]);
 
   // Cambia la cantidad respetando el stock del catálogo.
   function cambiarCantidad(id, nuevaCantidad) {
@@ -93,6 +101,37 @@ function App() {
     );
   }
 
+  // Guarda los datos de sesión sin incluir la contraseña.
+  function iniciarSesion(usuario) {
+    const sesion = {
+      run: usuario.run,
+      nombre: usuario.nombre,
+      apellidos: usuario.apellidos,
+      correo: usuario.correo,
+      tipo: usuario.tipo || "Cliente",
+      beneficios: usuario.beneficios || [],
+      descuentoEdad: usuario.descuentoEdad || 0,
+      descuentoCodigo: usuario.descuentoCodigo || 0,
+      tortaGratisDuoc: usuario.tortaGratisDuoc || false,
+      fechaLogin: new Date().toISOString(),
+    };
+
+    localStorage.setItem("usuarioActivo", JSON.stringify(sesion));
+    setUsuarioActivo(sesion);
+  }
+
+  function cerrarSesion() {
+    localStorage.removeItem("usuarioActivo");
+    setUsuarioActivo(null);
+  }
+
+  const cantidadTotal = carrito.reduce((suma, item) => suma + item.cantidad, 0);
+
+  // Actualiza el título de la pestaña.
+  useEffect(() => {
+    document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
+  }, [cantidadTotal]);
+
   return (
     <>
       <Routes>
@@ -102,6 +141,8 @@ function App() {
             <Layout
               cantidad={cantidadTotal}
               onVerCarrito={() => setMostrarCarrito(true)}
+              usuarioActivo={usuarioActivo}
+              onCerrarSesion={cerrarSesion}
             />
           }
         >
@@ -136,10 +177,13 @@ function App() {
           <Route path="checkout" element={<Checkout carrito={carrito} />} />
 
           <Route path="nosotros" element={<Nosotros />} />
-
           <Route path="contacto" element={<Contacto />} />
-
           <Route path="registro" element={<Registro />} />
+
+          <Route
+            path="login"
+            element={<Login onIniciarSesion={iniciarSesion} />}
+          />
           
           <Route path="*" element={<NotFound />} />
         </Route>

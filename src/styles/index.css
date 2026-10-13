@@ -218,3 +218,47 @@ main.site-main-home {
   max-width: none;
   padding: 0;
 }
+
+.nav-sesion {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-left: 1rem;
+}
+
+.nav-usuario {
+  color: #8b4513;
+  font-weight: 700;
+}
+
+.nav-login {
+  color: #5d4037;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-login:hover {
+  color: #8b4513;
+}
+
+.nav-registro {
+  padding: 0.5rem 1rem;
+  background-color: #ffc0cb;
+  color: #8b4513;
+  border-radius: 8px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-registro:hover {
+  background-color: #e8a0b0;
+  color: #8b4513;
+}
+
+@media (max-width: 991px) {
+  .nav-sesion {
+    margin-left: 0;
+    margin-top: 1rem;
+  }
+}

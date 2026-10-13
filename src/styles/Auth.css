@@ -61,3 +61,7 @@
     padding: 1.25rem;
   }
 }
+
+.auth-login {
+  max-width: 500px;
+}
