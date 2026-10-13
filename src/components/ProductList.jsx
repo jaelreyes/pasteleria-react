@@ -1,6 +1,7 @@
 import ProductCard from "./ProductCard";
 import { useSearchParams } from "react-router-dom";
 import { Form, Row, Col } from "react-bootstrap";
+import '../styles/Productos.css'
 
 function ProductList({ productos, onAgregar }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -26,9 +27,11 @@ function ProductList({ productos, onAgregar }) {
   }
 
   const productosFiltrados = productos.filter((producto) => {
-    const coincideBusqueda = producto.nombre
-      .toLowerCase()
-      .includes(busqueda.toLowerCase());
+    const texto = busqueda.trim().toLowerCase();
+
+    const coincideBusqueda =
+      producto.nombre.toLowerCase().includes(texto) ||
+      producto.codigo.toLowerCase().includes(texto);
 
     const coincideCategoria =
       categoria === "" || producto.categoria === categoria;
@@ -37,40 +40,55 @@ function ProductList({ productos, onAgregar }) {
   });
 
   return (
-    <section>
-      <h2>Nuestros productos</h2>
-      <Form.Group className="mb-4" controlId="busqueda-productos">
-        <Form.Label>Buscar productos</Form.Label>
+    <section className="catalogo-page">
+      <h1>Nuestros Productos</h1>
+      <p className="catalogo-subtitulo">Encuentra tu próximo sabor favorito.</p>
 
-        <Form.Control
-          type="search"
-          placeholder="Escribe el nombre de un producto"
-          value={busqueda}
-          onChange={(evento) => actualizarFiltro("q", evento.target.value)}
-        />
-      </Form.Group>
+      <Form
+        className="catalogo-filtros"
+        onSubmit={(evento) => evento.preventDefault()}
+      >
+        <Row className="g-3">
+          <Col xs={12} md={8}>
+            <Form.Group controlId="busqueda-productos">
+              <Form.Label>Buscar productos</Form.Label>
 
-      <Form.Group className="mb-4" controlId="categoria-productos">
-        <Form.Label>Categoría</Form.Label>
+              <Form.Control
+                type="search"
+                placeholder="Buscar por nombre o código"
+                value={busqueda}
+                onChange={(evento) =>
+                  actualizarFiltro("q", evento.target.value)
+                }
+              />
+            </Form.Group>
+          </Col>
 
-        <Form.Select
-          value={categoria}
-          onChange={(evento) =>
-            actualizarFiltro("categoria", evento.target.value)
-          }
-        >
-          <option value="">Todas las categorías</option>
+          <Col xs={12} md={4}>
+            <Form.Group controlId="categoria-productos">
+              <Form.Label>Categoría</Form.Label>
 
-          {categorias.map((nombreCategoria) => (
-            <option key={nombreCategoria} value={nombreCategoria}>
-              {nombreCategoria}
-            </option>
-          ))}
-        </Form.Select>
-      </Form.Group>
+              <Form.Select
+                value={categoria}
+                onChange={(evento) =>
+                  actualizarFiltro("categoria", evento.target.value)
+                }
+              >
+                <option value="">Todas las categorías</option>
+
+                {categorias.map((nombreCategoria) => (
+                  <option key={nombreCategoria} value={nombreCategoria}>
+                    {nombreCategoria}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Col>
+        </Row>
+      </Form>
 
       {productosFiltrados.length === 0 ? (
-        <p>No encontramos productos con ese nombre.</p>
+        <p>No se encontraron productos con esos filtros.</p>
       ) : (
         <Row xs={1} sm={2} lg={3} className="g-4">
           {productosFiltrados.map((producto) => (
@@ -83,6 +101,7 @@ function ProductList({ productos, onAgregar }) {
                 imagen={producto.imagen}
                 stock={producto.stock}
                 onAgregar={() => onAgregar(producto)}
+                categoria={producto.categoria}
               />
             </Col>
           ))}

@@ -35,7 +35,7 @@ const categorias = [
   },
   {
     nombre: "Productos Veganos",
-    filtro: "Productos Vegana",
+    filtro: "Productos Veganos",
     imagen: "PV002.jpg",
     descripcion: "Sin ingredientes de origen animal.",
   },

@@ -1,41 +1,63 @@
-import { Card, Button } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Card, Button } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
+import '../styles/Productos.css'
 
 function ProductCard({
   id,
   nombre,
+  categoria,
   descripcion,
   precio,
   imagen,
   stock,
   onAgregar,
 }) {
+  const agotado = stock === 0
+
   return (
     <Card className="product-card h-100">
-      <Card.Img variant="top" src={imagen} alt={nombre} />
+      <Card.Img
+        variant="top"
+        src={imagen}
+        alt={nombre}
+        loading="lazy"
+      />
 
-      <Card.Body>
+      <Card.Body className="d-flex flex-column">
         <Card.Title as="h3">{nombre}</Card.Title>
 
-        <Card.Text>{descripcion}</Card.Text>
+        <p className="producto-categoria">{categoria}</p>
 
-        <Card.Text>Precio: ${precio.toLocaleString("es-CL")}</Card.Text>
+        <Card.Text className="producto-descripcion">
+          {descripcion}
+        </Card.Text>
 
-        <Button variant="primary" onClick={onAgregar} disabled={stock === 0}>
-          {stock === 0 ? "Agotado" : "Agregar al carrito"}
-        </Button>
+        <p className="producto-precio">
+          ${precio.toLocaleString('es-CL')}
+        </p>
 
-        <Button
-          as={Link}
-          to={`/productos/${id}`}
-          variant="outline-secondary"
-          className="ms-2"
-        >
-          Ver detalle
-        </Button>
+        <div className="producto-acciones mt-auto">
+          <Button
+            as={Link}
+            to={`/productos/${id}`}
+            className="producto-btn-detalle"
+            variant="light"
+          >
+            Ver Detalle
+          </Button>
+
+          <Button
+            className="producto-btn-agregar"
+            variant="primary"
+            onClick={onAgregar}
+            disabled={agotado}
+          >
+            {agotado ? 'Agotado' : 'Añadir al carrito'}
+          </Button>
+        </div>
       </Card.Body>
     </Card>
-  );
+  )
 }
 
-export default ProductCard;
+export default ProductCard

@@ -1,67 +1,135 @@
-import { Button, ListGroup, Alert } from "react-bootstrap";
-import { Link } from "react-router-dom";
+import { Button, Alert } from 'react-bootstrap'
+import { Link } from 'react-router-dom'
+import '../styles/Cart.css'
 
-function Cart({ carrito, onVaciar, onEliminar, onContinuar }) {
+function Cart({
+  carrito,
+  onVaciar,
+  onEliminar,
+  onContinuar,
+  onCambiarCantidad,
+}) {
   const total = carrito.reduce(
     (suma, producto) => suma + producto.precio * producto.cantidad,
-    0,
-  );
+    0
+  )
 
   return (
-    <section>
+    <section className="carrito">
       <h2>Tu carrito</h2>
 
       {carrito.length === 0 ? (
-        <Alert variant="info">Tu carrito está vacío.</Alert>
+        <Alert variant="info">
+          Tu carrito está vacío.
+          {' '}
+          <Link to="/productos" onClick={onContinuar}>
+            Explorar productos
+          </Link>
+        </Alert>
       ) : (
-        <ListGroup className="mb-3">
-          {carrito.map((producto) => (
-            <ListGroup.Item
-              key={producto.id}
-              className="d-flex justify-content-between align-items-center gap-3"
-            >
-              <span>
-                {producto.nombre} × {producto.cantidad}
-                {" — $"}
-                {(producto.precio * producto.cantidad).toLocaleString("es-CL")}
-              </span>
+        <ul className="carrito-lista">
+          {carrito.map(producto => (
+            <li key={producto.id} className="carrito-item">
+              <img
+                src={producto.imagen}
+                alt={producto.nombre}
+                className="carrito-imagen"
+              />
 
-              <Button
-                variant="outline-danger"
-                size="sm"
-                onClick={() => onEliminar(producto.id)}
-              >
-                Eliminar
-              </Button>
-            </ListGroup.Item>
+              <div className="carrito-info">
+                <h3>{producto.nombre}</h3>
+
+                <p className="carrito-precio">
+                  Precio unitario: $
+                  {producto.precio.toLocaleString('es-CL')}
+                </p>
+
+                <div
+                  className="carrito-cantidad"
+                  role="group"
+                  aria-label={`Cantidad de ${producto.nombre}`}
+                >
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    disabled={producto.cantidad <= 1}
+                    onClick={() =>
+                      onCambiarCantidad(
+                        producto.id,
+                        producto.cantidad - 1
+                      )
+                    }
+                    aria-label={`Disminuir cantidad de ${producto.nombre}`}
+                  >
+                    −
+                  </Button>
+
+                  <span aria-live="polite">
+                    {producto.cantidad}
+                  </span>
+
+                  <Button
+                    variant="outline-secondary"
+                    size="sm"
+                    disabled={producto.cantidad >= producto.stock}
+                    onClick={() =>
+                      onCambiarCantidad(
+                        producto.id,
+                        producto.cantidad + 1
+                      )
+                    }
+                    aria-label={`Aumentar cantidad de ${producto.nombre}`}
+                  >
+                    +
+                  </Button>
+                </div>
+
+                <p className="carrito-subtotal">
+                  Subtotal: $
+                  {(producto.precio * producto.cantidad).toLocaleString('es-CL')}
+                </p>
+
+                <Button
+                  variant="outline-danger"
+                  size="sm"
+                  onClick={() => onEliminar(producto.id)}
+                >
+                  Eliminar
+                </Button>
+              </div>
+            </li>
           ))}
-        </ListGroup>
+        </ul>
       )}
 
-      <p>
-        <strong>Total: ${total.toLocaleString("es-CL")}</strong>
-      </p>
+      <div className="carrito-resumen">
+        <p className="carrito-total">
+          Total: <strong>${total.toLocaleString('es-CL')}</strong>
+        </p>
 
-      <Button
-        variant="danger"
-        onClick={onVaciar}
-        disabled={carrito.length === 0}
-      >
-        Vaciar carrito
-      </Button>
+        <div className="carrito-acciones">
+          <Button
+            variant="outline-danger"
+            onClick={onVaciar}
+            disabled={carrito.length === 0}
+          >
+            Vaciar carrito
+          </Button>
 
-      <Button
-        as={Link}
-        to="/checkout"
-        variant="success"
-        className="ms-2"
-        disabled={carrito.length === 0}
-        onClick={onContinuar}
-      >
-        Continuar compra
-      </Button>
+          <Button
+            as={Link}
+            to="/checkout"
+            className="carrito-btn-continuar"
+            variant="primary"
+            disabled={carrito.length === 0}
+            onClick={onContinuar}
+          >
+            Continuar compra
+          </Button>
+        </div>
+      </div>
     </section>
-  );
+  )
 }
 
-export default Cart;
+export default Cart

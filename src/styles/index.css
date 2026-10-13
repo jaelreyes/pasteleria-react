@@ -18,29 +18,6 @@ main {
   padding: 32px 20px;
 }
 
-
-.product-card {
-  border: 1px solid #ffc0cb;
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.product-card img {
-  width: 100%;
-  height: 220px;
-  object-fit: cover;
-  border-radius: 8px;
-}
-
-.product-detail-image {
-  width: 100%;
-  max-width: 500px;
-  height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-}
-
-
 .site-layout {
   display: flex;
   flex-direction: column;

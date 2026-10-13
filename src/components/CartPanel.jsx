@@ -1,7 +1,8 @@
 import { Offcanvas } from "react-bootstrap";
 import Cart from "./Cart";
 
-function CartPanel({ mostrar, onCerrar, carrito, onVaciar, onEliminar }) {
+function CartPanel({ mostrar, onCerrar, carrito, onVaciar, onEliminar,
+  onCambiarCantidad }) {
   return (
     <Offcanvas show={mostrar} onHide={onCerrar} placement="end">
       <Offcanvas.Header closeButton>
@@ -14,6 +15,7 @@ function CartPanel({ mostrar, onCerrar, carrito, onVaciar, onEliminar }) {
           onVaciar={onVaciar}
           onEliminar={onEliminar}
           onContinuar={onCerrar}
+          onCambiarCantidad={onCambiarCantidad}
         />
       </Offcanvas.Body>
     </Offcanvas>

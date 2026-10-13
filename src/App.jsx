@@ -10,9 +10,9 @@ import NotFound from "./pages/NotFound";
 import ProductDetail from "./pages/ProductDetail";
 import Home from "./pages/Home";
 import Checkout from "./pages/Checkout";
-import CartPanel from './components/CartPanel'
-import Nosotros from './pages/Nosotros'
-import Contacto from './pages/Contacto'
+import CartPanel from "./components/CartPanel";
+import Nosotros from "./pages/Nosotros";
+import Contacto from "./pages/Contacto";
 
 function App() {
   // Recupera el carrito guardado al iniciar la aplicación.
@@ -28,20 +28,27 @@ function App() {
     localStorage.setItem("carrito", JSON.stringify(carrito));
   }, [carrito]);
 
-  // Agrega un producto o aumenta su cantidad.
-  function agregarProducto(producto) {
+  function agregarProducto(producto, cantidad = 1) {
     setCarrito((carritoActual) => {
       const existe = carritoActual.find((item) => item.id === producto.id);
+      const cantidadActual = existe ? existe.cantidad : 0;
+
+      const disponibles = Math.max(0, producto.stock - cantidadActual);
+      const cantidadAgregar = Math.min(cantidad, disponibles);
+
+      if (cantidadAgregar <= 0) {
+        return carritoActual;
+      }
 
       if (existe) {
         return carritoActual.map((item) =>
           item.id === producto.id
-            ? { ...item, cantidad: item.cantidad + 1 }
+            ? { ...item, cantidad: item.cantidad + cantidadAgregar }
             : item,
         );
       }
 
-      return [...carritoActual, { ...producto, cantidad: 1 }];
+      return [...carritoActual, { ...producto, cantidad: cantidadAgregar }];
     });
   }
 
@@ -64,69 +71,86 @@ function App() {
     document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
   }, [cantidadTotal]);
 
-  
-return (
-  <>
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <Layout
-            cantidad={cantidadTotal}
-            onVerCarrito={() => setMostrarCarrito(true)}
+  // Cambia la cantidad respetando el stock del catálogo.
+  function cambiarCantidad(id, nuevaCantidad) {
+    const producto = productos.find((producto) => producto.id === id);
+
+    if (
+      !producto ||
+      !Number.isInteger(nuevaCantidad) ||
+      nuevaCantidad < 1 ||
+      nuevaCantidad > producto.stock
+    ) {
+      return;
+    }
+
+    setCarrito((carritoActual) =>
+      carritoActual.map((item) =>
+        item.id === id ? { ...item, cantidad: nuevaCantidad } : item,
+      ),
+    );
+  }
+
+  return (
+    <>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Layout
+              cantidad={cantidadTotal}
+              onVerCarrito={() => setMostrarCarrito(true)}
+            />
+          }
+        >
+          <Route index element={<Home />} />
+
+          <Route
+            path="productos"
+            element={
+              <ProductList productos={productos} onAgregar={agregarProducto} />
+            }
           />
-        }
-      >
-        <Route index element={<Home />} />
 
-        <Route
-          path="productos"
-          element={
-            <ProductList
-              productos={productos}
-              onAgregar={agregarProducto}
-            />
-          }
-        />
+          <Route
+            path="productos/:id"
+            element={
+              <ProductDetail onAgregar={agregarProducto} carrito={carrito} />
+            }
+          />
 
-        <Route
-          path="productos/:id"
-          element={<ProductDetail onAgregar={agregarProducto} />}
-        />
+          <Route
+            path="carrito"
+            element={
+              <Cart
+                carrito={carrito}
+                onVaciar={vaciarCarrito}
+                onEliminar={eliminarProducto}
+                onCambiarCantidad={cambiarCantidad}
+              />
+            }
+          />
 
-        <Route
-          path="carrito"
-          element={
-            <Cart
-              carrito={carrito}
-              onVaciar={vaciarCarrito}
-              onEliminar={eliminarProducto}
-            />
-          }
-        />
+          <Route path="checkout" element={<Checkout carrito={carrito} />} />
 
-        <Route
-          path="checkout"
-          element={<Checkout carrito={carrito} />}
-        />
+          <Route path="nosotros" element={<Nosotros />} />
 
-        <Route path="nosotros" element={<Nosotros />} />
+          <Route path="contacto" element={<Contacto />} />
 
-        <Route path="contacto" element={<Contacto />} />
+          <Route path="*" element={<NotFound />} />
+        </Route>
+      </Routes>
 
-        <Route path="*" element={<NotFound />} />
-      </Route>
-    </Routes>
-
-    <CartPanel
-      mostrar={mostrarCarrito}
-      onCerrar={() => setMostrarCarrito(false)}
-      carrito={carrito}
-      onVaciar={vaciarCarrito}
-      onEliminar={eliminarProducto}
-    />
-  </>
-);
+      <CartPanel
+        mostrar={mostrarCarrito}
+        onCerrar={() => setMostrarCarrito(false)}
+        carrito={carrito}
+        onVaciar={vaciarCarrito}
+        onEliminar={eliminarProducto}
+        onCambiarCantidad={cambiarCantidad}
+      />
+    </>
+  );
 }
 
 export default App;
