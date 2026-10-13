@@ -13,6 +13,8 @@ import Checkout from "./pages/Checkout";
 import CartPanel from "./components/CartPanel";
 import Nosotros from "./pages/Nosotros";
 import Contacto from "./pages/Contacto";
+import Registro from './pages/Registro'
+
 
 function App() {
   // Recupera el carrito guardado al iniciar la aplicación.
@@ -137,6 +139,8 @@ function App() {
 
           <Route path="contacto" element={<Contacto />} />
 
+          <Route path="registro" element={<Registro />} />
+          
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
