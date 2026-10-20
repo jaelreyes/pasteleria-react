@@ -1,136 +1,85 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { Form, Button, Alert } from 'react-bootstrap'
-import {
-  validarCorreo,
-  validarPassword,
-} from '../utils/validaciones'
-import { rutaInicioSegunRol } from '../utils/roles'
-import '../styles/Auth.css'
+import { useState } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
+import { obtenerUsuarios } from '../data/db';
 
-function Login({ onIniciarSesion }) {
-  const navegar = useNavigate()
+export default function Login({ onIniciarSesion }) {
+  const [correo, setCorreo] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const [correo, setCorreo] = useState('')
-  const [password, setPassword] = useState('')
-  const [errores, setErrores] = useState({})
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setError('');
 
-  function ingresar(evento) {
-    evento.preventDefault()
+    const usuarios = obtenerUsuarios();
+    const usuarioEncontrado = usuarios.find(
+      u => (u.email === correo || u.correo === correo) && u.password === password
+    );
 
-    const nuevosErrores = {}
-
-    if (!validarCorreo(correo)) {
-      nuevosErrores.correo =
-        'Ingresa un correo @duoc.cl, @profesor.duoc.cl, @duocuc.cl o @gmail.com.'
-    }
-
-    if (!validarPassword(password)) {
-      nuevosErrores.password =
-        'La contraseña debe tener entre 4 y 10 caracteres.'
-    }
-
-    setErrores(nuevosErrores)
-
-    if (Object.keys(nuevosErrores).length > 0) return
-
-    try {
-      const usuarios = JSON.parse(
-        localStorage.getItem('usuarios') || '[]'
-      )
-
-      if (!Array.isArray(usuarios)) {
-        throw new Error('Datos de usuarios inválidos')
+    if (usuarioEncontrado) {
+      onIniciarSesion(usuarioEncontrado);
+      const tipo = (usuarioEncontrado.tipo || usuarioEncontrado.rol || '').toLowerCase();
+      if (tipo === 'admin' || tipo === 'administrador' || tipo === 'vendedor') {
+        navigate('/admin/ordenes');
+      } else {
+        navigate('/');
       }
-
-      const correoBuscado = correo.trim().toLowerCase()
-
-      const usuario = usuarios.find(
-        usuario =>
-          String(usuario.correo || '').trim().toLowerCase() ===
-            correoBuscado &&
-          usuario.password === password
-      )
-
-      if (!usuario) {
-        setErrores({
-          general: 'Correo o contraseña incorrectos.',
-        })
-        return
-      }
-
-      onIniciarSesion(usuario)
-      // Administrador y Vendedor van al panel; el Cliente, a la tienda.
-      navegar(rutaInicioSegunRol(usuario), { replace: true })
-    } catch {
-      setErrores({
-        general: 'No se pudo iniciar sesión en este navegador.',
-      })
+    } else {
+      setError('Correo o contraseña incorrectos.');
     }
-  }
+  };
 
   return (
-    <section className="auth-page auth-login">
-      <h1>Iniciar sesión</h1>
+    <Container className="my-5" style={{ maxWidth: '500px' }}>
+      <div className="text-center mb-4">
+        <h2 className="fw-bold" style={{ color: '#5c3d2e' }}>Iniciar sesión</h2>
+        <p className="text-muted">Ingresa a tu cuenta de Pastelería 1000 Sabores.</p>
+      </div>
 
-      <p className="auth-subtitulo">
-        Ingresa a tu cuenta de Pastelería 1000 Sabores.
-      </p>
+      <Card className="shadow-sm border-0 p-4">
+        {error && <Alert variant="danger">{error}</Alert>}
+        <Form onSubmit={handleSubmit}>
+          <Form.Group className="mb-3">
+            <Form.Label>Correo electrónico</Form.Label>
+            <Form.Control 
+              type="email" 
+              placeholder="tucorreo@ejemplo.com"
+              value={correo} 
+              onChange={(e) => setCorreo(e.target.value)}
+              required 
+            />
+          </Form.Group>
 
-      <Form className="auth-form" noValidate onSubmit={ingresar}>
-        {errores.general && (
-          <Alert variant="danger" role="alert">
-            {errores.general}
-          </Alert>
-        )}
+          <Form.Group className="mb-3">
+            <Form.Label>Contraseña</Form.Label>
+            <Form.Control 
+              type="password" 
+              placeholder="••••••••"
+              value={password} 
+              onChange={(e) => setPassword(e.target.value)}
+              required 
+            />
+          </Form.Group>
 
-        <Form.Group className="mb-3" controlId="login-correo">
-          <Form.Label>Correo electrónico</Form.Label>
+          <Button 
+            type="submit" 
+            className="w-100 py-2 fw-bold text-white mb-3"
+            style={{ background: '#8b5a2b', border: 'none' }}
+          >
+            Iniciar sesión
+          </Button>
 
-          <Form.Control
-            type="email"
-            autoComplete="username"
-            value={correo}
-            onChange={evento => setCorreo(evento.target.value)}
-            maxLength={100}
-            isInvalid={Boolean(errores.correo)}
-            required
-          />
-
-          <Form.Control.Feedback type="invalid">
-            {errores.correo}
-          </Form.Control.Feedback>
-        </Form.Group>
-
-        <Form.Group className="mb-4" controlId="login-password">
-          <Form.Label>Contraseña</Form.Label>
-
-          <Form.Control
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={evento => setPassword(evento.target.value)}
-            maxLength={10}
-            isInvalid={Boolean(errores.password)}
-            required
-          />
-
-          <Form.Control.Feedback type="invalid">
-            {errores.password}
-          </Form.Control.Feedback>
-        </Form.Group>
-
-        <Button type="submit" variant="primary" className="auth-btn">
-          Iniciar sesión
-        </Button>
-
-        <p className="mt-4 mb-0">
-          ¿No tienes una cuenta?{' '}
-          <Link to="/registro">Regístrate</Link>
-        </p>
-      </Form>
-    </section>
-  )
+          {/* Enlace para redirigir al registro de usuarios */}
+          <div className="text-center mt-3">
+            <span className="text-muted">¿No tienes una cuenta? </span>
+            <Link to="/registro" className="fw-bold text-decoration-none" style={{ color: '#8b5a2b' }}>
+              Regístrate aquí
+            </Link>
+          </div>
+        </Form>
+      </Card>
+    </Container>
+  );
 }
-
-export default Login
