@@ -15,6 +15,8 @@ import Nosotros from "./pages/Nosotros";
 import Contacto from "./pages/Contacto";
 import Registro from "./pages/Registro";
 import Login from "./pages/Login";
+import Blogs from "./pages/Blogs";
+import BlogDetalle from "./pages/BlogDetalle";
 
 function App() {
   // Recupera el carrito guardado al iniciar.
@@ -177,6 +179,8 @@ function App() {
           <Route path="checkout" element={<Checkout carrito={carrito} />} />
 
           <Route path="nosotros" element={<Nosotros />} />
+          <Route path="blogs" element={<Blogs />} />
+          <Route path="blogs/:id" element={<BlogDetalle />} />
           <Route path="contacto" element={<Contacto />} />
           <Route path="registro" element={<Registro />} />
 
@@ -184,7 +188,7 @@ function App() {
             path="login"
             element={<Login onIniciarSesion={iniciarSesion} />}
           />
-          
+
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

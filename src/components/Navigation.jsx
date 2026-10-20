@@ -78,6 +78,14 @@ function Navigation({
 
             <Nav.Link
               as={NavLink}
+              to="/blogs"
+              onClick={cerrarMenu}
+            >
+              Blogs
+            </Nav.Link>
+
+            <Nav.Link
+              as={NavLink}
               to="/contacto"
               onClick={cerrarMenu}
             >
