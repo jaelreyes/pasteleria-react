@@ -1,17 +1,10 @@
-// src/data/db.js
-
-// Claves acordadas en localStorage
-const STORAGE_KEYS = {
-  ORDENES: 'ordenes',
-  USUARIOS: 'usuarios',
-  USUARIO_ACTIVO: 'usuarioActivo',
-  CARRITO: 'carrito'
-};
-
-// --- ORDENES ---
 export const obtenerOrdenes = () => {
-  const data = localStorage.getItem(STORAGE_KEYS.ORDENES);
-  return data ? JSON.parse(data) : [];
+  try {
+    const ordenes = localStorage.getItem('ordenes');
+    return ordenes ? JSON.parse(ordenes) : [];
+  } catch {
+    return [];
+  }
 };
 
 export const crearOrden = (datosOrden) => {
@@ -19,44 +12,62 @@ export const crearOrden = (datosOrden) => {
   const nuevaOrden = {
     id: `ORD-${Date.now()}`,
     fecha: new Date().toISOString(),
-    estado: 'Completada',
+    estado: 'completado',
     ...datosOrden
   };
-  ordenes.push(nuevaOrden);
-  localStorage.setItem(STORAGE_KEYS.ORDENES, JSON.stringify(ordenes));
+  ordenes.unshift(nuevaOrden);
+  localStorage.setItem('ordenes', JSON.stringify(ordenes));
   return nuevaOrden;
 };
 
 export const obtenerOrdenPorId = (id) => {
   const ordenes = obtenerOrdenes();
-  return ordenes.find(o => String(o.id) === String(id)) || null;
+  return ordenes.find(o => o.id === id) || null;
 };
 
 export const obtenerOrdenesPorUsuario = (email) => {
   if (!email) return [];
   const ordenes = obtenerOrdenes();
-  return ordenes.filter(o => o.cliente && o.cliente.email?.toLowerCase() === email.toLowerCase());
+  return ordenes.filter(
+    o => o.cliente && o.cliente.email && o.cliente.email.toLowerCase() === email.toLowerCase()
+  );
 };
 
-// --- USUARIOS ---
 export const obtenerUsuarios = () => {
-  const data = localStorage.getItem(STORAGE_KEYS.USUARIOS);
-  return data ? JSON.parse(data) : [];
+  try {
+    const usuarios = localStorage.getItem('usuarios');
+    return usuarios ? JSON.parse(usuarios) : [];
+  } catch {
+    return [];
+  }
 };
 
 export const guardarUsuario = (usuario) => {
   const usuarios = obtenerUsuarios();
-  const existeIndice = usuarios.findIndex(u => u.email === usuario.email);
-  if (existeIndice >= 0) {
-    usuarios[existeIndice] = { ...usuarios[existeIndice], ...usuario };
+  const indice = usuarios.findIndex(u => u.email.toLowerCase() === usuario.email.toLowerCase());
+  if (indice !== -1) {
+    usuarios[indice] = { ...usuarios[indice], ...usuario };
   } else {
     usuarios.push(usuario);
   }
-  localStorage.setItem(STORAGE_KEYS.USUARIOS, JSON.stringify(usuarios));
+  localStorage.setItem('usuarios', JSON.stringify(usuarios));
   return usuario;
 };
 
 export const obtenerUsuarioActivo = () => {
-  const data = localStorage.getItem(STORAGE_KEYS.USUARIO_ACTIVO);
-  return data ? JSON.parse(data) : null;
+  try {
+    return JSON.parse(localStorage.getItem('usuarioActivo') || 'null');
+  } catch {
+    return null;
+  }
+};
+
+export default {
+  obtenerOrdenes,
+  crearOrden,
+  obtenerOrdenPorId,
+  obtenerOrdenesPorUsuario,
+  obtenerUsuarios,
+  guardarUsuario,
+  obtenerUsuarioActivo
 };
