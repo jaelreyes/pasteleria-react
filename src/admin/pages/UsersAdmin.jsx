@@ -1,232 +1,255 @@
-import React, { useState, useEffect } from 'react';
-import { obtenerUsuarios, guardarUsuario, obtenerOrdenesPorUsuario } from '../../data/db';
-import { validarCorreo } from '../../utils/validaciones';
+import { useState } from 'react';
+import { obtenerUsuarios, eliminarUsuario } from '../../data/db';
+import { Table, Button, Form, Container, Row, Col, Card, Badge, Modal } from 'react-bootstrap';
 
-export const UsersAdmin = () => {
-  const [usuarios, setUsuarios] = useState([]);
+export function UsersAdmin() {
+  const [usuarios, setUsuarios] = useState(() => obtenerUsuarios());
   const [busqueda, setBusqueda] = useState('');
-  const [modoEdicion, setModoEdicion] = useState(false);
-  const [form, setForm] = useState({ nombre: '', email: '', rol: 'cliente' });
-  const [errorEmail, setErrorEmail] = useState('');
-  const [usuarioHistorial, setUsuarioHistorial] = useState(null);
-  const [compras, setCompras] = useState([]);
+  const [filtroRol, setFiltroRol] = useState('');
+  const [criterioOrden, setCriterioOrden] = useState({ campo: 'nombre', direccion: 'asc' });
 
-  useEffect(() => {
-    cargarUsuarios();
-  }, []);
+  // Estados para el Modal de Edición de Rol
+  const [showModal, setShowModal] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState(null);
+  const [nuevoRol, setNuevoRol] = useState('cliente');
 
-  const cargarUsuarios = () => {
-    const existentes = obtenerUsuarios();
-    if (existentes.length === 0) {
-      const demo = [
-        { nombre: 'Administrador Demo', email: 'admin@duoc.cl', rol: 'admin' },
-        { nombre: 'Vendedor Demo', email: 'vendedor@duoc.cl', rol: 'vendedor' },
-        { nombre: 'Cliente Demo', email: 'cliente@gmail.com', rol: 'cliente' }
-      ];
-      demo.forEach(u => guardarUsuario(u));
-      setUsuarios(demo);
-    } else {
-      setUsuarios(existentes);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-
-    if (name === 'email' && !modoEdicion) {
-      setErrorEmail(validarCorreo && !validarCorreo(value) ? 'Correo inválido o dominio no permitido' : '');
-    }
-  };
-
-  const handleGuardarUsuario = (e) => {
-    e.preventDefault();
-    if (!form.nombre.trim() || !form.email.trim() || (!modoEdicion && errorEmail)) return;
-
-    guardarUsuario(form);
+  const handleEliminar = (email) => {
+    eliminarUsuario(email);
     setUsuarios(obtenerUsuarios());
-    setForm({ nombre: '', email: '', rol: 'cliente' });
-    setModoEdicion(false);
-    setErrorEmail('');
   };
 
-  const handleEditar = (usuario) => {
-    setForm(usuario);
-    setModoEdicion(true);
-    setErrorEmail('');
+  const abrirModalEditar = (usuario) => {
+    setUsuarioEditando(usuario);
+    setNuevoRol(usuario.rol || usuario.tipo || 'cliente');
+    setShowModal(true);
   };
 
-  const handleCancelarEdicion = () => {
-    setForm({ nombre: '', email: '', rol: 'cliente' });
-    setModoEdicion(false);
-    setErrorEmail('');
+  const guardarCambioRol = () => {
+    if (!usuarioEditando) return;
+    const emailTarget = usuarioEditando.email || usuarioEditando.correo;
+    
+    let listaUsuarios = obtenerUsuarios();
+    listaUsuarios = listaUsuarios.map(u => {
+      const emailU = u.email || u.correo;
+      if (emailU === emailTarget) {
+        return { ...u, rol: nuevoRol, tipo: nuevoRol.charAt(0).toUpperCase() + nuevoRol.slice(1) };
+      }
+      return u;
+    });
+
+    localStorage.setItem('usuarios', JSON.stringify(listaUsuarios));
+    setUsuarios(listaUsuarios);
+    setShowModal(false);
   };
 
-  const handleVerHistorial = (usuario) => {
-    setUsuarioHistorial(usuario);
-    setCompras(obtenerOrdenesPorUsuario(usuario.email));
+  const ordenarPor = (campo) => {
+    let direccion = 'asc';
+    if (criterioOrden.campo === campo && criterioOrden.direccion === 'asc') {
+      direccion = 'desc';
+    }
+    setCriterioOrden({ campo, direccion });
   };
 
-  // Filtrar usuarios según la barra de búsqueda
-  const usuariosFiltrados = usuarios.filter(u =>
-    u.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    u.email.toLowerCase().includes(busqueda.toLowerCase())
-  );
+  // Filtrado
+  const usuariosFiltrados = usuarios.filter(u => {
+    const textoBusqueda = (u.email || u.correo || '').toLowerCase() + ' ' + (u.nombre || '').toLowerCase();
+    const coincideTexto = textoBusqueda.includes(busqueda.toLowerCase());
+    
+    const rolUsuario = (u.rol || u.tipo || '').toLowerCase();
+    const coincideRol = filtroRol === '' || rolUsuario === filtroRol.toLowerCase();
+
+    return coincideTexto && coincideRol;
+  });
+
+  // Ordenamiento
+  const usuariosOrdenados = usuariosFiltrados.sort((a, b) => {
+    let valorA = '';
+    let valorB = '';
+
+    if (criterioOrden.campo === 'nombre') {
+      valorA = (a.nombre || '').toLowerCase();
+      valorB = (b.nombre || '').toLowerCase();
+    } else if (criterioOrden.campo === 'correo') {
+      valorA = (a.email || a.correo || '').toLowerCase();
+      valorB = (b.email || b.correo || '').toLowerCase();
+    } else if (criterioOrden.campo === 'rol') {
+      valorA = (a.rol || a.tipo || '').toLowerCase();
+      valorB = (b.rol || b.tipo || '').toLowerCase();
+    }
+
+    if (valorA < valorB) return criterioOrden.direccion === 'asc' ? -1 : 1;
+    if (valorA > valorB) return criterioOrden.direccion === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  const obtenerFlecha = (campo) => {
+    if (criterioOrden.campo !== campo) return ' ↕';
+    return criterioOrden.direccion === 'asc' ? ' ▲' : ' ▼';
+  };
+
+  // Estadísticas (KPIs)
+  const totalUsuarios = usuarios.length;
+  const totalAdmins = usuarios.filter(u => (u.rol || u.tipo || '').toLowerCase() === 'admin').length;
+  const totalVendedores = usuarios.filter(u => (u.rol || u.tipo || '').toLowerCase() === 'vendedor').length;
+  const totalClientes = usuarios.filter(u => (u.rol || u.tipo || '').toLowerCase() === 'cliente').length;
 
   return (
-    <div style={{ padding: '20px', maxWidth: '100%', boxSizing: 'border-box' }}>
-      <h2 style={{ marginBottom: '20px', color: '#5c3d2e' }}>Gestión de Usuarios</h2>
+    <Container className="my-4">
+      <Row className="mb-4 align-items-center">
+        <Col>
+          <h2 style={{ color: '#5c3d2e', fontWeight: 'bold' }}>Gestión de Usuarios</h2>
+          <p className="text-muted">Panel de control avanzado para la administración de cuentas y accesos.</p>
+        </Col>
+      </Row>
 
-      {/* Formulario de Crear / Actualizar */}
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', marginBottom: '25px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)' }}>
-        <h4 style={{ marginTop: 0, color: '#333', marginBottom: '15px' }}>
-          {modoEdicion ? `Actualizar Usuario: ${form.email}` : 'Crear Nuevo Usuario'}
-        </h4>
-        <form onSubmit={handleGuardarUsuario} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px', alignItems: 'center' }}>
-          <input
-            type="text"
-            name="nombre"
-            placeholder="Nombre completo"
-            value={form.nombre}
-            onChange={handleChange}
-            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ced4da', width: '100%', boxSizing: 'border-box' }}
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="correo@duoc.cl"
-            value={form.email}
-            onChange={handleChange}
-            disabled={modoEdicion} // El correo no se cambia para mantener la llave de búsqueda
-            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ced4da', width: '100%', boxSizing: 'border-box', background: modoEdicion ? '#e9ecef' : '#fff' }}
-          />
-          <select
-            name="rol"
-            value={form.rol}
-            onChange={handleChange}
-            style={{ padding: '10px', borderRadius: '4px', border: '1px solid #ced4da', width: '100%', boxSizing: 'border-box', background: '#fff' }}
-          >
-            <option value="cliente">Cliente</option>
-            <option value="vendedor">Vendedor</option>
-            <option value="admin">Administrador</option>
-          </select>
+      {/* Tarjetas de Estadísticas (KPIs) */}
+      <Row className="mb-4 g-3">
+        <Col md={3}>
+          <Card className="shadow-sm border-0 bg-white text-center p-3">
+            <h6 className="text-muted mb-1">Total Usuarios</h6>
+            <h3 className="fw-bold mb-0" style={{ color: '#5c3d2e' }}>{totalUsuarios}</h3>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="shadow-sm border-0 bg-white text-center p-3">
+            <h6 className="text-muted mb-1">Administradores</h6>
+            <h3 className="fw-bold mb-0 text-danger">{totalAdmins}</h3>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="shadow-sm border-0 bg-white text-center p-3">
+            <h6 className="text-muted mb-1">Vendedores</h6>
+            <h3 className="fw-bold mb-0 text-warning">{totalVendedores}</h3>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="shadow-sm border-0 bg-white text-center p-3">
+            <h6 className="text-muted mb-1">Clientes</h6>
+            <h3 className="fw-bold mb-0 text-secondary">{totalClientes}</h3>
+          </Card>
+        </Col>
+      </Row>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button
-              type="submit"
-              style={{ padding: '10px 20px', background: '#8d5524', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', flex: 1 }}
+      {/* Filtros */}
+      <Card className="shadow-sm border-0 mb-4 p-3">
+        <Row className="g-3">
+          <Col md={8}>
+            <Form.Control 
+              type="text" 
+              placeholder="🔍 Buscar por correo o nombre de usuario..." 
+              value={busqueda} 
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </Col>
+          <Col md={4}>
+            <Form.Select 
+              value={filtroRol} 
+              onChange={(e) => setFiltroRol(e.target.value)}
             >
-              {modoEdicion ? 'Actualizar' : 'Guardar'}
-            </button>
-            {modoEdicion && (
-              <button
-                type="button"
-                onClick={handleCancelarEdicion}
-                style={{ padding: '10px 15px', background: '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-              >
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
-        {errorEmail && <div style={{ color: '#dc3545', fontSize: '0.85rem', marginTop: '8px' }}>{errorEmail}</div>}
-      </div>
+              <option value="">Filtrar por todos los roles</option>
+              <option value="admin">Admin</option>
+              <option value="vendedor">Vendedor</option>
+              <option value="cliente">Cliente</option>
+            </Form.Select>
+          </Col>
+        </Row>
+      </Card>
 
-      {/* Barra de Búsqueda */}
-      <div style={{ marginBottom: '20px' }}>
-        <input
-          type="text"
-          placeholder="🔍 Buscar usuario por nombre o correo..."
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          style={{ width: '100%', padding: '12px 15px', borderRadius: '6px', border: '1px solid #ced4da', boxSizing: 'border-box', fontSize: '1rem', background: '#fff' }}
-        />
-      </div>
-
-      {/* Tabla Responsiva */}
-      <div style={{ background: '#fff', borderRadius: '8px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }} border="1" cellPadding="12">
-          <thead>
-            <tr style={{ background: '#f8f9fa', textAlign: 'left' }}>
-              <th>Nombre</th>
-              <th>Email</th>
-              <th>Rol</th>
-              <th style={{ textAlign: 'center' }}>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuariosFiltrados.length === 0 ? (
+      {/* Tabla de Usuarios */}
+      <Card className="shadow-sm border-0">
+        <Card.Body className="p-0">
+          <Table responsive hover striped className="mb-0 align-middle">
+            <thead style={{ background: '#f8f9fa', color: '#5c3d2e', cursor: 'pointer' }}>
               <tr>
-                <td colSpan="4" style={{ textAlign: 'center', color: '#6c757d', padding: '20px' }}>
-                  No se encontraron usuarios coincidentes.
-                </td>
+                <th className="py-3 px-4" onClick={() => ordenarPor('nombre')}>
+                  Nombre{obtenerFlecha('nombre')}
+                </th>
+                <th className="py-3" onClick={() => ordenarPor('correo')}>
+                  Correo Electrónico{obtenerFlecha('correo')}
+                </th>
+                <th className="py-3" onClick={() => ordenarPor('rol')}>
+                  Rol{obtenerFlecha('rol')}
+                </th>
+                <th className="py-3 text-center">Acciones</th>
               </tr>
-            ) : (
-              usuariosFiltrados.map((u, i) => (
-                <tr key={i}>
-                  <td><strong>{u.nombre}</strong></td>
-                  <td>{u.email}</td>
-                  <td>
-                    <span style={{
-                      padding: '3px 8px',
-                      borderRadius: '4px',
-                      fontSize: '0.85rem',
-                      background: u.rol === 'admin' ? '#cce5ff' : '#e2e3e5',
-                      color: u.rol === 'admin' ? '#004085' : '#383d41'
-                    }}>
-                      {u.rol}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center', display: 'flex', gap: '8px', justifyContent: 'center' }}>
-                    <button
-                      onClick={() => handleEditar(u)}
-                      style={{ padding: '6px 12px', background: '#ffc107', color: '#000', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      onClick={() => handleVerHistorial(u)}
-                      style={{ padding: '6px 12px', background: '#6c757d', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                    >
-                      Historial
-                    </button>
-                  </td>
+            </thead>
+            <tbody>
+              {usuariosOrdenados.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="text-center py-4 text-muted">No se encontraron usuarios con esos filtros.</td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                usuariosOrdenados.map((u, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 fw-bold">{u.nombre}</td>
+                    <td>{u.email || u.correo}</td>
+                    <td>
+                      <Badge bg={u.rol === 'admin' || u.tipo === 'Admin' ? 'danger' : u.rol === 'vendedor' || u.tipo === 'Vendedor' ? 'warning' : 'secondary'}>
+                        {u.rol || u.tipo}
+                      </Badge>
+                    </td>
+                    <td className="text-center">
+                      <Button 
+                        variant="outline-primary" 
+                        size="sm" 
+                        className="me-2"
+                        onClick={() => abrirModalEditar(u)}
+                      >
+                        Editar Rol
+                      </Button>
+                      <Button 
+                        variant="outline-danger" 
+                        size="sm" 
+                        onClick={() => handleEliminar(u.email || u.correo)}
+                      >
+                        Eliminar
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </Table>
+        </Card.Body>
+        <Card.Footer className="bg-white text-muted small py-3 px-4">
+          Mostrando {usuariosOrdenados.length} de {usuarios.totalUsuarios || usuarios.length} usuarios registrados.
+        </Card.Footer>
+      </Card>
 
-      {/* Historial de Compras */}
-      {usuarioHistorial && (
-        <div style={{ marginTop: '25px', padding: '20px', background: '#fff', borderRadius: '8px', border: '1px solid #dee2e6' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <h4 style={{ margin: 0 }}>Historial de compras: {usuarioHistorial.nombre} ({usuarioHistorial.email})</h4>
-            <button
-              onClick={() => setUsuarioHistorial(null)}
-              style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: '#6c757d' }}
-            >
-              ✕
-            </button>
-          </div>
-          <hr style={{ border: 0, borderTop: '1px solid #eee', margin: '15px 0' }} />
-          {compras.length === 0 ? (
-            <p style={{ color: '#6c757d', margin: 0 }}>Este usuario no registra compras asociadas en el sistema.</p>
-          ) : (
-            <ul style={{ paddingLeft: '20px', margin: 0 }}>
-              {compras.map(c => (
-                <li key={c.id} style={{ marginBottom: '8px' }}>
-                  <strong>{c.id}</strong> — {new Date(c.fecha).toLocaleDateString('es-CL')} — 
-                  Total: <strong>${c.total?.toLocaleString('es-CL')}</strong> ({c.estado})
-                </li>
-              ))}
-            </ul>
+      {/* Modal para Editar Rol */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton>
+          <Modal.Title style={{ color: '#5c3d2e' }}>Modificar Rol de Usuario</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {usuarioEditando && (
+            <div>
+              <p>Estás cambiando el rol para: <strong>{usuarioEditando.nombre}</strong></p>
+              <Form.Group className="mb-3">
+                <Form.Label>Selecciona el nuevo rol:</Form.Label>
+                <Form.Select 
+                  value={nuevoRol} 
+                  onChange={(e) => setNuevoRol(e.target.value)}
+                >
+                  <option value="admin">Admin</option>
+                  <option value="vendedor">Vendedor</option>
+                  <option value="cliente">Cliente</option>
+                </Form.Select>
+              </Form.Group>
+            </div>
           )}
-        </div>
-      )}
-    </div>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancelar
+          </Button>
+          <Button style={{ background: '#8d5524', border: 'none' }} onClick={guardarCambioRol}>
+            Guardar Cambios
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Container>
   );
-};
+}
 
 export default UsersAdmin;
