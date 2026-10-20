@@ -1,77 +1,88 @@
-import React from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
+import { Navigate, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { puedeEntrarAlPanel, obtenerUsuarioActivo } from '../data/db';
+import { Navbar, Nav, Container } from 'react-bootstrap';
+
 import OrdersAdmin from './pages/OrdersAdmin';
 import UsersAdmin from './pages/UsersAdmin';
 import AdminProfile from './pages/AdminProfile';
 
-export const AdminRoutes = () => {
+export function AdminRoutes() {
+  const autorizado = puedeEntrarAlPanel();
+  const usuario = obtenerUsuarioActivo();
   const location = useLocation();
+  const [expanded, setExpanded] = useState(false);
 
-  const getEstiloEnlace = (ruta) => ({
-    display: 'inline-block',
-    padding: '8px 14px',
-    color: location.pathname.includes(ruta) ? '#fff' : '#5c3d2e',
-    textDecoration: 'none',
-    borderRadius: '20px',
-    background: location.pathname.includes(ruta) ? '#8d5524' : 'transparent',
-    fontWeight: '500',
-    whiteSpace: 'nowrap',
-    fontSize: '0.95rem',
-    transition: 'all 0.2s ease'
-  });
+  if (!autorizado) {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      minHeight: '85vh', 
-      background: '#fdfbf7' 
-    }}>
-      {/* Barra superior estilo Pastelería */}
-      <aside style={{ 
-        width: '100%', 
-        background: '#fff8ec', 
-        padding: '15px 25px', 
-        color: '#5c3d2e',
-        boxSizing: 'border-box',
-        display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        gap: '12px',
-        borderBottom: '2px solid #f0e6d2',
-        boxShadow: '0 2px 5px rgba(0,0,0,0.03)'
-      }}>
-        <h3 style={{ color: '#8d5524', margin: 0, fontSize: '1.3rem', fontFamily: 'serif' }}>
-          🍰 Panel Admin
-        </h3>
-        <nav style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
-          <Link to="/admin/ordenes" style={getEstiloEnlace('ordenes')}>
-            📋 Órdenes
-          </Link>
-          <Link to="/admin/usuarios" style={getEstiloEnlace('usuarios')}>
-            👥 Usuarios
-          </Link>
-          <Link to="/admin/perfil" style={getEstiloEnlace('perfil')}>
-            👤 Perfil
-          </Link>
-          <Link to="/" style={{ color: '#8d5524', textDecoration: 'none', padding: '8px 12px', fontSize: '0.9rem', fontWeight: 'bold' }}>
-            ← Volver a la Tienda
-          </Link>
-        </nav>
-      </aside>
+    <div>
+      <Navbar 
+        bg="white" 
+        expand="md" 
+        expanded={expanded}
+        className="shadow-sm mb-4 py-3 border-bottom"
+      >
+        <Container>
+          <Navbar.Brand className="fw-bold" style={{ color: '#5c3d2e' }}>
+            🍰 Panel Admin ({usuario?.tipo || usuario?.rol || 'Admin'})
+          </Navbar.Brand>
+          
+          <Navbar.Toggle 
+            aria-controls="admin-navbar" 
+            onClick={() => setExpanded(expanded ? false : true)} 
+          />
+          
+          <Navbar.Collapse id="admin-navbar" className="justify-content-end">
+            <Nav className="align-items-center gap-3">
+              {/* Rutas absolutas con /admin/ para evitar el bucle */}
+              <Nav.Link 
+                as={Link} 
+                to="/admin/ordenes" 
+                onClick={() => setExpanded(false)}
+                className={`fw-semibold ${location.pathname.includes('ordenes') ? 'text-primary' : 'text-dark'}`}
+              >
+                📋 Órdenes
+              </Nav.Link>
+              <Nav.Link 
+                as={Link} 
+                to="/admin/usuarios" 
+                onClick={() => setExpanded(false)}
+                className={`fw-semibold ${location.pathname.includes('usuarios') ? 'text-primary' : 'text-dark'}`}
+              >
+                👥 Usuarios
+              </Nav.Link>
+              <Nav.Link 
+                as={Link} 
+                to="/admin/perfil" 
+                onClick={() => setExpanded(false)}
+                className={`fw-semibold ${location.pathname.includes('perfil') ? 'text-primary' : 'text-dark'}`}
+              >
+                👤 Perfil
+              </Nav.Link>
+              <Nav.Link 
+                as={Link} 
+                to="/" 
+                onClick={() => setExpanded(false)}
+                className="text-danger fw-semibold ms-md-3"
+              >
+                ← Volver a la Tienda
+              </Nav.Link>
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
 
-      {/* Contenido principal */}
-      <main style={{ flex: 1, padding: '20px', boxSizing: 'border-box', overflowX: 'auto' }}>
-        <Routes>
-          <Route path="ordenes" element={<OrdersAdmin />} />
-          <Route path="usuarios" element={<UsersAdmin />} />
-          <Route path="perfil" element={<AdminProfile />} />
-          <Route path="*" element={<OrdersAdmin />} />
-        </Routes>
-      </main>
+      <Routes>
+        <Route path="/" element={<Navigate to="ordenes" replace />} />
+        <Route path="ordenes" element={<OrdersAdmin />} />
+        <Route path="usuarios" element={<UsersAdmin />} />
+        <Route path="perfil" element={<AdminProfile />} />
+      </Routes>
     </div>
   );
-};
+}
 
 export default AdminRoutes;

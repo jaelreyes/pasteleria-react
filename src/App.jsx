@@ -22,7 +22,6 @@ import Pedido from "./pages/Pedido";
 import Categorias from "./pages/Categorias";
 import Ofertas from "./pages/Ofertas";
 
-// Módulos Persona 3
 import PagoExito from "./pages/PagoExito";
 import PagoFallo from "./pages/PagoFallo";
 import AdminRoutes from "./admin/AdminRoutes";
@@ -48,9 +47,7 @@ function App() {
   }, [carrito]);
 
   function agregarProducto(producto, cantidad = 1) {
-    if (!Number.isInteger(cantidad) || cantidad < 1) {
-      return;
-    }
+    if (!Number.isInteger(cantidad) || cantidad < 1) return;
 
     setCarrito((carritoActual) => {
       const existe = carritoActual.find((item) => item.id === producto.id);
@@ -58,9 +55,7 @@ function App() {
       const disponibles = Math.max(0, producto.stock - cantidadActual);
       const cantidadAgregar = Math.min(cantidad, disponibles);
 
-      if (cantidadAgregar <= 0) {
-        return carritoActual;
-      }
+      if (cantidadAgregar <= 0) return carritoActual;
 
       if (existe) {
         return carritoActual.map((item) =>
@@ -85,14 +80,8 @@ function App() {
   }
 
   function cambiarCantidad(id, nuevaCantidad) {
-    const producto = productos.find((producto) => producto.id === id);
-
-    if (
-      !producto ||
-      !Number.isInteger(nuevaCantidad) ||
-      nuevaCantidad < 1 ||
-      nuevaCantidad > producto.stock
-    ) {
+    const producto = productos.find((p) => p.id === id);
+    if (!producto || !Number.isInteger(nuevaCantidad) || nuevaCantidad < 1 || nuevaCantidad > producto.stock) {
       return;
     }
 
@@ -108,7 +97,8 @@ function App() {
       run: usuario.run,
       nombre: usuario.nombre,
       apellidos: usuario.apellidos,
-      correo: usuario.correo,
+      correo: usuario.email || usuario.correo,
+      rol: usuario.rol || 'cliente',
       tipo: usuario.tipo || "Cliente",
       beneficios: usuario.beneficios || [],
       descuentoEdad: usuario.descuentoEdad || 0,
@@ -136,6 +126,7 @@ function App() {
   return (
     <>
       <Routes>
+        {/* Rutas de la Tienda (con Layout principal) */}
         <Route
           path="/"
           element={
@@ -162,8 +153,6 @@ function App() {
               />
             }
           />
-
-          {/* Rutas Persona 3 */}
           <Route
             path="checkout"
             element={
@@ -176,7 +165,6 @@ function App() {
           />
           <Route path="pago/exito/:idOrden" element={<PagoExito />} />
           <Route path="pago/error" element={<PagoFallo />} />
-
           <Route path="pedido" element={<Pedido />} />
           <Route path="categorias" element={<Categorias productos={productos} onAgregar={agregarProducto} />} />
           <Route path="categorias/:slug" element={<Categorias productos={productos} onAgregar={agregarProducto} />} />
@@ -187,12 +175,13 @@ function App() {
           <Route path="contacto" element={<Contacto />} />
           <Route path="registro" element={<Registro />} />
           <Route path="login" element={<Login onIniciarSesion={iniciarSesion} />} />
-
-          <Route path="*" element={<NotFound />} />
         </Route>
 
-        {/* Panel Administrativo Modular (fuera del Layout de cliente) */}
+        {/* Panel de Administración (Completamente fuera del Layout de clientes) */}
         <Route path="/admin/*" element={<AdminRoutes />} />
+
+        {/* Página 404 general */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <CartPanel
