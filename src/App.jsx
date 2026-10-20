@@ -19,6 +19,7 @@ import Login from "./pages/Login";
 import Blogs from "./pages/Blogs";
 import BlogDetalle from "./pages/BlogDetalle";
 import Pedido from "./pages/Pedido";
+import Categorias from "./pages/Categorias";
 
 function App() {
   // Recupera el carrito guardado al iniciar.
@@ -194,6 +195,20 @@ function App() {
           />
 
           <Route path="pedido" element={<Pedido />} />
+          
+          <Route
+            path="categorias"
+            element={
+              <Categorias productos={productos} onAgregar={agregarProducto} />
+            }
+          />
+
+          <Route
+            path="categorias/:slug"
+            element={
+              <Categorias productos={productos} onAgregar={agregarProducto} />
+            }
+          />
 
           <Route path="nosotros" element={<Nosotros />} />
           <Route path="blogs" element={<Blogs />} />

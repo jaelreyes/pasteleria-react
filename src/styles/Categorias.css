@@ -1,0 +1,40 @@
+.categoria-card {
+  text-decoration: none;
+  border: 2px solid rgba(255, 192, 203, 0.6);
+  border-radius: 16px;
+  overflow: hidden;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.categoria-card:hover {
+  transform: translateY(-3px);
+}
+
+.categoria-card .card-img-top {
+  height: 120px;
+  object-fit: cover;
+}
+
+.categoria-card-titulo {
+  color: #8b4513;
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.categoria-card-activa {
+  border-color: #8b4513;
+  background-color: #fff5e1;
+}
+
+.categorias-titulo {
+  color: #8b4513;
+  font-family: 'Pacifico', cursive;
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 575px) {
+  .categoria-card .card-img-top {
+    height: 90px;
+  }
+}
