@@ -6,6 +6,7 @@ import Cart from "./components/Cart";
 import Layout from "./components/Layout";
 import CartPanel from "./components/CartPanel";
 import productos from "./data/productos";
+import { obtenerDescuentoUsuario } from "./utils/precios";
 
 import NotFound from "./pages/NotFound";
 import ProductDetail from "./pages/ProductDetail";
@@ -127,6 +128,9 @@ function App() {
     setUsuarioActivo(null);
   }
 
+  // Descuento del usuario con sesión (0 si no hay sesión).
+  const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
+
   const cantidadTotal = carrito.reduce((suma, item) => suma + item.cantidad, 0);
 
   // Actualiza el título de la pestaña.
@@ -169,6 +173,7 @@ function App() {
             element={
               <Cart
                 carrito={carrito}
+                descuento={descuentoUsuario}
                 onVaciar={vaciarCarrito}
                 onEliminar={eliminarProducto}
                 onCambiarCantidad={cambiarCantidad}
@@ -176,7 +181,10 @@ function App() {
             }
           />
 
-          <Route path="checkout" element={<Checkout carrito={carrito} />} />
+          <Route
+            path="checkout"
+            element={<Checkout carrito={carrito} descuento={descuentoUsuario} />}
+          />
 
           <Route path="nosotros" element={<Nosotros />} />
           <Route path="blogs" element={<Blogs />} />
@@ -197,6 +205,7 @@ function App() {
         mostrar={mostrarCarrito}
         onCerrar={() => setMostrarCarrito(false)}
         carrito={carrito}
+        descuento={descuentoUsuario}
         onVaciar={vaciarCarrito}
         onEliminar={eliminarProducto}
         onCambiarCantidad={cambiarCantidad}

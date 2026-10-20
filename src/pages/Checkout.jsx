@@ -1,15 +1,17 @@
 import { Navigate, Link } from 'react-router-dom'
+import {
+  aplicarDescuento,
+  calcularTotales,
+  formatearPrecio,
+} from '../utils/precios'
 
-function Checkout({ carrito }) {
+function Checkout({ carrito, descuento = 0 }) {
   // Si el carrito está vacío, vuelve al carrito.
   if (carrito.length === 0) {
     return <Navigate to="/carrito" replace />
   }
 
-  const total = carrito.reduce(
-    (suma, producto) => suma + producto.precio * producto.cantidad,
-    0
-  )
+  const { subtotal, ahorro, total } = calcularTotales(carrito, descuento)
 
   return (
     <section>
@@ -19,14 +21,25 @@ function Checkout({ carrito }) {
         {carrito.map(producto => (
           <li key={producto.id}>
             {producto.nombre} × {producto.cantidad}
-            {' — $'}
-            {(producto.precio * producto.cantidad).toLocaleString('es-CL')}
+            {' — '}
+            {formatearPrecio(
+              aplicarDescuento(producto.precio, descuento) * producto.cantidad
+            )}
           </li>
         ))}
       </ul>
 
+      {ahorro > 0 && (
+        <>
+          <p>Subtotal: {formatearPrecio(subtotal)}</p>
+          <p>
+            Descuento ({descuento}%): -{formatearPrecio(ahorro)}
+          </p>
+        </>
+      )}
+
       <p>
-        <strong>Total: ${total.toLocaleString('es-CL')}</strong>
+        <strong>Total: {formatearPrecio(total)}</strong>
       </p>
 
       <p>Revisa tus productos antes de continuar con la compra.</p>
