@@ -40,7 +40,9 @@ function Footer() {
             <li><Link to="/">Inicio</Link></li>
             <li><Link to="/productos">Productos</Link></li>
             <li><Link to="/nosotros">Nosotros</Link></li>
+            <li><Link to="/blogs">Blogs</Link></li>
             <li><Link to="/contacto">Contacto</Link></li>
+            <li><Link to="/pedido">Mis pedidos</Link></li>
           </ul>
         </section>
 

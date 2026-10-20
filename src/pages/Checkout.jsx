@@ -1,17 +1,39 @@
+import { useState } from 'react'
 import { Navigate, Link } from 'react-router-dom'
+import { Button } from 'react-bootstrap'
 import {
   aplicarDescuento,
   calcularTotales,
   formatearPrecio,
 } from '../utils/precios'
+import { crearPedido, guardarPedido } from '../utils/pedidos'
 
-function Checkout({ carrito, descuento = 0 }) {
+function Checkout({ carrito, descuento = 0, onCompraConfirmada }) {
+  const [compraConfirmada, setCompraConfirmada] = useState(false)
+
+  // Después de confirmar, muestra el seguimiento del pedido.
+  if (compraConfirmada) {
+    return <Navigate to="/pedido" replace />
+  }
+
   // Si el carrito está vacío, vuelve al carrito.
   if (carrito.length === 0) {
     return <Navigate to="/carrito" replace />
   }
 
   const { subtotal, ahorro, total } = calcularTotales(carrito, descuento)
+
+  function confirmarCompra() {
+    const confirmado = window.confirm(
+      `¿Confirmas tu compra por ${formatearPrecio(total)}?`
+    )
+
+    if (!confirmado) return
+
+    guardarPedido(crearPedido(carrito, descuento))
+    setCompraConfirmada(true)
+    onCompraConfirmada()
+  }
 
   return (
     <section>
@@ -42,9 +64,18 @@ function Checkout({ carrito, descuento = 0 }) {
         <strong>Total: {formatearPrecio(total)}</strong>
       </p>
 
-      <p>Revisa tus productos antes de continuar con la compra.</p>
+      <p>Revisa tus productos antes de confirmar la compra.</p>
 
-      <Link to="/carrito">Volver al carrito</Link>
+      <div className="d-flex flex-wrap gap-3 align-items-center">
+        <Button
+          className="carrito-btn-continuar"
+          onClick={confirmarCompra}
+        >
+          Confirmar compra
+        </Button>
+
+        <Link to="/carrito">Volver al carrito</Link>
+      </div>
     </section>
   )
 }

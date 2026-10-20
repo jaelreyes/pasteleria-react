@@ -18,6 +18,7 @@ import Registro from "./pages/Registro";
 import Login from "./pages/Login";
 import Blogs from "./pages/Blogs";
 import BlogDetalle from "./pages/BlogDetalle";
+import Pedido from "./pages/Pedido";
 
 function App() {
   // Recupera el carrito guardado al iniciar.
@@ -183,8 +184,16 @@ function App() {
 
           <Route
             path="checkout"
-            element={<Checkout carrito={carrito} descuento={descuentoUsuario} />}
+            element={
+              <Checkout
+                carrito={carrito}
+                descuento={descuentoUsuario}
+                onCompraConfirmada={vaciarCarrito}
+              />
+            }
           />
+
+          <Route path="pedido" element={<Pedido />} />
 
           <Route path="nosotros" element={<Nosotros />} />
           <Route path="blogs" element={<Blogs />} />
