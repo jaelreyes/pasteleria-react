@@ -1,225 +1,74 @@
-import { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import ProductList from "./components/ProductList";
-import Cart from "./components/Cart";
-import Layout from "./components/Layout";
-import CartPanel from "./components/CartPanel";
-import productos from "./data/productos";
-import { obtenerDescuentoUsuario } from "./utils/precios";
+// Layout y componentes globales
+import Header from './components/Header';
+import Footer from './components/Footer';
 
-import NotFound from "./pages/NotFound";
-import ProductDetail from "./pages/ProductDetail";
-import Home from "./pages/Home";
-import Checkout from "./pages/Checkout";
-import Nosotros from "./pages/Nosotros";
-import Contacto from "./pages/Contacto";
-import Registro from "./pages/Registro";
-import Login from "./pages/Login";
-import Blogs from "./pages/Blogs";
-import BlogDetalle from "./pages/BlogDetalle";
-import Pedido from "./pages/Pedido";
+// Vistas públicas existentes
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Registro from './pages/Registro';
+import ProductDetail from './pages/ProductDetail';
+import Blogs from './pages/Blogs';
+import BlogDetalle from './pages/BlogDetalle';
+import Contacto from './pages/Contacto';
+import Nosotros from './pages/Nosotros';
+import NotFound from './pages/NotFound';
 
-function App() {
-  // Recupera el carrito guardado al iniciar.
+// Vistas del flujo de Compra (Persona 3)
+import Checkout from './pages/Checkout';
+import PagoExito from './pages/PagoExito';
+import PagoFallo from './pages/PagoFallo';
+
+// Módulo de Administración (Persona 3)
+import AdminRoutes from './admin/AdminRoutes';
+
+export function App() {
   const [carrito, setCarrito] = useState(() => {
-    const carritoGuardado = localStorage.getItem("carrito");
-    return carritoGuardado ? JSON.parse(carritoGuardado) : [];
+    const guardado = localStorage.getItem('carrito');
+    return guardado ? JSON.parse(guardado) : [];
   });
 
-  const [mostrarCarrito, setMostrarCarrito] = useState(false);
-
-  // Recupera la sesión con la misma clave del proyecto original.
-  const [usuarioActivo, setUsuarioActivo] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("usuarioActivo") || "null");
-    } catch {
-      return null;
-    }
-  });
-
-  // Guarda el carrito cada vez que cambia.
   useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(carrito));
+    localStorage.setItem('carrito', JSON.stringify(carrito));
   }, [carrito]);
 
-  function agregarProducto(producto, cantidad = 1) {
-    if (!Number.isInteger(cantidad) || cantidad < 1) {
-      return;
-    }
-
-    setCarrito((carritoActual) => {
-      const existe = carritoActual.find((item) => item.id === producto.id);
-
-      const cantidadActual = existe ? existe.cantidad : 0;
-      const disponibles = Math.max(0, producto.stock - cantidadActual);
-      const cantidadAgregar = Math.min(cantidad, disponibles);
-
-      if (cantidadAgregar <= 0) {
-        return carritoActual;
-      }
-
-      if (existe) {
-        return carritoActual.map((item) =>
-          item.id === producto.id
-            ? {
-                ...item,
-                cantidad: item.cantidad + cantidadAgregar,
-              }
-            : item,
-        );
-      }
-
-      return [...carritoActual, { ...producto, cantidad: cantidadAgregar }];
-    });
-  }
-
-  function vaciarCarrito() {
+  const limpiarCarrito = () => {
     setCarrito([]);
-  }
-
-  // Elimina todas las unidades del producto seleccionado.
-  function eliminarProducto(idAEliminar) {
-    setCarrito((carritoActual) =>
-      carritoActual.filter((item) => item.id !== idAEliminar),
-    );
-  }
-
-  // Cambia la cantidad respetando el stock del catálogo.
-  function cambiarCantidad(id, nuevaCantidad) {
-    const producto = productos.find((producto) => producto.id === id);
-
-    if (
-      !producto ||
-      !Number.isInteger(nuevaCantidad) ||
-      nuevaCantidad < 1 ||
-      nuevaCantidad > producto.stock
-    ) {
-      return;
-    }
-
-    setCarrito((carritoActual) =>
-      carritoActual.map((item) =>
-        item.id === id ? { ...item, cantidad: nuevaCantidad } : item,
-      ),
-    );
-  }
-
-  // Guarda los datos de sesión sin incluir la contraseña.
-  function iniciarSesion(usuario) {
-    const sesion = {
-      run: usuario.run,
-      nombre: usuario.nombre,
-      apellidos: usuario.apellidos,
-      correo: usuario.correo,
-      tipo: usuario.tipo || "Cliente",
-      beneficios: usuario.beneficios || [],
-      descuentoEdad: usuario.descuentoEdad || 0,
-      descuentoCodigo: usuario.descuentoCodigo || 0,
-      tortaGratisDuoc: usuario.tortaGratisDuoc || false,
-      fechaLogin: new Date().toISOString(),
-    };
-
-    localStorage.setItem("usuarioActivo", JSON.stringify(sesion));
-    setUsuarioActivo(sesion);
-  }
-
-  function cerrarSesion() {
-    localStorage.removeItem("usuarioActivo");
-    setUsuarioActivo(null);
-  }
-
-  // Descuento del usuario con sesión (0 si no hay sesión).
-  const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
-
-  const cantidadTotal = carrito.reduce((suma, item) => suma + item.cantidad, 0);
-
-  // Actualiza el título de la pestaña.
-  useEffect(() => {
-    document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
-  }, [cantidadTotal]);
+    localStorage.removeItem('carrito');
+  };
 
   return (
-    <>
+    <Router>
+      <Header carrito={carrito} />
       <Routes>
-        <Route
-          path="/"
-          element={
-            <Layout
-              cantidad={cantidadTotal}
-              onVerCarrito={() => setMostrarCarrito(true)}
-              usuarioActivo={usuarioActivo}
-              onCerrarSesion={cerrarSesion}
-            />
-          }
-        >
-          <Route index element={<Home />} />
+        {/* Rutas Públicas */}
+        <Route path="/" element={<Home carrito={carrito} setCarrito={setCarrito} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/registro" element={<Registro />} />
+        <Route path="/producto/:id" element={<ProductDetail setCarrito={setCarrito} />} />
+        <Route path="/blogs" element={<Blogs />} />
+        <Route path="/blogs/:id" element={<BlogDetalle />} />
+        <Route path="/contacto" element={<Contacto />} />
+        <Route path="/nosotros" element={<Nosotros />} />
 
-          <Route
-            path="productos"
-            element={
-              <ProductList productos={productos} onAgregar={agregarProducto} />
-            }
-          />
+        {/* Flujo de Compra y Pagos (Persona 3) */}
+        <Route 
+          path="/checkout" 
+          element={<Checkout carrito={carrito} limpiarCarrito={limpiarCarrito} />} 
+        />
+        <Route path="/pago/exito/:idOrden" element={<PagoExito />} />
+        <Route path="/pago/error" element={<PagoFallo />} />
 
-          <Route
-            path="productos/:id"
-            element={
-              <ProductDetail onAgregar={agregarProducto} carrito={carrito} />
-            }
-          />
+        {/* Módulo Admin Modular (Persona 3) */}
+        <Route path="/admin/*" element={<AdminRoutes />} />
 
-          <Route
-            path="carrito"
-            element={
-              <Cart
-                carrito={carrito}
-                descuento={descuentoUsuario}
-                onVaciar={vaciarCarrito}
-                onEliminar={eliminarProducto}
-                onCambiarCantidad={cambiarCantidad}
-              />
-            }
-          />
-
-          <Route
-            path="checkout"
-            element={
-              <Checkout
-                carrito={carrito}
-                descuento={descuentoUsuario}
-                onCompraConfirmada={vaciarCarrito}
-              />
-            }
-          />
-
-          <Route path="pedido" element={<Pedido />} />
-
-          <Route path="nosotros" element={<Nosotros />} />
-          <Route path="blogs" element={<Blogs />} />
-          <Route path="blogs/:id" element={<BlogDetalle />} />
-          <Route path="contacto" element={<Contacto />} />
-          <Route path="registro" element={<Registro />} />
-
-          <Route
-            path="login"
-            element={<Login onIniciarSesion={iniciarSesion} />}
-          />
-
-          <Route path="*" element={<NotFound />} />
-        </Route>
+        {/* Ruta 404 */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
-
-      <CartPanel
-        mostrar={mostrarCarrito}
-        onCerrar={() => setMostrarCarrito(false)}
-        carrito={carrito}
-        descuento={descuentoUsuario}
-        onVaciar={vaciarCarrito}
-        onEliminar={eliminarProducto}
-        onCambiarCantidad={cambiarCantidad}
-      />
-    </>
+      <Footer />
+    </Router>
   );
 }
 
