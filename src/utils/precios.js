@@ -42,3 +42,14 @@ export function calcularTotales(carrito, descuento) {
 export function formatearPrecio(valor) {
   return `$${valor.toLocaleString('es-CL')}`
 }
+
+
+// Precio de un producto en oferta (si no tiene descuento, es el mismo).
+export function precioConOferta(producto) {
+  return aplicarDescuento(producto.precio, Number(producto.descuento) || 0)
+}
+
+// Productos que tienen un descuento mayor a 0.
+export function obtenerOfertas(productos) {
+  return productos.filter(producto => Number(producto.descuento) > 0)
+}

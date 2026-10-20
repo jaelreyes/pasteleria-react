@@ -1,4 +1,4 @@
-import { Card, Button } from 'react-bootstrap'
+import { Card, Button, Badge } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import '../styles/Productos.css'
 
@@ -11,11 +11,19 @@ function ProductCard({
   imagen,
   stock,
   onAgregar,
+  precioAnterior,
+  descuento = 0,
 }) {
   const agotado = stock === 0
 
   return (
-    <Card className="product-card h-100">
+    <Card className="product-card h-100 position-relative">
+      {descuento > 0 && (
+        <Badge bg="danger" className="producto-badge-oferta">
+          -{descuento}%
+        </Badge>
+      )}
+
       <Card.Img
         variant="top"
         src={imagen}
@@ -34,6 +42,11 @@ function ProductCard({
 
         <p className="producto-precio">
           ${precio.toLocaleString('es-CL')}
+          {precioAnterior > precio && (
+            <del className="producto-precio-anterior">
+              ${precioAnterior.toLocaleString('es-CL')}
+            </del>
+          )}
         </p>
 
         <div className="producto-acciones mt-auto">

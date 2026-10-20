@@ -20,6 +20,7 @@ import Blogs from "./pages/Blogs";
 import BlogDetalle from "./pages/BlogDetalle";
 import Pedido from "./pages/Pedido";
 import Categorias from "./pages/Categorias";
+import Ofertas from "./pages/Ofertas";
 
 // Módulos Persona 3
 import PagoExito from "./pages/PagoExito";
@@ -177,24 +178,9 @@ function App() {
           <Route path="pago/error" element={<PagoFallo />} />
 
           <Route path="pedido" element={<Pedido />} />
-<<<<<<< HEAD
-          
-          <Route
-            path="categorias"
-            element={
-              <Categorias productos={productos} onAgregar={agregarProducto} />
-            }
-          />
-
-          <Route
-            path="categorias/:slug"
-            element={
-              <Categorias productos={productos} onAgregar={agregarProducto} />
-            }
-          />
-
-=======
->>>>>>> 446ec024459bfb17ac2622a36327f367dd0b322b
+          <Route path="categorias" element={<Categorias productos={productos} onAgregar={agregarProducto} />} />
+          <Route path="categorias/:slug" element={<Categorias productos={productos} onAgregar={agregarProducto} />} />
+          <Route path="ofertas" element={<Ofertas productos={productos} onAgregar={agregarProducto} />} />
           <Route path="nosotros" element={<Nosotros />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="blogs/:id" element={<BlogDetalle />} />

@@ -110,3 +110,18 @@
   border-color: #8b4513;
   box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
 }
+
+
+.producto-precio-anterior {
+  color: #8d6e63;
+  font-size: 1rem;
+  font-weight: 400;
+  margin-left: 0.5rem;
+}
+
+.producto-badge-oferta {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  font-size: 0.95rem;
+}

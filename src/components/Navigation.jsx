@@ -67,13 +67,21 @@ function Navigation({
             >
               Productos
             </Nav.Link>
-            
+
             <Nav.Link
               as={NavLink}
               to="/categorias"
               onClick={cerrarMenu}
             >
               Categorías
+            </Nav.Link>
+
+            <Nav.Link
+              as={NavLink}
+              to="/ofertas"
+              onClick={cerrarMenu}
+            >
+              Ofertas
             </Nav.Link>
 
             <Nav.Link
