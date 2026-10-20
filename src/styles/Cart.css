@@ -112,3 +112,31 @@
     height: 65px;
   }
 }
+
+
+/* Descuentos del usuario */
+.carrito-precio-original {
+  text-decoration: line-through;
+  color: #9e9e9e;
+}
+
+.carrito-descuento {
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background-color: #ffc0cb;
+  color: #5d4037;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.carrito-linea {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  color: #8d6e63;
+}
+
+.carrito-ahorro {
+  color: #2e7d32;
+  font-weight: 600;
+}
