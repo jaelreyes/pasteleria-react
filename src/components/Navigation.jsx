@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Container, Nav, Navbar, Button } from 'react-bootstrap'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { puedeEntrarAlPanel } from '../utils/roles'
 
 function Navigation({
   cantidad,
@@ -123,6 +124,22 @@ function Navigation({
                 <span className="nav-usuario">
                   Hola, {usuarioActivo.nombre}
                 </span>
+
+                {usuarioActivo.tortaGratisDuoc && (
+                  <span className="nav-torta" title="Beneficio comunidad Duoc">
+                    🎂 Torta gratis en tu cumpleaños
+                  </span>
+                )}
+
+                {puedeEntrarAlPanel(usuarioActivo) && (
+                  <Link
+                    to="/admin"
+                    className="nav-login"
+                    onClick={cerrarMenu}
+                  >
+                    Panel
+                  </Link>
+                )}
 
                 <Button
                   variant="outline-secondary"

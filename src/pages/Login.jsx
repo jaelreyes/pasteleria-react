@@ -5,6 +5,7 @@ import {
   validarCorreo,
   validarPassword,
 } from '../utils/validaciones'
+import { rutaInicioSegunRol } from '../utils/roles'
 import '../styles/Auth.css'
 
 function Login({ onIniciarSesion }) {
@@ -59,7 +60,8 @@ function Login({ onIniciarSesion }) {
       }
 
       onIniciarSesion(usuario)
-      navegar('/', { replace: true })
+      // Administrador y Vendedor van al panel; el Cliente, a la tienda.
+      navegar(rutaInicioSegunRol(usuario), { replace: true })
     } catch {
       setErrores({
         general: 'No se pudo iniciar sesión en este navegador.',

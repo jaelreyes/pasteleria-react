@@ -228,8 +228,17 @@ main.site-main-home {
 }
 
 .nav-usuario {
-  color: g#8b4513;
+  color: #8b4513;
   font-weight: 700;
+}
+
+.nav-torta {
+  padding: 0.25rem 0.6rem;
+  background-color: #fff5e1;
+  border: 1px solid #ffc0cb;
+  border-radius: 999px;
+  color: #8b4513;
+  font-size: 0.85rem;
 }
 
 .nav-login {
