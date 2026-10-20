@@ -20,8 +20,12 @@ import Blogs from "./pages/Blogs";
 import BlogDetalle from "./pages/BlogDetalle";
 import Pedido from "./pages/Pedido";
 
+// Módulos Persona 3
+import PagoExito from "./pages/PagoExito";
+import PagoFallo from "./pages/PagoFallo";
+import AdminRoutes from "./admin/AdminRoutes";
+
 function App() {
-  // Recupera el carrito guardado al iniciar.
   const [carrito, setCarrito] = useState(() => {
     const carritoGuardado = localStorage.getItem("carrito");
     return carritoGuardado ? JSON.parse(carritoGuardado) : [];
@@ -29,7 +33,6 @@ function App() {
 
   const [mostrarCarrito, setMostrarCarrito] = useState(false);
 
-  // Recupera la sesión con la misma clave del proyecto original.
   const [usuarioActivo, setUsuarioActivo] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("usuarioActivo") || "null");
@@ -38,7 +41,6 @@ function App() {
     }
   });
 
-  // Guarda el carrito cada vez que cambia.
   useEffect(() => {
     localStorage.setItem("carrito", JSON.stringify(carrito));
   }, [carrito]);
@@ -50,7 +52,6 @@ function App() {
 
     setCarrito((carritoActual) => {
       const existe = carritoActual.find((item) => item.id === producto.id);
-
       const cantidadActual = existe ? existe.cantidad : 0;
       const disponibles = Math.max(0, producto.stock - cantidadActual);
       const cantidadAgregar = Math.min(cantidad, disponibles);
@@ -62,10 +63,7 @@ function App() {
       if (existe) {
         return carritoActual.map((item) =>
           item.id === producto.id
-            ? {
-                ...item,
-                cantidad: item.cantidad + cantidadAgregar,
-              }
+            ? { ...item, cantidad: item.cantidad + cantidadAgregar }
             : item,
         );
       }
@@ -78,14 +76,12 @@ function App() {
     setCarrito([]);
   }
 
-  // Elimina todas las unidades del producto seleccionado.
   function eliminarProducto(idAEliminar) {
     setCarrito((carritoActual) =>
       carritoActual.filter((item) => item.id !== idAEliminar),
     );
   }
 
-  // Cambia la cantidad respetando el stock del catálogo.
   function cambiarCantidad(id, nuevaCantidad) {
     const producto = productos.find((producto) => producto.id === id);
 
@@ -105,7 +101,6 @@ function App() {
     );
   }
 
-  // Guarda los datos de sesión sin incluir la contraseña.
   function iniciarSesion(usuario) {
     const sesion = {
       run: usuario.run,
@@ -129,12 +124,9 @@ function App() {
     setUsuarioActivo(null);
   }
 
-  // Descuento del usuario con sesión (0 si no hay sesión).
   const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
-
   const cantidadTotal = carrito.reduce((suma, item) => suma + item.cantidad, 0);
 
-  // Actualiza el título de la pestaña.
   useEffect(() => {
     document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
   }, [cantidadTotal]);
@@ -154,21 +146,8 @@ function App() {
           }
         >
           <Route index element={<Home />} />
-
-          <Route
-            path="productos"
-            element={
-              <ProductList productos={productos} onAgregar={agregarProducto} />
-            }
-          />
-
-          <Route
-            path="productos/:id"
-            element={
-              <ProductDetail onAgregar={agregarProducto} carrito={carrito} />
-            }
-          />
-
+          <Route path="productos" element={<ProductList productos={productos} onAgregar={agregarProducto} />} />
+          <Route path="productos/:id" element={<ProductDetail onAgregar={agregarProducto} carrito={carrito} />} />
           <Route
             path="carrito"
             element={
@@ -182,6 +161,7 @@ function App() {
             }
           />
 
+          {/* Rutas Persona 3 */}
           <Route
             path="checkout"
             element={
@@ -192,22 +172,22 @@ function App() {
               />
             }
           />
+          <Route path="pago/exito/:idOrden" element={<PagoExito />} />
+          <Route path="pago/error" element={<PagoFallo />} />
 
           <Route path="pedido" element={<Pedido />} />
-
           <Route path="nosotros" element={<Nosotros />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="blogs/:id" element={<BlogDetalle />} />
           <Route path="contacto" element={<Contacto />} />
           <Route path="registro" element={<Registro />} />
-
-          <Route
-            path="login"
-            element={<Login onIniciarSesion={iniciarSesion} />}
-          />
+          <Route path="login" element={<Login onIniciarSesion={iniciarSesion} />} />
 
           <Route path="*" element={<NotFound />} />
         </Route>
+
+        {/* Panel Administrativo Modular (fuera del Layout de cliente) */}
+        <Route path="/admin/*" element={<AdminRoutes />} />
       </Routes>
 
       <CartPanel
