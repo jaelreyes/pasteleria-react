@@ -1,9 +1,10 @@
 import ProductCard from "./ProductCard";
 import { useSearchParams } from "react-router-dom";
 import { Form, Row, Col } from "react-bootstrap";
-import '../styles/Productos.css'
+import "../styles/Productos.css";
+import { calcularPrecioProducto } from "../utils/precios";
 
-function ProductList({ productos, onAgregar }) {
+function ProductList({ productos, onAgregar, descuentoUsuario = 0 }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const busqueda = searchParams.get("q") || "";
@@ -31,7 +32,9 @@ function ProductList({ productos, onAgregar }) {
 
     const coincideBusqueda =
       producto.nombre.toLowerCase().includes(texto) ||
-      producto.codigo.toLowerCase().includes(texto);
+      String(producto.codigo || "")
+        .toLowerCase()
+        .includes(texto);
 
     const coincideCategoria =
       categoria === "" || producto.categoria === categoria;
@@ -91,20 +94,27 @@ function ProductList({ productos, onAgregar }) {
         <p>No se encontraron productos con esos filtros.</p>
       ) : (
         <Row xs={1} sm={2} lg={3} className="g-4">
-          {productosFiltrados.map((producto) => (
-            <Col key={producto.id}>
-              <ProductCard
-                id={producto.id}
-                nombre={producto.nombre}
-                descripcion={producto.descripcion}
-                precio={producto.precio}
-                imagen={producto.imagen}
-                stock={producto.stock}
-                onAgregar={() => onAgregar(producto)}
-                categoria={producto.categoria}
-              />
-            </Col>
-          ))}
+          {productosFiltrados.map((producto) => {
+            const { precioBase, precioFinal, descuento } =
+              calcularPrecioProducto(producto, descuentoUsuario);
+
+            return (
+              <Col key={producto.id}>
+                <ProductCard
+                  id={producto.id}
+                  nombre={producto.nombre}
+                  categoria={producto.categoria}
+                  descripcion={producto.descripcion}
+                  precio={precioFinal}
+                  precioAnterior={precioBase}
+                  descuento={descuento}
+                  imagen={producto.imagen}
+                  stock={producto.stock}
+                  onAgregar={() => onAgregar(producto)}
+                />
+              </Col>
+            );
+          })}
         </Row>
       )}
     </section>

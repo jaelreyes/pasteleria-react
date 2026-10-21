@@ -1,7 +1,7 @@
 import { Button, Alert } from 'react-bootstrap'
 import { Link } from 'react-router-dom'
 import {
-  aplicarDescuento,
+  calcularPrecioProducto,
   calcularTotales,
   formatearPrecio,
 } from '../utils/precios'
@@ -15,16 +15,24 @@ function Cart({
   onContinuar,
   onCambiarCantidad,
 }) {
-  const { subtotal, ahorro, total } = calcularTotales(carrito, descuento)
+  const { subtotal, ahorro, total } = calcularTotales(
+    carrito,
+    descuento
+  )
 
   return (
     <section className="carrito">
       <h2>Tu carrito</h2>
 
       {descuento > 0 && carrito.length > 0 && (
-        <Alert variant="success" className="carrito-aviso-descuento">
-          Tienes un <strong>{descuento}% de descuento</strong> aplicado en
-          todos tus productos.
+        <Alert
+          variant="success"
+          className="carrito-aviso-descuento"
+        >
+          Tu beneficio de usuario es del <strong>{descuento}%</strong>.
+          {' '}
+          En cada producto se aplica el mayor descuento entre
+          su oferta y tu beneficio.
         </Alert>
       )}
 
@@ -39,7 +47,11 @@ function Cart({
       ) : (
         <ul className="carrito-lista">
           {carrito.map(producto => {
-            const precioFinal = aplicarDescuento(producto.precio, descuento)
+            const {
+              precioBase,
+              descuento: descuentoAplicado,
+              precioFinal,
+            } = calcularPrecioProducto(producto, descuento)
 
             return (
               <li key={producto.id} className="carrito-item">
@@ -52,18 +64,22 @@ function Cart({
                 <div className="carrito-info">
                   <h3>{producto.nombre}</h3>
 
-                  {descuento > 0 ? (
+                  {descuentoAplicado > 0 ? (
                     <p className="carrito-precio">
                       Precio unitario:{' '}
-                      <span className="carrito-precio-original">
-                        {formatearPrecio(producto.precio)}
-                      </span>{' '}
-                      <strong>{formatearPrecio(precioFinal)}</strong>{' '}
-                      <span className="carrito-descuento">-{descuento}%</span>
+                      <del className="carrito-precio-original">
+                        {formatearPrecio(precioBase)}
+                      </del>{' '}
+                      <strong>
+                        {formatearPrecio(precioFinal)}
+                      </strong>{' '}
+                      <span className="carrito-descuento">
+                        -{descuentoAplicado}%
+                      </span>
                     </p>
                   ) : (
                     <p className="carrito-precio">
-                      Precio unitario: {formatearPrecio(producto.precio)}
+                      Precio unitario: {formatearPrecio(precioBase)}
                     </p>
                   )}
 
@@ -94,7 +110,9 @@ function Cart({
                     <Button
                       variant="outline-secondary"
                       size="sm"
-                      disabled={producto.cantidad >= producto.stock}
+                      disabled={
+                        producto.cantidad >= producto.stock
+                      }
                       onClick={() =>
                         onCambiarCantidad(
                           producto.id,
@@ -108,7 +126,10 @@ function Cart({
                   </div>
 
                   <p className="carrito-subtotal">
-                    Subtotal: {formatearPrecio(precioFinal * producto.cantidad)}
+                    Subtotal:{' '}
+                    {formatearPrecio(
+                      precioFinal * producto.cantidad
+                    )}
                   </p>
 
                   <Button
@@ -129,10 +150,13 @@ function Cart({
         {ahorro > 0 && (
           <>
             <p className="carrito-linea">
-              Subtotal: <span>{formatearPrecio(subtotal)}</span>
+              Subtotal sin descuentos:{' '}
+              <span>{formatearPrecio(subtotal)}</span>
             </p>
+
             <p className="carrito-linea carrito-ahorro">
-              Descuento ({descuento}%): <span>-{formatearPrecio(ahorro)}</span>
+              Ahorro total:{' '}
+              <span>-{formatearPrecio(ahorro)}</span>
             </p>
           </>
         )}

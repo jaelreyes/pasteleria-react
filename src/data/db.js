@@ -1,3 +1,5 @@
+import productosIniciales from './productos'
+
 // --- USUARIOS Y ROLES ---
 export const obtenerUsuarios = () => {
   try {
@@ -54,23 +56,28 @@ export const puedeEntrarAlPanel = () => {
 };
 
 // --- PRODUCTOS ---
-export const obtenerProductos = () => {
-  try {
-    const porDefecto = [
-      { id: 1, nombre: 'Torta de Mil Hojas', precio: 18000, stock: 4, categoria: 'Tortas', descuento: 0 },
-      { id: 2, nombre: 'Kuchen de Manzana', precio: 12000, stock: 12, categoria: 'Kuchen', descuento: 10 },
-      { id: 3, nombre: 'Torta de Chocolate', precio: 20000, stock: 3, categoria: 'Tortas', descuento: 5 }
-    ];
-    let prods = JSON.parse(localStorage.getItem('productos') || 'null');
-    if (!prods || prods.length === 0) {
-      localStorage.setItem('productos', JSON.stringify(porDefecto));
-      return porDefecto;
-    }
-    return prods;
-  } catch {
-    return [];
+export function obtenerProductos() {
+  const guardados = localStorage.getItem('productos')
+
+  // Carga los 16 productos originales solo la primera vez.
+  if (guardados === null) {
+    const productos = productosIniciales.map(producto => ({
+      ...producto,
+      descuento: Number(producto.descuento) || 0,
+    }))
+
+    localStorage.setItem('productos', JSON.stringify(productos))
+    return productos
   }
-};
+
+  const productos = JSON.parse(guardados)
+
+  if (!Array.isArray(productos)) {
+    throw new Error('Los productos guardados no tienen un formato válido.')
+  }
+
+  return productos
+}
 
 export const guardarProducto = (producto) => {
   try {

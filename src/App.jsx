@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 
 import ProductList from "./components/ProductList";
 import Cart from "./components/Cart";
 import Layout from "./components/Layout";
 import CartPanel from "./components/CartPanel";
-import productos from "./data/productos";
+
+import { obtenerProductos } from "./data/db";
 import { obtenerDescuentoUsuario } from "./utils/precios";
 
 import NotFound from "./pages/NotFound";
@@ -21,12 +22,15 @@ import BlogDetalle from "./pages/BlogDetalle";
 import Pedido from "./pages/Pedido";
 import Categorias from "./pages/Categorias";
 import Ofertas from "./pages/Ofertas";
-
 import PagoExito from "./pages/PagoExito";
 import PagoFallo from "./pages/PagoFallo";
 import AdminRoutes from "./admin/AdminRoutes";
 
 function App() {
+  // Lee el catálogo compartido con administración al iniciar.
+  const [productos, setProductos] = useState(() => obtenerProductos());
+  const ubicacion = useLocation();
+
   const [carrito, setCarrito] = useState(() => {
     const carritoGuardado = localStorage.getItem("carrito");
     return carritoGuardado ? JSON.parse(carritoGuardado) : [];
@@ -49,23 +53,39 @@ function App() {
   function agregarProducto(producto, cantidad = 1) {
     if (!Number.isInteger(cantidad) || cantidad < 1) return;
 
+    const productoActual = obtenerProductos().find(
+      (item) => item.id === producto.id,
+    );
+
+    if (!productoActual) return;
+
     setCarrito((carritoActual) => {
-      const existe = carritoActual.find((item) => item.id === producto.id);
+      const existe = carritoActual.find(
+        (item) => item.id === productoActual.id,
+      );
+
       const cantidadActual = existe ? existe.cantidad : 0;
-      const disponibles = Math.max(0, producto.stock - cantidadActual);
+      const disponibles = Math.max(0, productoActual.stock - cantidadActual);
+
       const cantidadAgregar = Math.min(cantidad, disponibles);
 
       if (cantidadAgregar <= 0) return carritoActual;
 
       if (existe) {
         return carritoActual.map((item) =>
-          item.id === producto.id
-            ? { ...item, cantidad: item.cantidad + cantidadAgregar }
+          item.id === productoActual.id
+            ? {
+                ...productoActual,
+                cantidad: item.cantidad + cantidadAgregar,
+              }
             : item,
         );
       }
 
-      return [...carritoActual, { ...producto, cantidad: cantidadAgregar }];
+      return [
+        ...carritoActual,
+        { ...productoActual, cantidad: cantidadAgregar },
+      ];
     });
   }
 
@@ -80,14 +100,22 @@ function App() {
   }
 
   function cambiarCantidad(id, nuevaCantidad) {
-    const producto = productos.find((p) => p.id === id);
-    if (!producto || !Number.isInteger(nuevaCantidad) || nuevaCantidad < 1 || nuevaCantidad > producto.stock) {
+    const productoActual = obtenerProductos().find(
+      (producto) => producto.id === id,
+    );
+
+    if (
+      !productoActual ||
+      !Number.isInteger(nuevaCantidad) ||
+      nuevaCantidad < 1 ||
+      nuevaCantidad > productoActual.stock
+    ) {
       return;
     }
 
     setCarrito((carritoActual) =>
       carritoActual.map((item) =>
-        item.id === id ? { ...item, cantidad: nuevaCantidad } : item,
+        item.id === id ? { ...productoActual, cantidad: nuevaCantidad } : item,
       ),
     );
   }
@@ -98,7 +126,7 @@ function App() {
       nombre: usuario.nombre,
       apellidos: usuario.apellidos,
       correo: usuario.email || usuario.correo,
-      rol: usuario.rol || 'cliente',
+      rol: usuario.rol || "cliente",
       tipo: usuario.tipo || "Cliente",
       beneficios: usuario.beneficios || [],
       descuentoEdad: usuario.descuentoEdad || 0,
@@ -117,16 +145,23 @@ function App() {
   }
 
   const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
+
   const cantidadTotal = carrito.reduce((suma, item) => suma + item.cantidad, 0);
 
+  // Actualiza el título de la pestaña.
   useEffect(() => {
     document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
   }, [cantidadTotal]);
 
+  // Recupera los cambios del catálogo al navegar entre páginas.
+  useEffect(() => {
+    setProductos(obtenerProductos());
+  }, [ubicacion.pathname]);
+
   return (
     <>
       <Routes>
-        {/* Rutas de la Tienda (con Layout principal) */}
+        {/* Tienda pública */}
         <Route
           path="/"
           element={
@@ -138,9 +173,31 @@ function App() {
             />
           }
         >
-          <Route index element={<Home />} />
-          <Route path="productos" element={<ProductList productos={productos} onAgregar={agregarProducto} />} />
-          <Route path="productos/:id" element={<ProductDetail onAgregar={agregarProducto} carrito={carrito} />} />
+          <Route index element={<Home productos={productos} />} />
+
+          <Route
+            path="productos"
+            element={
+              <ProductList
+                productos={productos}
+                onAgregar={agregarProducto}
+                descuentoUsuario={descuentoUsuario}
+              />
+            }
+          />
+
+          <Route
+            path="productos/:id"
+            element={
+              <ProductDetail
+                productos={productos}
+                onAgregar={agregarProducto}
+                carrito={carrito}
+                descuentoUsuario={descuentoUsuario}
+              />
+            }
+          />
+
           <Route
             path="carrito"
             element={
@@ -153,6 +210,7 @@ function App() {
               />
             }
           />
+
           <Route
             path="checkout"
             element={
@@ -163,24 +221,60 @@ function App() {
               />
             }
           />
+
           <Route path="pago/exito/:idOrden" element={<PagoExito />} />
+
           <Route path="pago/error" element={<PagoFallo />} />
           <Route path="pedido" element={<Pedido />} />
-          <Route path="categorias" element={<Categorias productos={productos} onAgregar={agregarProducto} />} />
-          <Route path="categorias/:slug" element={<Categorias productos={productos} onAgregar={agregarProducto} />} />
-          <Route path="ofertas" element={<Ofertas productos={productos} onAgregar={agregarProducto} />} />
+
+          <Route
+            path="categorias"
+            element={
+              <Categorias
+                productos={productos}
+                onAgregar={agregarProducto}
+                descuentoUsuario={descuentoUsuario}
+              />
+            }
+          />
+
+          <Route
+            path="categorias/:slug"
+            element={
+              <Categorias
+                productos={productos}
+                onAgregar={agregarProducto}
+                descuentoUsuario={descuentoUsuario}
+              />
+            }
+          />
+
+          <Route
+            path="ofertas"
+            element={
+              <Ofertas
+                productos={productos}
+                onAgregar={agregarProducto}
+                descuentoUsuario={descuentoUsuario}
+              />
+            }
+          />
+
           <Route path="nosotros" element={<Nosotros />} />
           <Route path="blogs" element={<Blogs />} />
           <Route path="blogs/:id" element={<BlogDetalle />} />
           <Route path="contacto" element={<Contacto />} />
           <Route path="registro" element={<Registro />} />
-          <Route path="login" element={<Login onIniciarSesion={iniciarSesion} />} />
+
+          <Route
+            path="login"
+            element={<Login onIniciarSesion={iniciarSesion} />}
+          />
         </Route>
 
-        {/* Panel de Administración (Completamente fuera del Layout de clientes) */}
+        {/* Administración */}
         <Route path="/admin/*" element={<AdminRoutes />} />
 
-        {/* Página 404 general */}
         <Route path="*" element={<NotFound />} />
       </Routes>
 

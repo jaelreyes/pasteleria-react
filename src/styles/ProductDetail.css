@@ -98,3 +98,17 @@
   border-color: #8b4513;
   box-shadow: 0 0 0 3px rgba(139, 69, 19, 0.1);
 }
+
+.detalle-precio-anterior {
+  color: #8d6e63;
+  margin-bottom: 0.25rem;
+}
+
+.detalle-descuento {
+  display: inline-block;
+  background-color: #ffc0cb;
+  color: #8b4513;
+  border-radius: 6px;
+  padding: 0.15rem 0.5rem;
+  font-weight: 700;
+}

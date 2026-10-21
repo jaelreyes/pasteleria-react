@@ -1,10 +1,18 @@
 import { useState } from 'react'
 import { Link, useParams, useNavigate } from 'react-router-dom'
 import { Button, Alert, Form } from 'react-bootstrap'
-import productos from '../data/productos'
+import {
+  calcularPrecioProducto,
+  formatearPrecio,
+} from '../utils/precios'
 import '../styles/ProductDetail.css'
 
-function ProductDetail({ onAgregar, carrito }) {
+function ProductDetail({
+  productos,
+  onAgregar,
+  carrito,
+  descuentoUsuario = 0,
+}) {
   const { id } = useParams()
   const navegar = useNavigate()
   const [cantidad, setCantidad] = useState('1')
@@ -16,17 +24,34 @@ function ProductDetail({ onAgregar, carrito }) {
   if (!producto) {
     return (
       <section>
-        <Alert variant="warning">Producto no encontrado.</Alert>
+        <Alert variant="warning">
+          Producto no encontrado.
+        </Alert>
+
         <Link to="/productos">Volver al catálogo</Link>
       </section>
     )
   }
 
-  const itemEnCarrito = carrito.find(item => item.id === producto.id)
-  const cantidadEnCarrito = itemEnCarrito ? itemEnCarrito.cantidad : 0
-  const disponibles = Math.max(0, producto.stock - cantidadEnCarrito)
+  // Aplica el mayor descuento entre la oferta y el beneficio del usuario.
+  const { precioBase, precioFinal, descuento } =
+    calcularPrecioProducto(producto, descuentoUsuario)
+
+  const itemEnCarrito = carrito.find(
+    item => item.id === producto.id
+  )
+
+  const cantidadEnCarrito = itemEnCarrito
+    ? itemEnCarrito.cantidad
+    : 0
+
+  const disponibles = Math.max(
+    0,
+    producto.stock - cantidadEnCarrito
+  )
 
   const cantidadNumero = Number(cantidad)
+
   const cantidadValida =
     Number.isInteger(cantidadNumero) &&
     cantidadNumero >= 1 &&
@@ -37,6 +62,7 @@ function ProductDetail({ onAgregar, carrito }) {
 
     if (!cantidadValida) return
 
+    // Envía el producto con su precio base para evitar descuentos dobles.
     onAgregar(producto, cantidadNumero)
     navegar('/carrito')
   }
@@ -44,7 +70,10 @@ function ProductDetail({ onAgregar, carrito }) {
   return (
     <section className="detalle-producto">
       <figure className="detalle-producto-imagen">
-        <img src={producto.imagen} alt={producto.nombre} />
+        <img
+          src={producto.imagen}
+          alt={producto.nombre}
+        />
       </figure>
 
       <div className="detalle-producto-info">
@@ -54,9 +83,21 @@ function ProductDetail({ onAgregar, carrito }) {
 
         <h1>{producto.nombre}</h1>
 
-        <p className="detalle-producto-precio">
-          ${producto.precio.toLocaleString('es-CL')}
-        </p>
+        <div className="detalle-producto-precios">
+          {descuento > 0 && (
+            <p className="detalle-precio-anterior">
+              <del>{formatearPrecio(precioBase)}</del>
+              {' '}
+              <span className="detalle-descuento">
+                -{descuento}%
+              </span>
+            </p>
+          )}
+
+          <p className="detalle-producto-precio">
+            {formatearPrecio(precioFinal)}
+          </p>
+        </div>
 
         <p className="detalle-producto-descripcion">
           {producto.descripcion}
@@ -87,7 +128,9 @@ function ProductDetail({ onAgregar, carrito }) {
                 max={disponibles}
                 step={1}
                 value={cantidad}
-                onChange={evento => setCantidad(evento.target.value)}
+                onChange={evento =>
+                  setCantidad(evento.target.value)
+                }
                 isInvalid={!cantidadValida}
                 required
               />
