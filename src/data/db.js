@@ -3,31 +3,50 @@ import productosIniciales from './productos'
 // --- USUARIOS Y ROLES ---
 export const obtenerUsuarios = () => {
   try {
-    const demo = [
-      { nombre: 'Administrador Demo', email: 'admin@duoc.cl', password: 'admin123', rol: 'admin', tipo: 'Administrador' },
-      { nombre: 'Vendedor Demo', email: 'vendedor@duoc.cl', password: 'venta123', rol: 'vendedor', tipo: 'Vendedor' },
-      { nombre: 'Cliente Demo', email: 'cliente@gmail.com', password: 'cliente1', rol: 'cliente', tipo: 'Cliente' }
-    ];
+    const guardados = localStorage.getItem('usuarios')
 
-    let usuarios = JSON.parse(localStorage.getItem('usuarios') || '[]');
+    // Crea las cuentas demo únicamente si no existe almacenamiento.
+    if (guardados === null) {
+      const usuariosDemo = [
+        {
+          nombre: 'Administrador Demo',
+          email: 'admin@duoc.cl',
+          password: 'admin123',
+          rol: 'admin',
+          tipo: 'Administrador',
+        },
+        {
+          nombre: 'Vendedor Demo',
+          email: 'vendedor@duoc.cl',
+          password: 'venta123',
+          rol: 'vendedor',
+          tipo: 'Vendedor',
+        },
+        {
+          nombre: 'Cliente Demo',
+          email: 'cliente@gmail.com',
+          password: 'cliente1',
+          rol: 'cliente',
+          tipo: 'Cliente',
+        },
+      ]
 
-    demo.forEach(d => {
-      const idx = usuarios.findIndex(u => String(u.email || u.correo || '').trim().toLowerCase() === d.email.toLowerCase());
-      if (idx === -1) {
-        usuarios.push(d);
-      } else {
-        usuarios[idx].password = d.password;
-        usuarios[idx].rol = d.rol;
-        usuarios[idx].tipo = d.tipo;
-      }
-    });
+      localStorage.setItem('usuarios', JSON.stringify(usuariosDemo))
+      return usuariosDemo
+    }
 
-    localStorage.setItem('usuarios', JSON.stringify(usuarios));
-    return usuarios;
-  } catch {
-    return [];
+    const usuarios = JSON.parse(guardados)
+
+    if (!Array.isArray(usuarios)) {
+      throw new Error('Los usuarios guardados no tienen un formato válido.')
+    }
+
+    return usuarios
+  } catch (error) {
+    console.error('Error al leer usuarios:', error)
+    return []
   }
-};
+}
 
 export const obtenerUsuarioActivo = () => {
   try {
