@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   obtenerProductos,
   guardarProducto,
@@ -12,8 +12,6 @@ import {
   Container,
   Row,
   Col,
-  Card,
-  Badge,
   Alert,
 } from "react-bootstrap";
 import ProductDetailModal from "../admin/components/ProductDetailModal";
@@ -44,6 +42,10 @@ function obtenerLimiteCritico(producto) {
 
 function tieneStockCritico(producto) {
   return Number(producto.stock) < obtenerLimiteCritico(producto);
+}
+
+function requiereAtencion(producto) {
+  return Number(producto.stock) === 0 || tieneStockCritico(producto);
 }
 
 const campos = [
@@ -110,17 +112,21 @@ const campos = [
     name: "descripcion",
     etiqueta: "Descripción",
     as: "textarea",
-    rows: 3,
+    rows: 4,
     maxLength: 1000,
     required: true,
     md: 12,
   },
 ];
 
-export const ProductsAdmin = ({ puedeModificar = false }) => {
+export const ProductsAdmin = ({
+  puedeModificar = false,
+  modo = "listado",
+}) => {
   const [productos, setProductos] = useState(() => obtenerProductos());
   const [form, setForm] = useState({ ...formularioInicial });
   const [modoEdicion, setModoEdicion] = useState(false);
+  const [creando, setCreando] = useState(false);
   const [productoDetalle, setProductoDetalle] = useState(null);
 
   const [soloCriticos, setSoloCriticos] = useState(false);
@@ -138,6 +144,9 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
   const formularioRef = useRef(null);
   const nombreRef = useRef(null);
 
+  const mostrarFormulario =
+    puedeModificar && (modoEdicion || creando || modo === "nuevo");
+
   const categorias = [
     ...new Set([
       ...obtenerCategorias(),
@@ -149,10 +158,31 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
     ...new Set(productos.map((producto) => producto.categoria)),
   ].filter(Boolean);
 
+  // El campo recibe el foco después de que aparece el formulario.
+  useEffect(() => {
+    if (mostrarFormulario) {
+      formularioRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+
+      nombreRef.current?.focus({ preventScroll: true });
+    }
+  }, [mostrarFormulario, modoEdicion, form.id]);
+
   function limpiarFormulario() {
     setForm({ ...formularioInicial });
     setModoEdicion(false);
+    setCreando(false);
     setError("");
+  }
+
+  function nuevoProducto() {
+    if (!puedeModificar) return;
+
+    limpiarFormulario();
+    setMensaje("");
+    setCreando(true);
   }
 
   function handleChange(evento) {
@@ -187,15 +217,9 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
     });
 
     setModoEdicion(true);
+    setCreando(false);
     setError("");
     setMensaje("");
-
-    formularioRef.current?.scrollIntoView({
-      behavior: "smooth",
-      block: "start",
-    });
-
-    nombreRef.current?.focus({ preventScroll: true });
   }
 
   function handleEliminar(id) {
@@ -355,13 +379,12 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
         "descuento",
       ];
 
-      const guardadoCorrectamente =
-        guardado &&
-        camposGuardados.every(
+      if (
+        !guardado ||
+        !camposGuardados.every(
           (campo) => guardado[campo] === productoGuardar[campo]
-        );
-
-      if (!guardadoCorrectamente) {
+        )
+      ) {
         setError("No se pudo guardar el producto. Revisa el almacenamiento.");
         return;
       }
@@ -397,15 +420,7 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
     }));
   }
 
-  function indicadorOrden(campo) {
-    if (orden.campo !== campo) return "↕";
-    return orden.direccion === "asc" ? "↑" : "↓";
-  }
-
-  function atributoOrden(campo) {
-    if (orden.campo !== campo) return "none";
-    return orden.direccion === "asc" ? "ascending" : "descending";
-  }
+  const productosAtencion = productos.filter(requiereAtencion);
 
   const productosMostrados = productos
     .filter((producto) => {
@@ -415,41 +430,67 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
         String(producto.nombre || "").toLowerCase().includes(texto) ||
         String(producto.codigo || "").toLowerCase().includes(texto);
 
-      const coincideCategoria =
-        categoriaFiltro === "" ||
-        producto.categoria === categoriaFiltro;
-
-      const coincideStock =
-        !soloCriticos || tieneStockCritico(producto);
-
-      return coincideBusqueda && coincideCategoria && coincideStock;
+      return (
+        coincideBusqueda &&
+        (!categoriaFiltro || producto.categoria === categoriaFiltro) &&
+        (!soloCriticos || requiereAtencion(producto))
+      );
     })
     .sort((a, b) => {
-      const comparacion =
-        orden.campo === "nombre"
-          ? String(a.nombre || "").localeCompare(
-              String(b.nombre || ""),
+      const resultado =
+        ["precio", "stock"].includes(orden.campo)
+          ? Number(a[orden.campo] || 0) - Number(b[orden.campo] || 0)
+          : String(a[orden.campo] || "").localeCompare(
+              String(b[orden.campo] || ""),
               "es",
               { sensitivity: "base", numeric: true }
-            )
-          : Number(a[orden.campo] || 0) -
-            Number(b[orden.campo] || 0);
+            );
 
-      return orden.direccion === "asc"
-        ? comparacion
-        : -comparacion;
+      return orden.direccion === "asc" ? resultado : -resultado;
     });
 
-  const stockCriticoCount = productos.filter(tieneStockCritico).length;
+  function encabezado(campo, etiqueta) {
+    const activo = orden.campo === campo;
+
+    return (
+      <th
+        aria-sort={
+          !activo
+            ? "none"
+            : orden.direccion === "asc"
+              ? "ascending"
+              : "descending"
+        }
+      >
+        <button
+          type="button"
+          className="admin-tabla-orden"
+          onClick={() => cambiarOrden(campo)}
+          aria-label={`Ordenar por ${etiqueta.toLowerCase()}`}
+        >
+          {etiqueta}{" "}
+          <span aria-hidden="true">
+            {activo ? (orden.direccion === "asc" ? "↑" : "↓") : "↕"}
+          </span>
+        </button>
+      </th>
+    );
+  }
 
   return (
-    <Container className="my-4">
-      <h2 className="fw-bold" style={{ color: "#8b4513" }}>
-        Gestión de Productos
+    <Container className="admin-productos-page">
+      <h2 className="admin-productos-titulo">
+        {modoEdicion
+          ? "Editar Producto"
+          : mostrarFormulario
+            ? "Nuevo Producto"
+            : "Listado de Productos"}
       </h2>
 
-      <p className="text-muted">
-        Control de inventario, precios y catálogo de la pastelería.
+      <p className="admin-productos-subtitulo">
+        {mostrarFormulario
+          ? "Completa los datos del producto."
+          : "Administra el catálogo de la tienda: precio, stock y categorías."}
       </p>
 
       {!puedeModificar && (
@@ -471,31 +512,9 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
         </Alert>
       )}
 
-      <Row className="mb-4 g-3">
-        <Col md={6}>
-          <Card className="shadow-sm border-0 text-center p-3">
-            <h6 className="text-muted">Total Productos en Catálogo</h6>
-            <h3 className="fw-bold mb-0">{productos.length}</h3>
-          </Card>
-        </Col>
-
-        <Col md={6}>
-          <Card className="shadow-sm border-0 text-center p-3">
-            <h6 className="text-muted">Productos con Stock Crítico</h6>
-            <h3 className="fw-bold mb-0 text-danger">
-              {stockCriticoCount}
-            </h3>
-          </Card>
-        </Col>
-      </Row>
-
-      {puedeModificar && (
-        <Card
-          ref={formularioRef}
-          className="shadow-sm border-0 mb-4 p-4"
-          style={{ scrollMarginTop: "100px" }}
-        >
-          <h3 className="h5 mb-3" style={{ color: "#8b4513" }}>
+      {mostrarFormulario ? (
+        <div ref={formularioRef} className="admin-producto-formulario">
+          <h3 className="h5 mb-4">
             {modoEdicion
               ? "Editar Producto Existente"
               : "Registrar Nuevo Producto"}
@@ -522,7 +541,6 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
                       {name === "imagen" && (
                         <Form.Text>
                           Usa una imagen existente en public o una URL.
-                          Este campo no sube archivos.
                         </Form.Text>
                       )}
 
@@ -559,12 +577,20 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
               </Col>
             </Row>
 
-            <div className="mt-3 text-end">
-              {modoEdicion && (
+            <div className="d-flex flex-wrap gap-2 mt-4">
+              <Button
+                type="submit"
+                className="admin-producto-boton-principal"
+              >
+                {modoEdicion
+                  ? "Actualizar Producto"
+                  : "Guardar Producto"}
+              </Button>
+
+              {modo === "listado" ? (
                 <Button
                   type="button"
-                  variant="secondary"
-                  className="me-2"
+                  variant="outline-secondary"
                   onClick={() => {
                     limpiarFormulario();
                     setMensaje("");
@@ -572,114 +598,120 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
                 >
                   Cancelar
                 </Button>
+              ) : (
+                <p className="small text-muted align-self-center mb-0">
+                  Puedes volver desde Listado de Productos en el menú.
+                </p>
               )}
-
-              <Button
-                type="submit"
-                style={{ background: "#8b4513", border: "none" }}
-              >
-                {modoEdicion
-                  ? "Actualizar Producto"
-                  : "Guardar Producto"}
-              </Button>
             </div>
           </Form>
-        </Card>
-      )}
-
-      <Card className="shadow-sm border-0 mb-4 p-3">
-        <Row className="g-3">
-          <Col xs={12} md={7}>
-            <Form.Group controlId="admin-busqueda-productos">
-              <Form.Label>Buscar productos</Form.Label>
-
-              <Form.Control
-                type="search"
-                placeholder="Buscar por nombre o código"
-                value={busqueda}
-                onChange={(evento) => setBusqueda(evento.target.value)}
-              />
-            </Form.Group>
-          </Col>
-
-          <Col xs={12} md={5}>
-            <Form.Group controlId="admin-filtro-categoria">
-              <Form.Label>Filtrar por categoría</Form.Label>
-
-              <Form.Select
-                value={categoriaFiltro}
-                onChange={(evento) =>
-                  setCategoriaFiltro(evento.target.value)
-                }
-              >
-                <option value="">Todas las categorías</option>
-
-                {categoriasFiltro.map((categoria) => (
-                  <option key={categoria} value={categoria}>
-                    {categoria}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
-        </Row>
-
-        <div className="d-flex flex-wrap align-items-center gap-3 mt-3">
-          <Button
-            type="button"
-            variant={soloCriticos ? "danger" : "outline-secondary"}
-            onClick={() => setSoloCriticos((actual) => !actual)}
-          >
-            {soloCriticos
-              ? "Ver Todos los Productos"
-              : "Filtrar por Stock Crítico"}
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline-secondary"
-            onClick={limpiarFiltros}
-          >
-            Limpiar filtros
-          </Button>
-
-          <span className="text-muted" role="status">
-            Mostrando {productosMostrados.length} de {productos.length} productos
-          </span>
         </div>
-      </Card>
+      ) : (
+        <>
+          {puedeModificar && (
+            <Button
+              type="button"
+              className="admin-producto-boton-principal mb-4"
+              onClick={nuevoProducto}
+            >
+              Nuevo Producto
+            </Button>
+          )}
 
-      <Card className="shadow-sm border-0">
-        <Card.Body className="p-0">
-          <Table responsive hover striped className="mb-0 align-middle">
-            <thead>
-              <tr>
-                <th>Código</th>
+          {productosAtencion.length > 0 && (
+            <div className="admin-productos-aviso">
+              <strong>Hay productos con stock crítico o agotado:</strong>
 
-                {[
-                  { campo: "nombre", etiqueta: "Nombre" },
-                  { campo: "precio", etiqueta: "Precio" },
-                  { campo: "stock", etiqueta: "Stock" },
-                ].map(({ campo, etiqueta }) => (
-                  <th key={campo} aria-sort={atributoOrden(campo)}>
+              <ul>
+                {productosAtencion.map((producto) => (
+                  <li key={producto.id}>
+                    {producto.nombre}{" "}
+                    {Number(producto.stock) === 0
+                      ? "(agotado)."
+                      : `(stock ${producto.stock} de un crítico de ${obtenerLimiteCritico(producto)}).`}
+                    {" "}
                     <button
                       type="button"
-                      className="btn btn-link p-0 fw-bold text-decoration-none"
-                      style={{ color: "#8b4513" }}
-                      onClick={() => cambiarOrden(campo)}
-                      aria-label={`Ordenar por ${etiqueta.toLowerCase()}`}
+                      onClick={() => setProductoDetalle(producto)}
                     >
-                      {etiqueta}{" "}
-                      <span aria-hidden="true">
-                        {indicadorOrden(campo)}
-                      </span>
+                      Ver detalle.
                     </button>
-                  </th>
+                  </li>
                 ))}
+              </ul>
+            </div>
+          )}
 
-                <th>Stock crítico</th>
-                <th>Descuento</th>
+          <Row className="g-3 mb-3">
+            <Col xs={12} md={5}>
+              <Form.Group controlId="admin-filtro-categoria">
+                <Form.Label>Filtrar por categoría</Form.Label>
+
+                <Form.Select
+                  value={categoriaFiltro}
+                  onChange={(evento) =>
+                    setCategoriaFiltro(evento.target.value)
+                  }
+                >
+                  <option value="">Todas las categorías</option>
+
+                  {categoriasFiltro.map((categoria) => (
+                    <option key={categoria} value={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Col>
+
+            <Col xs={12} md={7}>
+              <Form.Group controlId="admin-busqueda-productos">
+                <Form.Label>Buscar productos</Form.Label>
+
+                <Form.Control
+                  type="search"
+                  placeholder="Nombre o código..."
+                  value={busqueda}
+                  onChange={(evento) => setBusqueda(evento.target.value)}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <div className="d-flex flex-wrap align-items-center gap-3 mb-4">
+            <Button
+              type="button"
+              variant={soloCriticos ? "danger" : "outline-secondary"}
+              onClick={() => setSoloCriticos((actual) => !actual)}
+            >
+              {soloCriticos
+                ? "Ver Todos los Productos"
+                : "Filtrar por Stock Crítico"}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline-secondary"
+              onClick={limpiarFiltros}
+            >
+              Limpiar filtros
+            </Button>
+
+            <span className="text-muted small" role="status">
+              Mostrando {productosMostrados.length} de {productos.length} productos
+            </span>
+          </div>
+
+          <Table responsive className="admin-productos-tabla align-middle">
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                {encabezado("codigo", "Código")}
+                {encabezado("nombre", "Nombre")}
                 <th>Categoría</th>
+                {encabezado("precio", "Precio")}
+                {encabezado("stock", "Stock")}
+                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -692,81 +724,108 @@ export const ProductsAdmin = ({ puedeModificar = false }) => {
                   </td>
                 </tr>
               ) : (
-                productosMostrados.map((producto) => (
-                  <tr key={producto.id}>
-                    <td>{producto.codigo || "Sin código"}</td>
+                productosMostrados.map((producto) => {
+                  const agotado = Number(producto.stock) === 0;
+                  const critico = tieneStockCritico(producto);
 
-                    <td className="fw-bold">{producto.nombre}</td>
+                  return (
+                    <tr
+                      key={producto.id}
+                      className={
+                        agotado
+                          ? "producto-fila-agotado"
+                          : critico
+                            ? "producto-fila-critico"
+                            : ""
+                      }
+                    >
+                      <td>
+                        <img
+                          src={producto.imagen}
+                          alt={producto.nombre}
+                          className="admin-producto-miniatura"
+                          loading="lazy"
+                        />
+                      </td>
 
-                    <td className="text-success fw-bold">
-                      ${Number(producto.precio).toLocaleString("es-CL")}
-                    </td>
+                      <td>{producto.codigo || "Sin código"}</td>
+                      <td>{producto.nombre}</td>
 
-                    <td>
-                      {producto.stock}
+                      <td>
+                        <span className="admin-producto-categoria">
+                          {producto.categoria}
+                        </span>
+                      </td>
 
-                      {tieneStockCritico(producto) && (
-                        <Badge bg="danger" className="ms-1">
-                          Crítico
-                        </Badge>
-                      )}
-                    </td>
+                      <td>
+                        ${Number(producto.precio).toLocaleString("es-CL")}
+                      </td>
 
-                    <td>{obtenerLimiteCritico(producto)}</td>
+                      <td>{producto.stock}</td>
 
-                    <td>{Number(producto.descuento) || 0}%</td>
-
-                    <td>
-                      <Badge bg="secondary">{producto.categoria}</Badge>
-                    </td>
-
-                    <td>
-                      <div className="d-flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          variant="outline-secondary"
-                          size="sm"
-                          onClick={() => setProductoDetalle(producto)}
+                      <td>
+                        <span
+                          className={`admin-producto-estado ${
+                            agotado
+                              ? "agotado"
+                              : critico
+                                ? "critico"
+                                : "disponible"
+                          }`}
                         >
-                          Ver detalle
-                        </Button>
+                          {agotado
+                            ? "Agotado"
+                            : critico
+                              ? "Crítico"
+                              : "Disponible"}
+                        </span>
+                      </td>
 
-                        {puedeModificar && (
-                          <>
-                            <Button
-                              type="button"
-                              variant="outline-warning"
-                              size="sm"
-                              onClick={() => handleEditar(producto)}
-                            >
-                              Editar
-                            </Button>
+                      <td>
+                        <div className="admin-producto-acciones">
+                          <button
+                            type="button"
+                            className="accion-ver"
+                            onClick={() => setProductoDetalle(producto)}
+                          >
+                            Ver detalle
+                          </button>
 
-                            <Button
-                              type="button"
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => handleEliminar(producto.id)}
-                            >
-                              Eliminar
-                            </Button>
-                          </>
+                          {puedeModificar && (
+                            <>
+                              <button
+                                type="button"
+                                className="accion-editar"
+                                onClick={() => handleEditar(producto)}
+                              >
+                                Editar
+                              </button>
+
+                              <button
+                                type="button"
+                                className="accion-eliminar"
+                                onClick={() => handleEliminar(producto.id)}
+                              >
+                                Eliminar
+                              </button>
+                            </>
+                          )}
+                        </div>
+
+                        {!puedeModificar && (
+                          <small className="text-muted d-block mt-1">
+                            Solo consulta
+                          </small>
                         )}
-                      </div>
-
-                      {!puedeModificar && (
-                        <small className="text-muted d-block mt-1">
-                          Solo consulta
-                        </small>
-                      )}
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </Table>
-        </Card.Body>
-      </Card>
+        </>
+      )}
 
       <ProductDetailModal
         producto={productoDetalle}

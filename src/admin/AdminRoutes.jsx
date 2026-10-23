@@ -1,16 +1,6 @@
 import { useState } from "react";
-import {
-  Navigate,
-  Routes,
-  Route,
-  Link,
-  useLocation,
-} from "react-router-dom";
-import {
-  puedeEntrarAlPanel,
-  obtenerUsuarioActivo,
-} from "../data/db";
-import { Navbar, Nav, Container } from "react-bootstrap";
+import { Navigate, Routes, Route, Link, NavLink } from "react-router-dom";
+import { puedeEntrarAlPanel, obtenerUsuarioActivo } from "../data/db";
 
 import AdminHome from "./pages/AdminHome";
 import OrdersAdmin from "./pages/OrdersAdmin";
@@ -18,181 +8,269 @@ import UsersAdmin from "./pages/UsersAdmin";
 import AdminProfile from "./pages/AdminProfile";
 import { ProductsAdmin } from "../pages/ProductsAdmin";
 import UserCreateAdmin from "./pages/UserCreateAdmin";
+import "../styles/Admin.css";
 
 export function AdminRoutes() {
+  const [menuAbierto, setMenuAbierto] = useState(false);
+
   const usuario = obtenerUsuarioActivo();
   const autorizado = puedeEntrarAlPanel();
-  const location = useLocation();
-
-  const [expanded, setExpanded] = useState(false);
 
   const rol = String(usuario?.rol || usuario?.tipo || "")
     .trim()
     .toLowerCase();
 
-  const esAdministrador =
-    rol === "admin" || rol === "administrador";
+  const esAdministrador = rol === "admin" || rol === "administrador";
 
   if (!autorizado) {
     return <Navigate to="/login" replace />;
   }
 
   function cerrarMenu() {
-    setExpanded(false);
+    setMenuAbierto(false);
   }
 
-  function claseEnlace(seccion) {
-    const ruta = location.pathname.replace(/\/+$/, "") || "/";
+  function cerrarSesion() {
+    localStorage.removeItem("usuarioActivo");
 
-    const activo =
-      seccion === ""
-        ? ruta === "/admin"
-        : ruta === `/admin/${seccion}` ||
-          ruta.startsWith(`/admin/${seccion}/`);
+    // Recarga la aplicación para limpiar también la sesión de App.
+    window.location.assign("/login");
+  }
 
-    return `fw-semibold ${activo ? "text-primary" : "text-dark"}`;
+  function claseEnlace({ isActive }) {
+    return `admin-menu-enlace${isActive ? " activo" : ""}`;
   }
 
   return (
-    <div>
-      <Navbar
-        bg="white"
-        expand="lg"
-        expanded={expanded}
-        onToggle={setExpanded}
-        className="shadow-sm mb-4 py-3 border-bottom"
-      >
-        <Container>
-          <Navbar.Brand
-            as={Link}
-            to="/admin"
-            onClick={cerrarMenu}
-            className="fw-bold"
-            style={{ color: "#5c3d2e" }}
-          >
-            🍰 Panel {esAdministrador ? "Administrador" : "Vendedor"}
-          </Navbar.Brand>
+    <div className="admin-layout">
+      <header className="admin-header">
+        <div className="admin-header-contenido">
+          <Link to="/admin" className="admin-logo" onClick={cerrarMenu}>
+            <img src="/images/logo.png" alt="" />
+            <span>Panel de Administración</span>
+          </Link>
 
-          <Navbar.Toggle
-            aria-controls="admin-navbar"
-            aria-label="Abrir menú de administración"
-          />
+          <div className="admin-header-acciones">
+            <span>Hola, {usuario?.nombre || "Usuario"}</span>
 
-          <Navbar.Collapse
-            id="admin-navbar"
-            className="justify-content-end"
-          >
-            <Nav className="align-items-center gap-3">
-              <Nav.Link
-                as={Link}
-                to="/admin"
+            <span className="admin-rol">
+              {esAdministrador ? "Administrador" : "Vendedor"}
+            </span>
+
+            <Link to="/" className="admin-ver-tienda">
+              Ver tienda
+            </Link>
+
+            <button
+              type="button"
+              className="admin-cerrar-sesion"
+              onClick={cerrarSesion}
+            >
+              Cerrar Sesión
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="admin-estructura">
+        <button
+          type="button"
+          className="admin-menu-toggle"
+          aria-expanded={menuAbierto}
+          aria-controls="admin-menu-lateral"
+          onClick={() => setMenuAbierto((actual) => !actual)}
+        >
+          {menuAbierto ? "Cerrar menú" : "Abrir menú del panel"}
+        </button>
+
+        <aside
+          id="admin-menu-lateral"
+          className={`admin-sidebar${menuAbierto ? " abierto" : ""}`}
+        >
+          <nav aria-label="Menú de administración">
+            <NavLink
+              to="/admin"
+              end
+              className={claseEnlace}
+              onClick={cerrarMenu}
+            >
+              Inicio
+            </NavLink>
+
+            <p className="admin-menu-grupo">Productos</p>
+
+            <NavLink
+              to="/admin/productos"
+              end
+              className={claseEnlace}
+              onClick={cerrarMenu}
+            >
+              Listado de Productos
+            </NavLink>
+
+            {esAdministrador && (
+              <NavLink
+                to="/admin/productos/nuevo"
+                className={claseEnlace}
                 onClick={cerrarMenu}
-                className={claseEnlace("")}
               >
-                Inicio
-              </Nav.Link>
+                Nuevo Producto
+              </NavLink>
+            )}
 
-              <Nav.Link
-                as={Link}
-                to="/admin/ordenes"
-                onClick={cerrarMenu}
-                className={claseEnlace("ordenes")}
-              >
-                Órdenes
-              </Nav.Link>
+            <p className="admin-menu-grupo">Pedidos</p>
 
-              <Nav.Link
-                as={Link}
-                to="/admin/productos"
-                onClick={cerrarMenu}
-                className={claseEnlace("productos")}
-              >
-                Productos
-              </Nav.Link>
+            <NavLink
+              to="/admin/ordenes"
+              className={claseEnlace}
+              onClick={cerrarMenu}
+            >
+              Gestión de Órdenes
+            </NavLink>
 
-              {esAdministrador && (
-                <Nav.Link
-                  as={Link}
+            {esAdministrador && (
+              <>
+                <p className="admin-menu-grupo">Usuarios</p>
+
+                <NavLink
                   to="/admin/usuarios"
+                  end
+                  className={claseEnlace}
                   onClick={cerrarMenu}
-                  className={claseEnlace("usuarios")}
                 >
-                  Usuarios
-                </Nav.Link>
-              )}
+                  Listado de Usuarios
+                </NavLink>
 
-              <Nav.Link
-                as={Link}
-                to="/admin/perfil"
-                onClick={cerrarMenu}
-                className={claseEnlace("perfil")}
-              >
-                Perfil
-              </Nav.Link>
+                <NavLink
+                  to="/admin/usuarios/nuevo"
+                  className={claseEnlace}
+                  onClick={cerrarMenu}
+                >
+                  Nuevo Usuario
+                </NavLink>
+              </>
+            )}
 
-              <Nav.Link
-                as={Link}
-                to="/"
-                onClick={cerrarMenu}
-                className="text-danger fw-semibold"
-              >
-                ← Volver a la tienda
-              </Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
-        </Container>
-      </Navbar>
+            <p className="admin-menu-grupo">Cuenta</p>
 
-      <Routes>
-        <Route
-          index
-          element={<AdminHome esAdministrador={esAdministrador} />}
-        />
+            <NavLink
+              to="/admin/perfil"
+              className={claseEnlace}
+              onClick={cerrarMenu}
+            >
+              Mi Perfil
+            </NavLink>
 
-        <Route
-          path="ordenes"
-          element={<OrdersAdmin puedeModificar={true} />}
-        />
+            <p className="admin-menu-grupo">Tienda</p>
 
-        <Route
-          path="productos"
-          element={<ProductsAdmin puedeModificar={esAdministrador} />}
-        />
+            <Link to="/" className="admin-menu-enlace" onClick={cerrarMenu}>
+              Volver a la tienda
+            </Link>
+          </nav>
+        </aside>
 
-        <Route
-          path="usuarios"
-          element={
-            esAdministrador ? (
-              <UsersAdmin />
-            ) : (
-              <Navigate to="/admin" replace />
-            )
-          }
-        />
+        <main className="admin-contenido">
+          <Routes>
+            <Route
+              index
+              element={<AdminHome esAdministrador={esAdministrador} />}
+            />
 
-        <Route
-          path="usuarios/nuevo"
-          element={
-            esAdministrador ? (
-              <UserCreateAdmin />
-            ) : (
-              <Navigate to="/admin" replace />
-            )
-          }
-        />
+            <Route
+              path="ordenes"
+              element={<OrdersAdmin puedeModificar={true} />}
+            />
 
-        <Route path="perfil" element={<AdminProfile />} />
+            <Route
+              path="productos"
+              element={
+                <ProductsAdmin
+                  key="listado"
+                  modo="listado"
+                  puedeModificar={esAdministrador}
+                />
+              }
+            />
 
-        <Route
-          path="*"
-          element={
-            <Container className="my-4">
-              <h2>Página del panel no encontrada</h2>
-              <Link to="/admin">Volver al inicio del panel</Link>
-            </Container>
-          }
-        />
-      </Routes>
+            <Route
+              path="productos/nuevo"
+              element={
+                esAdministrador ? (
+                  <ProductsAdmin
+                    key="nuevo"
+                    modo="nuevo"
+                    puedeModificar={true}
+                  />
+                ) : (
+                  <Navigate to="/admin/productos" replace />
+                )
+              }
+            />
+
+            <Route
+              path="usuarios"
+              element={
+                esAdministrador ? (
+                  <UsersAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
+            <Route
+              path="usuarios/nuevo"
+              element={
+                esAdministrador ? (
+                  <UserCreateAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
+            <Route path="perfil" element={<AdminProfile />} />
+
+            <Route
+              path="*"
+              element={
+                <div>
+                  <h1>Página del panel no encontrada</h1>
+                  <Link to="/admin">Volver al inicio del panel</Link>
+                </div>
+              }
+            />
+          </Routes>
+        </main>
+      </div>
+
+      <footer className="admin-footer">
+        <div className="admin-footer-contenido">
+          <div>
+            <h2>Pastelería 1000 Sabores</h2>
+            <p>Panel de administración de la tienda online.</p>
+          </div>
+
+          <div>
+            <h2>Accesos</h2>
+            <Link to="/admin/productos">Productos</Link>
+            <Link to="/admin/ordenes">Órdenes</Link>
+
+            {esAdministrador && <Link to="/admin/usuarios">Usuarios</Link>}
+          </div>
+
+          <div>
+            <h2>Tienda</h2>
+            <Link to="/">Inicio</Link>
+            <Link to="/productos">Productos</Link>
+            <Link to="/contacto">Contacto</Link>
+          </div>
+        </div>
+
+        <div className="admin-footer-bottom">
+          © 2026 Pastelería 1000 Sabores. Todos los derechos reservados.
+        </div>
+      </footer>
     </div>
   );
 }

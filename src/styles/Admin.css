@@ -1,0 +1,682 @@
+.admin-layout {
+  min-height: 100vh;
+  background: #fff5e1;
+  color: #5d4037;
+  font-family: "Lato", sans-serif;
+  line-height: 1.6;
+}
+
+.admin-header {
+  background: white;
+  box-shadow: 0 2px 8px rgb(93 64 55 / 10%);
+}
+
+.admin-header-contenido {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0.85rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+
+.admin-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: #8b4513;
+  font-family: "Pacifico", cursive;
+  font-size: 1.2rem;
+  text-decoration: none;
+}
+
+.admin-logo:hover {
+  color: #a0522d;
+}
+
+.admin-logo img {
+  width: auto;
+  height: 34px;
+}
+
+.admin-header-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.admin-rol {
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  background: #ffc0cb;
+  color: #8b4513;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+}
+
+.admin-ver-tienda {
+  padding: 0.4rem 0.9rem;
+  border: 2px solid #8b4513;
+  border-radius: 999px;
+  color: #8b4513;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-ver-tienda:hover {
+  background: #8b4513;
+  color: white;
+}
+
+.admin-cerrar-sesion {
+  background: #8b4513;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 0.9rem;
+  font-family: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-cerrar-sesion:hover {
+  background: #a0522d;
+}
+
+.admin-estructura {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: start;
+  gap: 1.5rem;
+  max-width: 1400px;
+  padding: 1.5rem 1.5rem 2.5rem;
+  margin: 0 auto;
+}
+
+.admin-sidebar {
+  background: white;
+  padding: 1rem 0.75rem;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgb(93 64 55 / 10%);
+}
+
+.admin-menu-enlace {
+  display: block;
+  padding: 0.7rem 0.75rem;
+  margin-bottom: 0.25rem;
+  border-radius: 8px;
+  color: #5d4037;
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-menu-enlace:hover,
+.admin-menu-enlace.activo {
+  background: #ffc0cb;
+  color: #8b4513;
+}
+
+.admin-menu-grupo {
+  margin: 1rem 0 0.4rem;
+  padding: 0 0.75rem;
+  color: #8d6e63;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+main.admin-contenido {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+  margin: 0;
+  padding: 2rem;
+  border-radius: 16px;
+  background: white;
+  box-shadow: 0 2px 8px rgb(93 64 55 / 10%);
+}
+
+/* Integra las pantallas existentes dentro de la tarjeta principal. */
+.admin-contenido > .container {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+}
+
+.admin-inicio h1 {
+  margin: 0 0 0.5rem;
+  color: #8b4513;
+  font-family: "Pacifico", cursive;
+  font-size: 2rem;
+  line-height: 1.2;
+}
+
+.admin-inicio-descripcion {
+  color: #8d6e63;
+  margin-bottom: 2rem;
+}
+
+.admin-indicadores {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.admin-indicador {
+  background: #fff5e1;
+  border: 2px solid #ffc0cb;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.admin-indicador h2 {
+  margin: 0 0 0.5rem;
+  color: #8d6e63;
+  font-family: "Lato", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+.admin-indicador-valor {
+  margin: 0 0 0.25rem;
+  color: #8b4513;
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.admin-indicador-valor.critico {
+  color: #f44336;
+}
+
+.admin-indicador-descripcion {
+  margin: 0;
+  color: #8d6e63;
+  font-size: 0.8rem;
+}
+
+.admin-accesos-titulo {
+  margin: 0 0 0.5rem;
+  color: #8b4513;
+  font-family: "Lato", sans-serif;
+  font-size: 1.5rem;
+}
+
+.admin-accesos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.admin-accesos a {
+  padding: 0.7rem 1rem;
+  border: 2px solid #8b4513;
+  border-radius: 8px;
+  color: #8b4513;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.admin-accesos a:hover {
+  background: #8b4513;
+  color: white;
+}
+
+.admin-actualizar {
+  margin-top: 1.5rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #8b4513;
+  font-family: inherit;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-footer {
+  background: #8b4513;
+  color: #fff5e1;
+}
+
+.admin-footer-contenido {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.admin-footer h2 {
+  margin-bottom: 1rem;
+  color: white;
+  font-family: "Lato", sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.admin-footer p {
+  margin: 0;
+}
+
+.admin-footer a {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: #fff5e1;
+  text-decoration: none;
+}
+
+.admin-footer a:hover {
+  color: #ffc0cb;
+  text-decoration: underline;
+}
+
+.admin-footer-bottom {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgb(255 245 225 / 20%);
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+.admin-menu-toggle {
+  display: none;
+}
+
+.admin-layout button:focus-visible,
+.admin-layout a:focus-visible {
+  outline: 3px solid #e8a0b0;
+  outline-offset: 3px;
+}
+
+@media (max-width: 1100px) {
+  .admin-indicadores {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-header-contenido {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .admin-header-acciones {
+    justify-content: flex-start;
+  }
+
+  .admin-estructura {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-menu-toggle {
+    display: block;
+    padding: 0.75rem 1rem;
+    border: 2px solid #8b4513;
+    border-radius: 8px;
+    background: white;
+    color: #8b4513;
+    font-family: inherit;
+    font-weight: 700;
+  }
+
+  .admin-sidebar {
+    display: none;
+  }
+
+  .admin-sidebar.abierto {
+    display: block;
+  }
+
+  main.admin-contenido {
+    padding: 1.5rem;
+  }
+
+  .admin-footer-contenido {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 479px) {
+  .admin-indicadores {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-inicio h1 {
+    font-size: 1.65rem;
+  }
+}
+
+.admin-contenido .admin-productos-titulo {
+  font-family: "Pacifico", cursive;
+  color: #8b4513;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.admin-contenido .form-control,
+.admin-contenido .form-select {
+  border: 2px solid #ffc0cb;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.admin-contenido .form-control:focus,
+.admin-contenido .form-select:focus {
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgb(139 69 19 / 10%);
+}
+
+.admin-productos-titulo {
+  font-family: "Pacifico", cursive;
+  font-size: 2rem;
+  color: #8b4513;
+  margin-bottom: 0.5rem;
+}
+
+.admin-productos-subtitulo {
+  color: #8d6e63;
+  margin-bottom: 2rem;
+}
+
+.admin-producto-formulario {
+  scroll-margin-top: 100px;
+}
+
+.admin-producto-formulario h3,
+.admin-producto-formulario .form-label {
+  color: #8b4513;
+}
+
+.admin-producto-formulario .form-label {
+  font-weight: 700;
+}
+
+.admin-productos-page .form-control,
+.admin-productos-page .form-select {
+  border: 2px solid #ffc0cb;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+}
+
+.admin-productos-page .form-control:focus,
+.admin-productos-page .form-select:focus {
+  border-color: #8b4513;
+  box-shadow: 0 0 0 3px rgb(139 69 19 / 10%);
+}
+
+.admin-producto-boton-principal {
+  --bs-btn-bg: #8b4513;
+  --bs-btn-border-color: #8b4513;
+  --bs-btn-hover-bg: #a0522d;
+  --bs-btn-hover-border-color: #a0522d;
+  --bs-btn-active-bg: #a0522d;
+  --bs-btn-active-border-color: #a0522d;
+
+  padding: 0.8rem 1.5rem;
+  font-weight: 700;
+}
+
+.admin-productos-aviso {
+  background: #fdecea;
+  border-left: 4px solid #f44336;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  color: #a52a1a;
+  font-size: 0.85rem;
+}
+
+.admin-productos-aviso ul {
+  margin: 0.5rem 0 0;
+  padding-left: 1rem;
+}
+
+.admin-productos-aviso li {
+  margin-bottom: 0.25rem;
+}
+
+.admin-productos-aviso button {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.admin-productos-tabla {
+  --bs-table-color: #5d4037;
+  font-size: 0.85rem;
+  margin-bottom: 0;
+}
+
+.admin-productos-tabla > thead > tr > th {
+  background: #fff5e1;
+  color: #8b4513;
+  border-bottom: 2px solid #ffc0cb;
+  padding: 0.9rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.admin-productos-tabla > tbody > tr > td {
+  padding: 0.85rem;
+}
+
+.admin-tabla-orden {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 700;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+}
+
+.admin-producto-miniatura {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.admin-producto-categoria {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid #8b4513;
+  border-radius: 999px;
+  color: #8b4513;
+  background: #fff5e1;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+}
+
+.admin-productos-tabla > tbody > .producto-fila-critico > td {
+  background: #fdecea;
+}
+
+.admin-productos-tabla > tbody > .producto-fila-agotado > td {
+  background: #f3f3f3;
+}
+
+.admin-producto-estado {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.admin-producto-estado.disponible {
+  background: #4caf50;
+}
+
+.admin-producto-estado.critico {
+  background: #f44336;
+}
+
+.admin-producto-estado.agotado {
+  background: #757575;
+}
+
+.admin-producto-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  min-width: 130px;
+}
+
+.admin-producto-acciones button {
+  padding: 0.35rem 0.65rem;
+  border: 1px solid;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+
+.admin-producto-acciones .accion-ver {
+  background: #fff5e1;
+  border-color: #8b4513;
+  color: #8b4513;
+}
+
+.admin-producto-acciones .accion-editar {
+  background: #8b4513;
+  border-color: #8b4513;
+  color: white;
+}
+
+.admin-producto-acciones .accion-eliminar {
+  background: transparent;
+  border-color: #f44336;
+  color: #c62828;
+}
+
+/* Más espacio para el contenido del panel. */
+.admin-header-contenido,
+.admin-estructura {
+  max-width: 1500px;
+}
+
+.admin-estructura {
+  grid-template-columns: 230px minmax(0, 1fr);
+}
+
+main.admin-contenido {
+  padding: 2rem;
+}
+
+/* Aviso más legible. */
+.admin-productos-aviso {
+  padding: 1.25rem;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.admin-productos-aviso li {
+  margin-bottom: 0.5rem;
+}
+
+/* Tabla con tamaños y espacios uniformes. */
+.admin-productos-tabla {
+  min-width: 1050px;
+  font-size: 0.95rem;
+}
+
+.admin-productos-tabla > thead > tr > th {
+  padding: 1rem 0.85rem;
+  font-size: 0.85rem;
+  vertical-align: middle;
+  white-space: nowrap;
+  letter-spacing: 0;
+}
+
+.admin-tabla-orden {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.admin-productos-tabla > tbody > tr > td {
+  padding: 1rem 0.85rem;
+  line-height: 1.5;
+}
+
+/* Imagen y nombre con espacio suficiente. */
+.admin-producto-miniatura {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+}
+
+.admin-productos-tabla th:nth-child(3),
+.admin-productos-tabla td:nth-child(3) {
+  min-width: 210px;
+}
+
+.admin-productos-tabla td:nth-child(3) {
+  font-weight: 700;
+}
+
+.admin-productos-tabla td:nth-child(5),
+.admin-productos-tabla td:nth-child(6) {
+  white-space: nowrap;
+}
+
+/* Categorías y estados sin letras diminutas. */
+.admin-producto-categoria {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  text-transform: none;
+}
+
+.admin-producto-estado {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+/* Botones alineados en una columna. */
+.admin-producto-acciones {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+  min-width: 110px;
+}
+
+.admin-producto-acciones button {
+  width: 100%;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+@media (max-width: 767px) {
+  .admin-estructura {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  main.admin-contenido {
+    padding: 1.25rem;
+  }
+}
