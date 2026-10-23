@@ -12,10 +12,12 @@ import {
 } from "../data/db";
 import { Navbar, Nav, Container } from "react-bootstrap";
 
+import AdminHome from "./pages/AdminHome";
 import OrdersAdmin from "./pages/OrdersAdmin";
 import UsersAdmin from "./pages/UsersAdmin";
 import AdminProfile from "./pages/AdminProfile";
 import { ProductsAdmin } from "../pages/ProductsAdmin";
+import UserCreateAdmin from "./pages/UserCreateAdmin";
 
 export function AdminRoutes() {
   const usuario = obtenerUsuarioActivo();
@@ -40,24 +42,31 @@ export function AdminRoutes() {
   }
 
   function claseEnlace(seccion) {
-    const activo = location.pathname.startsWith(`/admin/${seccion}`);
+    const ruta = location.pathname.replace(/\/+$/, "") || "/";
 
-    return `fw-semibold ${
-      activo ? "text-primary" : "text-dark"
-    }`;
+    const activo =
+      seccion === ""
+        ? ruta === "/admin"
+        : ruta === `/admin/${seccion}` ||
+          ruta.startsWith(`/admin/${seccion}/`);
+
+    return `fw-semibold ${activo ? "text-primary" : "text-dark"}`;
   }
 
   return (
     <div>
       <Navbar
         bg="white"
-        expand="md"
+        expand="lg"
         expanded={expanded}
         onToggle={setExpanded}
         className="shadow-sm mb-4 py-3 border-bottom"
       >
         <Container>
           <Navbar.Brand
+            as={Link}
+            to="/admin"
+            onClick={cerrarMenu}
             className="fw-bold"
             style={{ color: "#5c3d2e" }}
           >
@@ -76,11 +85,20 @@ export function AdminRoutes() {
             <Nav className="align-items-center gap-3">
               <Nav.Link
                 as={Link}
+                to="/admin"
+                onClick={cerrarMenu}
+                className={claseEnlace("")}
+              >
+                Inicio
+              </Nav.Link>
+
+              <Nav.Link
+                as={Link}
                 to="/admin/ordenes"
                 onClick={cerrarMenu}
                 className={claseEnlace("ordenes")}
               >
-                📋 Órdenes
+                Órdenes
               </Nav.Link>
 
               <Nav.Link
@@ -89,7 +107,7 @@ export function AdminRoutes() {
                 onClick={cerrarMenu}
                 className={claseEnlace("productos")}
               >
-                🍰 Productos
+                Productos
               </Nav.Link>
 
               {esAdministrador && (
@@ -99,7 +117,7 @@ export function AdminRoutes() {
                   onClick={cerrarMenu}
                   className={claseEnlace("usuarios")}
                 >
-                  👥 Usuarios
+                  Usuarios
                 </Nav.Link>
               )}
 
@@ -109,14 +127,14 @@ export function AdminRoutes() {
                 onClick={cerrarMenu}
                 className={claseEnlace("perfil")}
               >
-                👤 Perfil
+                Perfil
               </Nav.Link>
 
               <Nav.Link
                 as={Link}
                 to="/"
                 onClick={cerrarMenu}
-                className="text-danger fw-semibold ms-md-3"
+                className="text-danger fw-semibold"
               >
                 ← Volver a la tienda
               </Nav.Link>
@@ -128,31 +146,37 @@ export function AdminRoutes() {
       <Routes>
         <Route
           index
-          element={<Navigate to="/admin/ordenes" replace />}
+          element={<AdminHome esAdministrador={esAdministrador} />}
         />
 
-        {/* Administrador y vendedor pueden cambiar estados. */}
         <Route
           path="ordenes"
           element={<OrdersAdmin puedeModificar={true} />}
         />
 
-        {/* Solo el administrador modifica productos. */}
         <Route
           path="productos"
-          element={
-            <ProductsAdmin puedeModificar={esAdministrador} />
-          }
+          element={<ProductsAdmin puedeModificar={esAdministrador} />}
         />
 
-        {/* Usuarios está reservado al administrador. */}
         <Route
           path="usuarios"
           element={
             esAdministrador ? (
               <UsersAdmin />
             ) : (
-              <Navigate to="/admin/ordenes" replace />
+              <Navigate to="/admin" replace />
+            )
+          }
+        />
+
+        <Route
+          path="usuarios/nuevo"
+          element={
+            esAdministrador ? (
+              <UserCreateAdmin />
+            ) : (
+              <Navigate to="/admin" replace />
             )
           }
         />
@@ -164,9 +188,7 @@ export function AdminRoutes() {
           element={
             <Container className="my-4">
               <h2>Página del panel no encontrada</h2>
-              <Link to="/admin/ordenes">
-                Volver a Órdenes
-              </Link>
+              <Link to="/admin">Volver al inicio del panel</Link>
             </Container>
           }
         />
