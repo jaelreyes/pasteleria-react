@@ -1,10 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef } from "react";
 import {
   obtenerProductos,
   guardarProducto,
   eliminarProducto,
   obtenerCategorias,
-} from '../data/db'
+} from "../data/db";
 import {
   Table,
   Button,
@@ -15,119 +15,144 @@ import {
   Card,
   Badge,
   Alert,
-} from 'react-bootstrap'
+} from "react-bootstrap";
 
 const formularioInicial = {
-  id: '',
-  nombre: '',
-  precio: '',
-  stock: '',
-  categoria: '',
+  id: "",
+  nombre: "",
+  precio: "",
+  stock: "",
+  categoria: "",
   descuento: 0,
-}
+};
 
-export const ProductsAdmin = () => {
-  const [productos, setProductos] = useState(() => obtenerProductos())
-  const [form, setForm] = useState(formularioInicial)
-  const [modoEdicion, setModoEdicion] = useState(false)
-  const [soloCriticos, setSoloCriticos] = useState(false)
-  const [error, setError] = useState('')
-  const [mensaje, setMensaje] = useState('')
+export const ProductsAdmin = ({ puedeModificar = false }) => {
+  const [productos, setProductos] = useState(() => obtenerProductos());
+  const [form, setForm] = useState({ ...formularioInicial });
+  const [modoEdicion, setModoEdicion] = useState(false);
+  const [soloCriticos, setSoloCriticos] = useState(false);
+  const [error, setError] = useState("");
+  const [mensaje, setMensaje] = useState("");
 
-  const formularioRef = useRef(null)
-  const nombreRef = useRef(null)
+  const formularioRef = useRef(null);
+  const nombreRef = useRef(null);
 
-  // Incluye las categorías guardadas en los productos originales.
   const categorias = [
     ...new Set([
       ...obtenerCategorias(),
-      ...productos.map(producto => producto.categoria),
+      ...productos.map((producto) => producto.categoria),
     ]),
-  ].filter(Boolean)
+  ].filter(Boolean);
 
   function cargarDatos() {
-    setProductos(obtenerProductos())
+    setProductos(obtenerProductos());
   }
 
   function limpiarFormulario() {
-    setForm({ ...formularioInicial })
-    setModoEdicion(false)
-    setError('')
+    setForm({ ...formularioInicial });
+    setModoEdicion(false);
+    setError("");
   }
 
   function handleChange(evento) {
-    const { name, value } = evento.target
+    if (!puedeModificar) return;
 
-    setForm(actual => ({
+    const { name, value } = evento.target;
+
+    setForm((actual) => ({
       ...actual,
       [name]: value,
-    }))
+    }));
 
-    setError('')
-    setMensaje('')
+    setError("");
+    setMensaje("");
   }
 
   function handleEditar(producto) {
-    // Copia también código, imagen y descripción para conservarlos.
+    if (!puedeModificar) return;
+
+    // Conserva también código, imagen y descripción.
     setForm({
       ...producto,
-      nombre: producto.nombre || '',
-      precio: producto.precio ?? '',
-      stock: producto.stock ?? '',
-      categoria: producto.categoria || '',
+      nombre: producto.nombre || "",
+      precio: producto.precio ?? "",
+      stock: producto.stock ?? "",
+      categoria: producto.categoria || "",
       descuento: producto.descuento ?? 0,
-    })
+    });
 
-    setModoEdicion(true)
-    setError('')
-    setMensaje('')
+    setModoEdicion(true);
+    setError("");
+    setMensaje("");
 
     formularioRef.current?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start',
-    })
+      behavior: "smooth",
+      block: "start",
+    });
 
-    nombreRef.current?.focus({ preventScroll: true })
+    nombreRef.current?.focus({ preventScroll: true });
   }
 
   function handleEliminar(id) {
-    eliminarProducto(id)
+    if (!puedeModificar) return;
 
-    if (form.id === id) {
-      limpiarFormulario()
+    setError("");
+    setMensaje("");
+
+    try {
+      eliminarProducto(id);
+
+      const productosActualizados = obtenerProductos();
+      const sigueExistiendo = productosActualizados.some(
+        (producto) => producto.id === id
+      );
+
+      if (sigueExistiendo) {
+        setError("No se pudo eliminar el producto.");
+        return;
+      }
+
+      if (form.id === id) {
+        limpiarFormulario();
+      }
+
+      setProductos(productosActualizados);
+      setMensaje("Producto eliminado correctamente.");
+    } catch {
+      setError("Ocurrió un error al eliminar el producto.");
     }
-
-    cargarDatos()
-    setMensaje('')
   }
 
   function handleSubmit(evento) {
-    evento.preventDefault()
-    setError('')
-    setMensaje('')
+    evento.preventDefault();
+
+    if (!puedeModificar) return;
+
+    setError("");
+    setMensaje("");
 
     if (
       !form.nombre.trim() ||
-      form.precio === '' ||
-      form.stock === '' ||
+      String(form.precio).trim() === "" ||
+      String(form.stock).trim() === "" ||
       !form.categoria
     ) {
-      setError('Completa nombre, precio, stock y categoría.')
-      return
+      setError("Completa nombre, precio, stock y categoría.");
+      return;
     }
 
-    const precio = Number(form.precio)
-    const stock = Number(form.stock)
-    const descuento = Number(form.descuento || 0)
+    const precio = Number(form.precio);
+    const stock = Number(form.stock);
+    const descuento = Number(form.descuento || 0);
 
     if (!Number.isFinite(precio) || precio < 0) {
-      setError('El precio debe ser un número mayor o igual a cero.')
-      return
+      setError("El precio debe ser un número mayor o igual a cero.");
+      return;
     }
 
     if (!Number.isInteger(stock) || stock < 0) {
-      setError('El stock debe ser un número entero mayor o igual a cero.')
-      return
+      setError("El stock debe ser un número entero mayor o igual a cero.");
+      return;
     }
 
     if (
@@ -135,8 +160,8 @@ export const ProductsAdmin = () => {
       descuento < 0 ||
       descuento > 100
     ) {
-      setError('El descuento debe ser un número entero entre 0 y 100.')
-      return
+      setError("El descuento debe ser un número entero entre 0 y 100.");
+      return;
     }
 
     const productoGuardar = {
@@ -145,54 +170,56 @@ export const ProductsAdmin = () => {
       precio,
       stock,
       descuento,
+    };
+
+    try {
+      guardarProducto(productoGuardar);
+
+      // guardarProducto captura sus errores, por eso verificamos.
+      const guardado = obtenerProductos().find(
+        (producto) => producto.id === productoGuardar.id
+      );
+
+      if (
+        !guardado ||
+        guardado.nombre !== productoGuardar.nombre ||
+        Number(guardado.precio) !== precio ||
+        Number(guardado.stock) !== stock ||
+        Number(guardado.descuento || 0) !== descuento ||
+        guardado.categoria !== productoGuardar.categoria
+      ) {
+        setError("No se pudo guardar el producto. Revisa el almacenamiento.");
+        return;
+      }
+
+      const estabaEditando = modoEdicion;
+
+      limpiarFormulario();
+      cargarDatos();
+
+      setMensaje(
+        estabaEditando
+          ? "Producto actualizado correctamente."
+          : "Producto creado correctamente."
+      );
+    } catch {
+      setError("Ocurrió un error al guardar el producto.");
     }
-
-    guardarProducto(productoGuardar)
-
-    // Verifica la persistencia porque guardarProducto captura sus errores.
-    const guardado = obtenerProductos().find(
-      producto => producto.id === productoGuardar.id
-    )
-
-    if (
-      !guardado ||
-      guardado.nombre !== productoGuardar.nombre ||
-      Number(guardado.precio) !== precio ||
-      Number(guardado.stock) !== stock ||
-      Number(guardado.descuento || 0) !== descuento ||
-      guardado.categoria !== productoGuardar.categoria
-    ) {
-      setError('No se pudo guardar el producto. Revisa el almacenamiento.')
-      return
-    }
-
-    const estabaEditando = modoEdicion
-
-    limpiarFormulario()
-    cargarDatos()
-
-    setMensaje(
-      estabaEditando
-        ? 'Producto actualizado correctamente.'
-        : 'Producto creado correctamente.'
-    )
   }
 
   const productosMostrados = soloCriticos
-    ? productos.filter(producto => Number(producto.stock) < 5)
-    : productos
-
-  const totalProductos = productos.length
+    ? productos.filter((producto) => Number(producto.stock) < 5)
+    : productos;
 
   const stockCriticoCount = productos.filter(
-    producto => Number(producto.stock) < 5
-  ).length
+    (producto) => Number(producto.stock) < 5
+  ).length;
 
   return (
     <Container className="my-4">
       <Row className="mb-4 align-items-center">
         <Col>
-          <h2 style={{ color: '#5c3d2e', fontWeight: 'bold' }}>
+          <h2 style={{ color: "#5c3d2e", fontWeight: "bold" }}>
             Gestión de Productos
           </h2>
 
@@ -203,6 +230,25 @@ export const ProductsAdmin = () => {
         </Col>
       </Row>
 
+      {!puedeModificar && (
+        <Alert variant="info">
+          Tu acceso es de consulta. Puedes revisar los productos y
+          filtrar por stock crítico.
+        </Alert>
+      )}
+
+      {error && (
+        <Alert variant="danger" role="alert">
+          {error}
+        </Alert>
+      )}
+
+      {mensaje && (
+        <Alert variant="success" role="status">
+          {mensaje}
+        </Alert>
+      )}
+
       <Row className="mb-4 g-3">
         <Col md={6}>
           <Card className="shadow-sm border-0 bg-white text-center p-3">
@@ -212,9 +258,9 @@ export const ProductsAdmin = () => {
 
             <h3
               className="fw-bold mb-0"
-              style={{ color: '#5c3d2e' }}
+              style={{ color: "#5c3d2e" }}
             >
-              {totalProductos}
+              {productos.length}
             </h3>
           </Card>
         </Col>
@@ -232,169 +278,151 @@ export const ProductsAdmin = () => {
         </Col>
       </Row>
 
-      <Card
-        ref={formularioRef}
-        className="shadow-sm border-0 mb-4 p-4"
-        style={{ scrollMarginTop: '100px' }}
-      >
-        <h3
-          className="h5 mb-3"
-          style={{ color: '#5c3d2e' }}
+      {puedeModificar && (
+        <Card
+          ref={formularioRef}
+          className="shadow-sm border-0 mb-4 p-4"
+          style={{ scrollMarginTop: "100px" }}
         >
-          {modoEdicion
-            ? 'Editar Producto Existente'
-            : 'Registrar Nuevo Producto'}
-        </h3>
+          <h3 className="h5 mb-3" style={{ color: "#5c3d2e" }}>
+            {modoEdicion
+              ? "Editar Producto Existente"
+              : "Registrar Nuevo Producto"}
+          </h3>
 
-        {error && (
-          <Alert variant="danger" role="alert">
-            {error}
-          </Alert>
-        )}
+          <Form noValidate onSubmit={handleSubmit}>
+            <Row className="g-3">
+              <Col md={3}>
+                <Form.Group controlId="admin-producto-nombre">
+                  <Form.Label>Nombre</Form.Label>
 
-        {mensaje && (
-          <Alert variant="success" role="status">
-            {mensaje}
-          </Alert>
-        )}
+                  <Form.Control
+                    ref={nombreRef}
+                    type="text"
+                    name="nombre"
+                    placeholder="Nombre del producto"
+                    value={form.nombre}
+                    onChange={handleChange}
+                    maxLength={100}
+                    required
+                  />
+                </Form.Group>
+              </Col>
 
-        <Form noValidate onSubmit={handleSubmit}>
-          <Row className="g-3">
-            <Col md={3}>
-              <Form.Group controlId="admin-producto-nombre">
-                <Form.Label>Nombre</Form.Label>
+              <Col md={2}>
+                <Form.Group controlId="admin-producto-precio">
+                  <Form.Label>Precio</Form.Label>
 
-                <Form.Control
-                  ref={nombreRef}
-                  type="text"
-                  name="nombre"
-                  placeholder="Nombre del producto"
-                  value={form.nombre}
-                  onChange={handleChange}
-                  maxLength={100}
-                  required
-                />
-              </Form.Group>
-            </Col>
+                  <Form.Control
+                    type="number"
+                    name="precio"
+                    min={0}
+                    step="any"
+                    value={form.precio}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
 
-            <Col md={2}>
-              <Form.Group controlId="admin-producto-precio">
-                <Form.Label>Precio</Form.Label>
+              <Col md={2}>
+                <Form.Group controlId="admin-producto-stock">
+                  <Form.Label>Stock</Form.Label>
 
-                <Form.Control
-                  type="number"
-                  name="precio"
-                  min={0}
-                  step="any"
-                  value={form.precio}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
+                  <Form.Control
+                    type="number"
+                    name="stock"
+                    min={0}
+                    step={1}
+                    value={form.stock}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+              </Col>
 
-            <Col md={2}>
-              <Form.Group controlId="admin-producto-stock">
-                <Form.Label>Stock</Form.Label>
+              <Col md={2}>
+                <Form.Group controlId="admin-producto-descuento">
+                  <Form.Label>Descuento %</Form.Label>
 
-                <Form.Control
-                  type="number"
-                  name="stock"
-                  min={0}
-                  step={1}
-                  value={form.stock}
-                  onChange={handleChange}
-                  required
-                />
-              </Form.Group>
-            </Col>
+                  <Form.Control
+                    type="number"
+                    name="descuento"
+                    min={0}
+                    max={100}
+                    step={1}
+                    value={form.descuento}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+              </Col>
 
-            <Col md={2}>
-              <Form.Group controlId="admin-producto-descuento">
-                <Form.Label>Descuento %</Form.Label>
+              <Col md={3}>
+                <Form.Group controlId="admin-producto-categoria">
+                  <Form.Label>Categoría</Form.Label>
 
-                <Form.Control
-                  type="number"
-                  name="descuento"
-                  min={0}
-                  max={100}
-                  step={1}
-                  value={form.descuento}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Col>
+                  <Form.Select
+                    name="categoria"
+                    value={form.categoria}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Seleccione Categoría</option>
 
-            <Col md={3}>
-              <Form.Group controlId="admin-producto-categoria">
-                <Form.Label>Categoría</Form.Label>
+                    {categorias.map((categoria) => (
+                      <option key={categoria} value={categoria}>
+                        {categoria}
+                      </option>
+                    ))}
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
 
-                <Form.Select
-                  name="categoria"
-                  value={form.categoria}
-                  onChange={handleChange}
-                  required
+            <div className="mt-3 text-end">
+              {modoEdicion && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  className="me-2"
+                  onClick={() => {
+                    limpiarFormulario();
+                    setMensaje("");
+                  }}
                 >
-                  <option value="">Seleccione Categoría</option>
+                  Cancelar
+                </Button>
+              )}
 
-                  {categorias.map(categoria => (
-                    <option key={categoria} value={categoria}>
-                      {categoria}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-          </Row>
-
-          <div className="mt-3 text-end">
-            {modoEdicion && (
               <Button
-                type="button"
-                variant="secondary"
-                className="me-2"
-                onClick={() => {
-                  limpiarFormulario()
-                  setMensaje('')
-                }}
+                type="submit"
+                style={{ background: "#8d5524", border: "none" }}
               >
-                Cancelar
+                {modoEdicion
+                  ? "Actualizar Producto"
+                  : "Guardar Producto"}
               </Button>
-            )}
-
-            <Button
-              type="submit"
-              style={{ background: '#8d5524', border: 'none' }}
-            >
-              {modoEdicion
-                ? 'Actualizar Producto'
-                : 'Guardar Producto'}
-            </Button>
-          </div>
-        </Form>
-      </Card>
+            </div>
+          </Form>
+        </Card>
+      )}
 
       <div className="mb-3">
         <Button
           type="button"
-          variant={soloCriticos ? 'danger' : 'outline-secondary'}
-          onClick={() => setSoloCriticos(actual => !actual)}
+          variant={soloCriticos ? "danger" : "outline-secondary"}
+          onClick={() => setSoloCriticos((actual) => !actual)}
         >
           {soloCriticos
-            ? 'Ver Todos los Productos'
-            : 'Filtrar por Stock Crítico'}
+            ? "Ver Todos los Productos"
+            : "Filtrar por Stock Crítico"}
         </Button>
       </div>
 
       <Card className="shadow-sm border-0">
         <Card.Body className="p-0">
-          <Table
-            responsive
-            hover
-            striped
-            className="mb-0 align-middle"
-          >
-            <thead style={{ background: '#f8f9fa', color: '#5c3d2e' }}>
+          <Table responsive hover striped className="mb-0 align-middle">
+            <thead style={{ background: "#f8f9fa", color: "#5c3d2e" }}>
               <tr>
                 <th className="py-3 px-4">Nombre</th>
                 <th className="py-3">Precio</th>
@@ -413,22 +441,22 @@ export const ProductsAdmin = () => {
                   </td>
                 </tr>
               ) : (
-                productosMostrados.map(producto => (
+                productosMostrados.map((producto) => (
                   <tr key={producto.id}>
                     <td className="px-4 fw-bold">
                       {producto.nombre}
                     </td>
 
                     <td className="text-success fw-bold">
-                      ${Number(producto.precio).toLocaleString('es-CL')}
+                      ${Number(producto.precio).toLocaleString("es-CL")}
                     </td>
 
                     <td>
                       <span
                         className={
                           Number(producto.stock) < 5
-                            ? 'text-danger fw-bold'
-                            : ''
+                            ? "text-danger fw-bold"
+                            : ""
                         }
                       >
                         {producto.stock}
@@ -450,24 +478,32 @@ export const ProductsAdmin = () => {
                     </td>
 
                     <td className="text-center">
-                      <Button
-                        type="button"
-                        variant="outline-warning"
-                        size="sm"
-                        className="me-2"
-                        onClick={() => handleEditar(producto)}
-                      >
-                        Editar
-                      </Button>
+                      {puedeModificar ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline-warning"
+                            size="sm"
+                            className="me-2"
+                            onClick={() => handleEditar(producto)}
+                          >
+                            Editar
+                          </Button>
 
-                      <Button
-                        type="button"
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleEliminar(producto.id)}
-                      >
-                        Eliminar
-                      </Button>
+                          <Button
+                            type="button"
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleEliminar(producto.id)}
+                          >
+                            Eliminar
+                          </Button>
+                        </>
+                      ) : (
+                        <span className="text-muted">
+                          Solo consulta
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -477,7 +513,7 @@ export const ProductsAdmin = () => {
         </Card.Body>
       </Card>
     </Container>
-  )
-}
+  );
+};
 
-export default ProductsAdmin
+export default ProductsAdmin;

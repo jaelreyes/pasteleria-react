@@ -1,224 +1,400 @@
-import { useState } from 'react'
-import { Row, Col, Form, Button, Alert, Card } from 'react-bootstrap'
+import { useRef, useState } from "react";
+import { Form } from "react-bootstrap";
+import "../styles/Contacto.css";
 
 const datosIniciales = {
-  nombre: '',
-  correo: '',
-  asunto: '',
-  comentario: '',
+  nombre: "",
+  correo: "",
+  asunto: "",
+  comentario: "",
+};
+
+function IconoContacto({ tipo }) {
+  return (
+    <svg
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      {tipo === "ubicacion" && (
+        <>
+          <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" />
+          <circle cx="12" cy="10" r="3" />
+        </>
+      )}
+
+      {tipo === "telefono" && (
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" />
+      )}
+
+      {tipo === "correo" && (
+        <>
+          <rect width="20" height="16" x="2" y="4" rx="2" />
+          <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+        </>
+      )}
+
+      {tipo === "horario" && (
+        <>
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12 6 12 12 16 14" />
+        </>
+      )}
+    </svg>
+  );
+}
+
+function validarCampo(nombre, valor) {
+  const texto = valor.trim();
+
+  if (nombre === "nombre" && (texto.length < 3 || texto.length > 100)) {
+    return "El nombre debe tener entre 3 y 100 caracteres.";
+  }
+
+  if (nombre === "correo") {
+    const correoPermitido =
+      /^[^\s@]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$/i;
+
+    if (texto.length > 100 || !correoPermitido.test(texto)) {
+      return "Ingresa un correo @duoc.cl, @profesor.duoc.cl o @gmail.com, de máximo 100 caracteres.";
+    }
+  }
+
+  if (
+    nombre === "comentario" &&
+    (texto.length < 10 || texto.length > 500)
+  ) {
+    return "El comentario debe tener entre 10 y 500 caracteres.";
+  }
+
+  return "";
 }
 
 function Contacto() {
-  const [datos, setDatos] = useState(datosIniciales)
-  const [errores, setErrores] = useState({})
-  const [enviado, setEnviado] = useState(false)
+  const [datos, setDatos] = useState({ ...datosIniciales });
+  const [errores, setErrores] = useState({});
+  const [enviado, setEnviado] = useState(false);
 
-  // Actualiza el campo sin modificar directamente el estado.
+  const formularioRef = useRef(null);
+
   function actualizarCampo(evento) {
-    const { name, value } = evento.target
+    const { name, value } = evento.target;
 
-    setDatos(datosActuales => ({
-      ...datosActuales,
+    setDatos((actuales) => ({
+      ...actuales,
       [name]: value,
-    }))
+    }));
+
+    // Actualiza el mensaje mientras se corrige un campo con error.
+    if (errores[name]) {
+      setErrores((actuales) => ({
+        ...actuales,
+        [name]: validarCampo(name, value),
+      }));
+    }
   }
 
-  function validarFormulario() {
-    const nuevosErrores = {}
-    const nombre = datos.nombre.trim()
-    const correo = datos.correo.trim()
-    const comentario = datos.comentario.trim()
+  function validarAlSalir(evento) {
+    const { name, value } = evento.target;
 
-    if (nombre.length < 3 || nombre.length > 100) {
-      nuevosErrores.nombre = 'El nombre debe tener entre 3 y 100 caracteres.'
-    }
-
-    const correoPermitido =
-      /^[^\s@]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$/i
-
-    if (correo.length > 100 || !correoPermitido.test(correo)) {
-      nuevosErrores.correo =
-        'Ingresa un correo @duoc.cl, @profesor.duoc.cl o @gmail.com, de máximo 100 caracteres.'
-    }
-
-    if (comentario.length < 10 || comentario.length > 500) {
-      nuevosErrores.comentario =
-        'El comentario debe tener entre 10 y 500 caracteres.'
-    }
-
-    return nuevosErrores
+    setErrores((actuales) => ({
+      ...actuales,
+      [name]: validarCampo(name, value),
+    }));
   }
 
   function enviarMensaje(evento) {
-    evento.preventDefault()
+    evento.preventDefault();
 
-    const nuevosErrores = validarFormulario()
-    setErrores(nuevosErrores)
+    const nuevosErrores = {};
 
-    if (Object.keys(nuevosErrores).length > 0) {
-      return
+    ["nombre", "correo", "comentario"].forEach((campo) => {
+      const error = validarCampo(campo, datos[campo]);
+
+      if (error) {
+        nuevosErrores[campo] = error;
+      }
+    });
+
+    setErrores(nuevosErrores);
+
+    const primerCampoInvalido = Object.keys(nuevosErrores)[0];
+
+    if (primerCampoInvalido) {
+      formularioRef.current?.elements
+        .namedItem(primerCampoInvalido)
+        ?.focus();
+      return;
     }
 
-    // Envío simulado: todavía no existe conexión con un backend.
-    setEnviado(true)
-    setDatos(datosIniciales)
+    // Simulación académica: no envía correos ni mensajes reales.
+    setEnviado(true);
+    setDatos({ ...datosIniciales });
   }
 
   function escribirOtroMensaje() {
-    setEnviado(false)
-    setErrores({})
+    setEnviado(false);
+    setErrores({});
   }
 
   return (
-    <section>
-      <h1>Contáctanos</h1>
-      <p className="lead">
-        Estamos aquí para ayudarte con tu pedido especial.
-      </p>
+    <div className="contacto-page">
+      <section className="contacto-hero">
+        <div className="contacto-marca">
+          <img
+            src="/images/logo-completo.png"
+            className="contacto-logo"
+            alt="Pastelería 1000 Sabores"
+            width={140}
+            height={153}
+          />
+        </div>
 
-      <Row className="g-4">
-        <Col xs={12} lg={8}>
-          {enviado ? (
-            <Alert variant="success">
-              <Alert.Heading>Mensaje enviado</Alert.Heading>
-              <p>
-                Gracias por contactarnos. Te responderemos a la brevedad.
-              </p>
-              <p className="small">
-                Demostración académica: el envío es simulado.
-              </p>
+        <h1>Contáctanos</h1>
+        <p>Estamos aquí para ayudarte con tu pedido especial</p>
+      </section>
 
-              <Button
-                variant="outline-success"
-                onClick={escribirOtroMensaje}
+      <section
+        className="contacto-contenido"
+        aria-label="Formulario e información de contacto"
+      >
+        <div className="contacto-grid">
+          <div className="contacto-formulario">
+            <h2>Envíanos un Mensaje</h2>
+
+            {enviado ? (
+              <div className="contacto-exito" role="status">
+                <span className="contacto-exito-icono" aria-hidden="true">
+                  ✓
+                </span>
+
+                <h3>Mensaje Enviado</h3>
+                <p>
+                  Gracias por contactarnos. Te responderemos a la brevedad.
+                </p>
+
+                <p className="contacto-nota">
+                  Demostración académica: el envío es simulado.
+                </p>
+
+                <button
+                  type="button"
+                  className="contacto-boton-secundario"
+                  onClick={escribirOtroMensaje}
+                >
+                  Escribir otro mensaje
+                </button>
+              </div>
+            ) : (
+              <Form
+                ref={formularioRef}
+                noValidate
+                onSubmit={enviarMensaje}
               >
-                Escribir otro mensaje
-              </Button>
-            </Alert>
-          ) : (
-            <>
-              <h2>Envíanos un mensaje</h2>
-              <p>Los campos marcados con * son obligatorios.</p>
+                <p className="contacto-nota">
+                  Los campos marcados con * son obligatorios.
+                </p>
 
-              <Form noValidate onSubmit={enviarMensaje}>
-                <Form.Group className="mb-3" controlId="contacto-nombre">
+                <Form.Group
+                  className="contacto-campo-grupo"
+                  controlId="contacto-nombre"
+                >
                   <Form.Label>Nombre *</Form.Label>
+
                   <Form.Control
                     type="text"
                     name="nombre"
+                    placeholder="Tu nombre completo"
                     autoComplete="name"
                     value={datos.nombre}
                     onChange={actualizarCampo}
+                    onBlur={validarAlSalir}
                     maxLength={100}
                     required
                     isInvalid={Boolean(errores.nombre)}
+                    aria-describedby="contacto-ayuda-nombre contacto-error-nombre"
                   />
-                  <Form.Control.Feedback type="invalid">
+
+                  <small
+                    id="contacto-ayuda-nombre"
+                    className="contacto-ayuda"
+                  >
+                    Entre 3 y 100 caracteres.
+                  </small>
+
+                  <small className="contacto-contador">
+                    {datos.nombre.length}/100
+                  </small>
+
+                  <Form.Control.Feedback
+                    type="invalid"
+                    id="contacto-error-nombre"
+                  >
                     {errores.nombre}
                   </Form.Control.Feedback>
-                  <Form.Text>
-                    Entre 3 y 100 caracteres. {datos.nombre.length}/100
-                  </Form.Text>
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="contacto-correo">
-                  <Form.Label>Correo electrónico *</Form.Label>
+                <Form.Group
+                  className="contacto-campo-grupo"
+                  controlId="contacto-correo"
+                >
+                  <Form.Label>Correo Electrónico *</Form.Label>
+
                   <Form.Control
                     type="email"
                     name="correo"
+                    placeholder="tunombre@duoc.cl"
                     autoComplete="email"
                     value={datos.correo}
                     onChange={actualizarCampo}
+                    onBlur={validarAlSalir}
                     maxLength={100}
                     required
                     isInvalid={Boolean(errores.correo)}
+                    aria-describedby="contacto-ayuda-correo contacto-error-correo"
                   />
-                  <Form.Control.Feedback type="invalid">
+
+                  <small
+                    id="contacto-ayuda-correo"
+                    className="contacto-ayuda"
+                  >
+                    Solo aceptamos @duoc.cl, @profesor.duoc.cl y
+                    @gmail.com (máx. 100 caracteres).
+                  </small>
+
+                  <Form.Control.Feedback
+                    type="invalid"
+                    id="contacto-error-correo"
+                  >
                     {errores.correo}
                   </Form.Control.Feedback>
-                  <Form.Text>
-                    Solo aceptamos @duoc.cl, @profesor.duoc.cl y @gmail.com.
-                  </Form.Text>
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="contacto-asunto">
+                <Form.Group
+                  className="contacto-campo-grupo"
+                  controlId="contacto-asunto"
+                >
                   <Form.Label>Asunto</Form.Label>
+
                   <Form.Select
                     name="asunto"
                     value={datos.asunto}
                     onChange={actualizarCampo}
+                    aria-describedby="contacto-ayuda-asunto"
                   >
                     <option value="">Selecciona un asunto</option>
-                    <option value="Pedido Especial">Pedido Especial</option>
-                    <option value="Consulta General">Consulta General</option>
-                    <option value="Sugerencia">Sugerencia</option>
-                    <option value="Reclamo">Reclamo</option>
-                    <option value="Otro">Otro</option>
+                    <option value="pedido">Pedido Especial</option>
+                    <option value="consulta">Consulta General</option>
+                    <option value="sugerencia">Sugerencia</option>
+                    <option value="reclamo">Reclamo</option>
+                    <option value="otro">Otro</option>
                   </Form.Select>
-                  <Form.Text>
+
+                  <small
+                    id="contacto-ayuda-asunto"
+                    className="contacto-ayuda"
+                  >
                     Opcional: nos ayuda a derivar tu mensaje más rápido.
-                  </Form.Text>
+                  </small>
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="contacto-comentario">
+                <Form.Group
+                  className="contacto-campo-grupo"
+                  controlId="contacto-comentario"
+                >
                   <Form.Label>Comentario *</Form.Label>
+
                   <Form.Control
                     as="textarea"
                     rows={5}
                     name="comentario"
+                    placeholder="Cuéntanos qué necesitas..."
                     value={datos.comentario}
                     onChange={actualizarCampo}
+                    onBlur={validarAlSalir}
                     maxLength={500}
                     required
                     isInvalid={Boolean(errores.comentario)}
+                    aria-describedby="contacto-ayuda-comentario contacto-error-comentario"
                   />
-                  <Form.Control.Feedback type="invalid">
+
+                  <small
+                    id="contacto-ayuda-comentario"
+                    className="contacto-ayuda"
+                  >
+                    Entre 10 y 500 caracteres.
+                  </small>
+
+                  <small className="contacto-contador">
+                    {datos.comentario.length}/500
+                  </small>
+
+                  <Form.Control.Feedback
+                    type="invalid"
+                    id="contacto-error-comentario"
+                  >
                     {errores.comentario}
                   </Form.Control.Feedback>
-                  <Form.Text>
-                    Entre 10 y 500 caracteres.
-                    {' '}{datos.comentario.length}/500
-                  </Form.Text>
                 </Form.Group>
 
-                <Button type="submit" variant="primary">
-                  Enviar mensaje
-                </Button>
+                <button type="submit" className="contacto-boton-enviar">
+                  Enviar Mensaje
+                </button>
               </Form>
-            </>
-          )}
-        </Col>
+            )}
+          </div>
 
-        <Col xs={12} lg={4}>
-          <Card>
-            <Card.Body>
-              <Card.Title as="h2">Información de contacto</Card.Title>
+          <aside className="contacto-info">
+            <h2>Información de Contacto</h2>
 
-              <dl className="mb-0">
-                <dt>Ubicación</dt>
-                <dd>Av. Dulce 123, Santiago, Chile</dd>
+            <div className="contacto-info-card">
+              <IconoContacto tipo="ubicacion" />
+              <div>
+                <h3>Ubicación</h3>
+                <p>Av. Dulce 123, Santiago, Chile</p>
+              </div>
+            </div>
 
-                <dt>Teléfono</dt>
-                <dd>
+            <div className="contacto-info-card">
+              <IconoContacto tipo="telefono" />
+              <div>
+                <h3>Teléfono</h3>
+                <p>
                   <a href="tel:+56912345678">+56 9 1234 5678</a>
-                </dd>
+                </p>
+              </div>
+            </div>
 
-                <dt>Correo</dt>
-                <dd>
+            <div className="contacto-info-card">
+              <IconoContacto tipo="correo" />
+              <div>
+                <h3>Correo</h3>
+                <p>
                   <a href="mailto:contacto@1000sabores.cl">
                     contacto@1000sabores.cl
                   </a>
-                </dd>
+                </p>
+              </div>
+            </div>
 
-                <dt>Horario</dt>
-                <dd>Lunes a Domingo: 9:00 - 20:00</dd>
-              </dl>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-    </section>
-  )
+            <div className="contacto-info-card">
+              <IconoContacto tipo="horario" />
+              <div>
+                <h3>Horario</h3>
+                <p>Lunes a Domingo: 9:00 - 20:00</p>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+    </div>
+  );
 }
 
-export default Contacto
+export default Contacto;

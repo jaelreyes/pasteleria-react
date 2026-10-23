@@ -1,85 +1,223 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
-import { obtenerUsuarios } from '../data/db';
+import { useRef, useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Form, Alert } from "react-bootstrap";
+import { obtenerUsuarios } from "../data/db";
+import "../styles/Auth.css";
 
 export default function Login({ onIniciarSesion }) {
-  const [correo, setCorreo] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [errores, setErrores] = useState({});
+
+  const formularioRef = useRef(null);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    setError('');
+  function handleSubmit(evento) {
+    evento.preventDefault();
+    setError("");
 
-    const usuarios = obtenerUsuarios();
-    const usuarioEncontrado = usuarios.find(
-      u => (u.email === correo || u.correo === correo) && u.password === password
-    );
+    const correoNormalizado = correo.trim().toLowerCase();
+    const nuevosErrores = {};
 
-    if (usuarioEncontrado) {
-      onIniciarSesion(usuarioEncontrado);
-      const tipo = (usuarioEncontrado.tipo || usuarioEncontrado.rol || '').toLowerCase();
-      if (tipo === 'admin' || tipo === 'administrador' || tipo === 'vendedor') {
-        navigate('/admin/ordenes');
-      } else {
-        navigate('/');
-      }
-    } else {
-      setError('Correo o contraseña incorrectos.');
+    const correoPermitido =
+      /^[^\s@]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$/i;
+
+    if (
+      correoNormalizado.length > 100 ||
+      !correoPermitido.test(correoNormalizado)
+    ) {
+      nuevosErrores.correo =
+        "Ingresa un correo @duoc.cl, @profesor.duoc.cl o @gmail.com.";
     }
-  };
+
+    if (password.length < 4 || password.length > 10) {
+      nuevosErrores.password =
+        "La contraseña debe tener entre 4 y 10 caracteres.";
+    }
+
+    setErrores(nuevosErrores);
+
+    const primerError = Object.keys(nuevosErrores)[0];
+
+    if (primerError) {
+      formularioRef.current?.elements
+        .namedItem(primerError)
+        ?.focus();
+      return;
+    }
+
+    try {
+      const usuarios = obtenerUsuarios();
+
+      const usuarioEncontrado = usuarios.find((usuario) => {
+        const correoUsuario = String(
+          usuario.email || usuario.correo || ""
+        )
+          .trim()
+          .toLowerCase();
+
+        return (
+          correoUsuario === correoNormalizado &&
+          usuario.password === password
+        );
+      });
+
+      if (!usuarioEncontrado) {
+        setError("Correo o contraseña incorrectos.");
+        return;
+      }
+
+      onIniciarSesion(usuarioEncontrado);
+
+      const rol = String(
+        usuarioEncontrado.rol || usuarioEncontrado.tipo || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      const tienePanel = ["admin", "administrador", "vendedor"].includes(rol);
+
+      navigate(tienePanel ? "/admin/ordenes" : "/", {
+        replace: true,
+      });
+    } catch {
+      setError("No se pudo iniciar sesión. Inténtalo nuevamente.");
+    }
+  }
 
   return (
-    <Container className="my-5" style={{ maxWidth: '500px' }}>
-      <div className="text-center mb-4">
-        <h2 className="fw-bold" style={{ color: '#5c3d2e' }}>Iniciar sesión</h2>
-        <p className="text-muted">Ingresa a tu cuenta de Pastelería 1000 Sabores.</p>
-      </div>
-
-      <Card className="shadow-sm border-0 p-4">
-        {error && <Alert variant="danger">{error}</Alert>}
-        <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3" controlId="login-correo">
-            <Form.Label>Correo electrónico</Form.Label>
-            <Form.Control 
-              type="email" 
-              placeholder="tucorreo@ejemplo.com"
-              value={correo} 
-              onChange={(e) => setCorreo(e.target.value)}
-              required 
+    <div className="login-page">
+      <section
+        className="login-container"
+        aria-labelledby="login-titulo"
+      >
+        <div className="login-card">
+          <div className="login-header">
+            <img
+              src="/images/logo-completo.png"
+              className="login-logo"
+              alt="Pastelería 1000 Sabores"
+              width={150}
+              height={164}
             />
-          </Form.Group>
 
-          <Form.Group className="mb-3" controlId="login-password">
-            <Form.Label>Contraseña</Form.Label>
-            <Form.Control 
-              type="password" 
-              placeholder="••••••••"
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)}
-              required 
-            />
-          </Form.Group>
-
-          <Button 
-            type="submit" 
-            className="w-100 py-2 fw-bold text-white mb-3"
-            style={{ background: '#8b5a2b', border: 'none' }}
-          >
-            Iniciar sesión
-          </Button>
-
-          {/* Enlace para redirigir al registro de usuarios */}
-          <div className="text-center mt-3">
-            <span className="text-muted">¿No tienes una cuenta? </span>
-            <Link to="/registro" className="fw-bold text-decoration-none" style={{ color: '#8b5a2b' }}>
-              Regístrate aquí
-            </Link>
+            <h1 id="login-titulo">Iniciar Sesión</h1>
+            <p>Ingresa tus credenciales para continuar</p>
           </div>
-        </Form>
-      </Card>
-    </Container>
+
+          {error && (
+            <Alert variant="danger" role="alert">
+              {error}
+            </Alert>
+          )}
+
+          <Form
+            ref={formularioRef}
+            className="login-form"
+            onSubmit={handleSubmit}
+            noValidate
+          >
+            <Form.Group controlId="login-correo">
+              <Form.Label>Correo Electrónico *</Form.Label>
+
+              <Form.Control
+                type="email"
+                name="correo"
+                placeholder="tunombre@duoc.cl"
+                autoComplete="username"
+                maxLength={100}
+                value={correo}
+                onChange={(evento) => {
+                  setCorreo(evento.target.value);
+                  setError("");
+                  setErrores((actuales) => ({
+                    ...actuales,
+                    correo: "",
+                  }));
+                }}
+                isInvalid={Boolean(errores.correo)}
+                aria-describedby="login-ayuda-correo login-error-correo"
+                required
+              />
+
+              <small id="login-ayuda-correo" className="login-ayuda">
+                Solo @duoc.cl, @profesor.duoc.cl y @gmail.com
+                (máx. 100 caracteres).
+              </small>
+
+              <Form.Control.Feedback
+                type="invalid"
+                id="login-error-correo"
+              >
+                {errores.correo}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <Form.Group controlId="login-password">
+              <Form.Label>Contraseña *</Form.Label>
+
+              <Form.Control
+                type="password"
+                name="password"
+                placeholder="Tu contraseña"
+                autoComplete="current-password"
+                maxLength={10}
+                value={password}
+                onChange={(evento) => {
+                  setPassword(evento.target.value);
+                  setError("");
+                  setErrores((actuales) => ({
+                    ...actuales,
+                    password: "",
+                  }));
+                }}
+                isInvalid={Boolean(errores.password)}
+                aria-describedby="login-ayuda-password login-error-password"
+                required
+              />
+
+              <small id="login-ayuda-password" className="login-ayuda">
+                Entre 4 y 10 caracteres.
+              </small>
+
+              <Form.Control.Feedback
+                type="invalid"
+                id="login-error-password"
+              >
+                {errores.password}
+              </Form.Control.Feedback>
+            </Form.Group>
+
+            <button type="submit" className="login-boton">
+              Iniciar Sesión
+            </button>
+          </Form>
+
+          <div className="login-footer">
+            <p>
+              ¿No tienes cuenta?{" "}
+              <Link to="/registro">Regístrate aquí</Link>
+            </p>
+          </div>
+
+          <aside className="login-demo">
+            <h2>Cuentas de prueba</h2>
+
+            <ul>
+              <li>
+                <strong>Administrador:</strong> admin@duoc.cl / admin123
+              </li>
+              <li>
+                <strong>Vendedor:</strong> vendedor@duoc.cl / venta123
+              </li>
+              <li>
+                <strong>Cliente:</strong> cliente@gmail.com / cliente1
+              </li>
+            </ul>
+          </aside>
+        </div>
+      </section>
+    </div>
   );
 }

@@ -1,11 +1,11 @@
-import { Button, Alert } from 'react-bootstrap'
-import { Link } from 'react-router-dom'
+import { Button, Alert } from "react-bootstrap";
+import { Link } from "react-router-dom";
 import {
   calcularPrecioProducto,
   calcularTotales,
   formatearPrecio,
-} from '../utils/precios'
-import '../styles/Cart.css'
+} from "../utils/precios";
+import "../styles/Cart.css";
 
 function Cart({
   carrito,
@@ -18,7 +18,12 @@ function Cart({
   const { subtotal, ahorro, total } = calcularTotales(
     carrito,
     descuento
-  )
+  );
+
+  const cantidadTotal = carrito.reduce(
+    (suma, producto) => suma + producto.cantidad,
+    0
+  );
 
   return (
     <section className="carrito">
@@ -30,164 +35,187 @@ function Cart({
           className="carrito-aviso-descuento"
         >
           Tu beneficio de usuario es del <strong>{descuento}%</strong>.
-          {' '}
+          {" "}
           En cada producto se aplica el mayor descuento entre
           su oferta y tu beneficio.
         </Alert>
       )}
 
       {carrito.length === 0 ? (
-        <Alert variant="info">
-          Tu carrito está vacío.
-          {' '}
-          <Link to="/productos" onClick={onContinuar}>
+        <div className="carrito-vacio">
+          <h3>Tu carrito está vacío</h3>
+          <p>Descubre nuestros productos y encuentra tu favorito.</p>
+
+          <Link
+            to="/productos"
+            className="btn carrito-btn-continuar"
+            onClick={onContinuar}
+          >
             Explorar productos
           </Link>
-        </Alert>
+        </div>
       ) : (
-        <ul className="carrito-lista">
-          {carrito.map(producto => {
-            const {
-              precioBase,
-              descuento: descuentoAplicado,
-              precioFinal,
-            } = calcularPrecioProducto(producto, descuento)
+        <div className="carrito-layout">
+          <div className="carrito-productos">
+            <ul className="carrito-lista">
+              {carrito.map((producto) => {
+                const {
+                  precioBase,
+                  descuento: descuentoAplicado,
+                  precioFinal,
+                } = calcularPrecioProducto(producto, descuento);
 
-            return (
-              <li key={producto.id} className="carrito-item">
-                <img
-                  src={producto.imagen}
-                  alt={producto.nombre}
-                  className="carrito-imagen"
-                />
+                return (
+                  <li key={producto.id} className="carrito-item">
+                    <img
+                      src={producto.imagen}
+                      alt={producto.nombre}
+                      className="carrito-imagen"
+                    />
 
-                <div className="carrito-info">
-                  <h3>{producto.nombre}</h3>
+                    <div className="carrito-info">
+                      <h3>{producto.nombre}</h3>
 
-                  {descuentoAplicado > 0 ? (
-                    <p className="carrito-precio">
-                      Precio unitario:{' '}
-                      <del className="carrito-precio-original">
-                        {formatearPrecio(precioBase)}
-                      </del>{' '}
-                      <strong>
-                        {formatearPrecio(precioFinal)}
-                      </strong>{' '}
-                      <span className="carrito-descuento">
-                        -{descuentoAplicado}%
+                      <p className="carrito-categoria">
+                        {producto.categoria}
+                      </p>
+
+                      <p className="carrito-precio">
+                        {descuentoAplicado > 0 ? (
+                          <>
+                            <del className="carrito-precio-original">
+                              {formatearPrecio(precioBase)}
+                            </del>
+                            {" "}
+                            <strong>
+                              {formatearPrecio(precioFinal)}
+                            </strong>
+                            {" "}
+                            <span className="carrito-descuento">
+                              -{descuentoAplicado}%
+                            </span>
+                          </>
+                        ) : (
+                          formatearPrecio(precioBase)
+                        )}
+                      </p>
+                    </div>
+
+                    <div
+                      className="carrito-cantidad"
+                      role="group"
+                      aria-label={`Cantidad de ${producto.nombre}`}
+                    >
+                      <button
+                        type="button"
+                        disabled={producto.cantidad <= 1}
+                        onClick={() =>
+                          onCambiarCantidad(
+                            producto.id,
+                            producto.cantidad - 1
+                          )
+                        }
+                        aria-label={`Disminuir cantidad de ${producto.nombre}`}
+                      >
+                        −
+                      </button>
+
+                      <span aria-live="polite">
+                        {producto.cantidad}
                       </span>
+
+                      <button
+                        type="button"
+                        disabled={producto.cantidad >= producto.stock}
+                        onClick={() =>
+                          onCambiarCantidad(
+                            producto.id,
+                            producto.cantidad + 1
+                          )
+                        }
+                        aria-label={`Aumentar cantidad de ${producto.nombre}`}
+                      >
+                        +
+                      </button>
+                    </div>
+
+                    <p className="carrito-subtotal">
+                      <small>Subtotal</small>
+                      {formatearPrecio(
+                        precioFinal * producto.cantidad
+                      )}
                     </p>
-                  ) : (
-                    <p className="carrito-precio">
-                      Precio unitario: {formatearPrecio(precioBase)}
-                    </p>
-                  )}
 
-                  <div
-                    className="carrito-cantidad"
-                    role="group"
-                    aria-label={`Cantidad de ${producto.nombre}`}
-                  >
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      disabled={producto.cantidad <= 1}
-                      onClick={() =>
-                        onCambiarCantidad(
-                          producto.id,
-                          producto.cantidad - 1
-                        )
-                      }
-                      aria-label={`Disminuir cantidad de ${producto.nombre}`}
+                    <button
+                      type="button"
+                      className="carrito-eliminar"
+                      onClick={() => onEliminar(producto.id)}
+                      aria-label={`Eliminar ${producto.nombre}`}
                     >
-                      −
-                    </Button>
+                      Eliminar
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
 
-                    <span aria-live="polite">
-                      {producto.cantidad}
-                    </span>
+            <div className="carrito-productos-acciones">
+              <Link to="/productos" onClick={onContinuar}>
+                ← Seguir comprando
+              </Link>
 
-                    <Button
-                      variant="outline-secondary"
-                      size="sm"
-                      disabled={
-                        producto.cantidad >= producto.stock
-                      }
-                      onClick={() =>
-                        onCambiarCantidad(
-                          producto.id,
-                          producto.cantidad + 1
-                        )
-                      }
-                      aria-label={`Aumentar cantidad de ${producto.nombre}`}
-                    >
-                      +
-                    </Button>
-                  </div>
+              <button
+                type="button"
+                className="carrito-vaciar"
+                onClick={onVaciar}
+              >
+                Vaciar carrito
+              </button>
+            </div>
+          </div>
 
-                  <p className="carrito-subtotal">
-                    Subtotal:{' '}
-                    {formatearPrecio(
-                      precioFinal * producto.cantidad
-                    )}
-                  </p>
+          <aside
+            className="carrito-resumen"
+            aria-label="Resumen de compra"
+          >
+            <h3>Resumen de compra</h3>
 
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => onEliminar(producto.id)}
-                  >
-                    Eliminar
-                  </Button>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      )}
-
-      <div className="carrito-resumen">
-        {ahorro > 0 && (
-          <>
             <p className="carrito-linea">
-              Subtotal sin descuentos:{' '}
+              Productos
+              <span>{cantidadTotal}</span>
+            </p>
+
+            <p className="carrito-linea">
+              Subtotal sin descuentos
               <span>{formatearPrecio(subtotal)}</span>
             </p>
 
-            <p className="carrito-linea carrito-ahorro">
-              Ahorro total:{' '}
-              <span>-{formatearPrecio(ahorro)}</span>
+            {ahorro > 0 && (
+              <p className="carrito-linea carrito-ahorro">
+                Ahorro total
+                <span>-{formatearPrecio(ahorro)}</span>
+              </p>
+            )}
+
+            <p className="carrito-total">
+              Total
+              <strong>{formatearPrecio(total)}</strong>
             </p>
-          </>
-        )}
 
-        <p className="carrito-total">
-          Total: <strong>{formatearPrecio(total)}</strong>
-        </p>
-
-        <div className="carrito-acciones">
-          <Button
-            variant="outline-danger"
-            onClick={onVaciar}
-            disabled={carrito.length === 0}
-          >
-            Vaciar carrito
-          </Button>
-
-          <Button
-            as={Link}
-            to="/checkout"
-            className="carrito-btn-continuar"
-            variant="primary"
-            disabled={carrito.length === 0}
-            onClick={onContinuar}
-          >
-            Continuar compra
-          </Button>
+            <Button
+              as={Link}
+              to="/checkout"
+              className="carrito-btn-continuar"
+              variant="primary"
+              onClick={onContinuar}
+            >
+              Continuar compra
+            </Button>
+          </aside>
         </div>
-      </div>
+      )}
     </section>
-  )
+  );
 }
 
-export default Cart
+export default Cart;

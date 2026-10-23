@@ -1,155 +1,202 @@
-import { Link } from 'react-router-dom'
-import { Button, ProgressBar } from 'react-bootstrap'
-import { cargarPedido } from '../utils/pedidos'
-import { formatearPrecio } from '../utils/precios'
-import '../styles/Pedido.css'
+import { useState } from "react";
+import { Link } from "react-router-dom";
+import { Alert, Button, Badge } from "react-bootstrap";
+import { obtenerOrdenes, obtenerUsuarioActivo } from "../data/db";
+import { formatearPrecio } from "../utils/precios";
+import "../styles/Pedido.css";
 
-const ETAPAS_ENVIO = [
-  {
-    nombre: 'Pedido recibido',
-    icono: '📝',
-    detalle:
-      'Hemos recibido tu pedido y confirmado el pago. Estamos preparando tus dulces.',
-  },
-  {
-    nombre: 'En preparación',
-    icono: '🧁',
-    detalle:
-      'Nuestros reposteros están elaborando tus productos con mucho cariño.',
-  },
-  {
-    nombre: 'Enviado',
-    icono: '🚚',
-    detalle:
-      'Tu pedido salió de nuestra pastelería. Lo recibirás en la fecha estimada.',
-  },
-  {
-    nombre: 'Entregado',
-    icono: '🎁',
-    detalle:
-      '¡Tu pedido fue entregado! Disfruta cada bocado de Pastelería 1000 Sabores.',
-  },
-]
+const ESTADOS = {
+  pendiente: { texto: "Pendiente", color: "secondary" },
+  procesando: { texto: "En preparación", color: "warning" },
+  completado: { texto: "Completado", color: "success" },
+  cancelado: { texto: "Cancelado", color: "danger" },
+};
+
+function normalizarCorreo(correo) {
+  return String(correo || "").trim().toLowerCase();
+}
 
 function Pedido() {
-  const pedido = cargarPedido()
+  const [ordenes, setOrdenes] = useState(() => obtenerOrdenes());
+  const usuario = obtenerUsuarioActivo();
 
-  if (!pedido) {
-    return (
-      <section className="pedido-vacio">
-        <h1>Aún no tienes pedidos</h1>
-        <p>
-          Cuando realices una compra podrás seguir aquí el estado de tu
-          pedido.
-        </p>
-        <Button as={Link} to="/productos" className="carrito-btn-continuar">
-          Ir a la tienda
-        </Button>
-      </section>
-    )
+  const correoUsuario = normalizarCorreo(
+    usuario?.correo || usuario?.email
+  );
+
+  // Con sesión, muestra únicamente las órdenes del usuario.
+  // Sin sesión, muestra las compras de este navegador para la demostración.
+  const pedidos = ordenes
+    .filter((orden) => {
+      if (!usuario) return true;
+
+      return (
+        correoUsuario !== "" &&
+        normalizarCorreo(orden.email || orden.correo) === correoUsuario
+      );
+    })
+    .slice()
+    .reverse();
+
+  function actualizarPedidos() {
+    setOrdenes(obtenerOrdenes());
   }
-
-  const ultimaEtapa = ETAPAS_ENVIO.length - 1
-  const pasoActual = Math.min(pedido.pasoActual || 0, ultimaEtapa)
-  const etapa = ETAPAS_ENVIO[pasoActual]
-  const avance = Math.round((pasoActual / ultimaEtapa) * 100)
 
   return (
     <section className="pedido">
       <h1>Mis pedidos</h1>
-      <p className="pedido-subtitulo">Sigue el estado de tu envío.</p>
 
-      <div className="pedido-panel">
-        <div className="pedido-cabecera">
-          <div>
-            <span className="pedido-badge">
-              {pasoActual === ultimaEtapa ? 'Entregado' : 'En curso'}
-            </span>
-            <h2>Seguimiento de tu pedido</h2>
-            <p>
-              Pedido <strong>{pedido.numero}</strong> · realizado el{' '}
-              {pedido.fecha}
-            </p>
-          </div>
+      <p className="pedido-subtitulo">
+        Revisa tus compras y el estado de cada pedido.
+      </p>
 
-          <div className="pedido-entrega">
-            <span>Entrega estimada</span>
-            <strong>{pedido.fechaEntrega}</strong>
-          </div>
-        </div>
+      {!usuario && (
+        <Alert variant="info">
+          Estás viendo las compras guardadas en este navegador.
+          {" "}
+          <Link to="/login">Inicia sesión</Link> para consultar las
+          asociadas a tu correo.
+        </Alert>
+      )}
 
-        <ProgressBar
-          now={avance}
-          label={`${avance}%`}
-          className="pedido-progreso"
-        />
+      <div className="pedido-acciones mb-4">
+        <Button
+          variant="outline-secondary"
+          onClick={actualizarPedidos}
+        >
+          Actualizar pedidos
+        </Button>
 
-        <ol className="pedido-etapas">
-          {ETAPAS_ENVIO.map((item, indice) => {
-            let clase = 'pedido-etapa'
-            if (indice < pasoActual) clase += ' completa'
-            if (indice === pasoActual) clase += ' actual'
-
-            return (
-              <li key={item.nombre} className={clase}>
-                <span className="pedido-etapa-icono">{item.icono}</span>
-                <span>{item.nombre}</span>
-              </li>
-            )
-          })}
-        </ol>
-
-        <div className="pedido-grid">
-          <div className="pedido-tarjeta">
-            <h3>Productos del pedido</h3>
-
-            <ul className="pedido-productos">
-              {pedido.productos.map(producto => (
-                <li key={producto.id}>
-                  <img src={producto.imagen} alt={producto.nombre} />
-                  <span>
-                    {producto.nombre}
-                    <small>
-                      {producto.cantidad} × {formatearPrecio(producto.precioFinal)}
-                    </small>
-                  </span>
-                  <strong>
-                    {formatearPrecio(producto.precioFinal * producto.cantidad)}
-                  </strong>
-                </li>
-              ))}
-            </ul>
-
-            {pedido.ahorro > 0 && (
-              <p className="pedido-ahorro">
-                Ahorraste {formatearPrecio(pedido.ahorro)} ({pedido.descuento}%
-                de descuento)
-              </p>
-            )}
-
-            <p className="pedido-total">
-              Total pagado <strong>{formatearPrecio(pedido.total)}</strong>
-            </p>
-          </div>
-
-          <div className="pedido-tarjeta">
-            <h3>Estado actual</h3>
-            <p className="pedido-estado">
-              <span>{etapa.icono}</span> <strong>{etapa.nombre}</strong>
-            </p>
-            <p>{etapa.detalle}</p>
-          </div>
-        </div>
-
-        <div className="pedido-acciones">
-          <Button as={Link} to="/productos" className="carrito-btn-continuar">
-            Seguir comprando
-          </Button>
-          <Link to="/contacto">¿Dudas con tu envío? Contáctanos</Link>
-        </div>
+        <Link to="/productos">Seguir comprando</Link>
       </div>
+
+      {pedidos.length === 0 ? (
+        <div className="pedido-vacio">
+          <h2>Aún no tienes pedidos</h2>
+          <p>Cuando realices una compra, podrás consultarla aquí.</p>
+
+          <Button as={Link} to="/productos" variant="primary">
+            Ir a la tienda
+          </Button>
+        </div>
+      ) : (
+        pedidos.map((orden) => {
+          const estado = ESTADOS[orden.estado] || {
+            texto: orden.estado || "Pendiente",
+            color: "secondary",
+          };
+
+          const fecha = new Date(orden.fecha);
+          const fechaTexto = Number.isNaN(fecha.getTime())
+            ? "Fecha no disponible"
+            : fecha.toLocaleDateString("es-CL");
+
+          const productos = Array.isArray(orden.productos)
+            ? orden.productos
+            : [];
+
+          return (
+            <article
+              key={orden.id}
+              className="pedido-panel mb-4"
+            >
+              <div className="pedido-cabecera">
+                <div>
+                  <Badge bg={estado.color}>{estado.texto}</Badge>
+
+                  <h2 className="h4 mt-3">Pedido {orden.id}</h2>
+                  <p>Realizado el {fechaTexto}</p>
+                </div>
+              </div>
+
+              <div className="pedido-grid">
+                <div className="pedido-tarjeta">
+                  <h3>Productos del pedido</h3>
+
+                  {productos.length === 0 ? (
+                    <p>
+                      Esta orden antigua no tiene un detalle de productos
+                      guardado.
+                    </p>
+                  ) : (
+                    <ul className="pedido-productos">
+                      {productos.map((producto) => (
+                        <li key={producto.id}>
+                          <img
+                            src={producto.imagen}
+                            alt={producto.nombre}
+                          />
+
+                          <span>
+                            {producto.nombre}
+
+                            <small>
+                              {producto.cantidad} ×{" "}
+                              {formatearPrecio(producto.precioFinal)}
+                            </small>
+                          </span>
+
+                          <strong>
+                            {formatearPrecio(
+                              producto.precioFinal * producto.cantidad
+                            )}
+                          </strong>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {orden.ahorro > 0 && (
+                    <p className="pedido-ahorro">
+                      Ahorraste {formatearPrecio(orden.ahorro)}
+                    </p>
+                  )}
+
+                  <p className="pedido-total">
+                    Total de la compra
+                    <strong>{formatearPrecio(orden.total)}</strong>
+                  </p>
+                </div>
+
+                <div className="pedido-tarjeta">
+                  <h3>Datos de despacho</h3>
+
+                  <p>
+                    <strong>Nombre:</strong> {orden.nombre}
+                  </p>
+
+                  <p>
+                    <strong>Correo:</strong>{" "}
+                    {orden.email || orden.correo}
+                  </p>
+
+                  <p>
+                    <strong>Dirección:</strong> {orden.direccion}
+                  </p>
+
+                  <p>
+                    <strong>Teléfono:</strong> {orden.telefono || "Sin registrar"}
+                  </p>
+
+                  {orden.pagoSimulado && (
+                    <p className="text-muted">
+                      Compra académica con pago simulado.
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="pedido-acciones">
+                <Link to="/contacto">
+                  ¿Dudas con tu pedido? Contáctanos
+                </Link>
+              </div>
+            </article>
+          );
+        })
+      )}
     </section>
-  )
+  );
 }
 
-export default Pedido
+export default Pedido;

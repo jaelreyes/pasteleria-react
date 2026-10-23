@@ -1,39 +1,50 @@
-import { useState } from 'react'
+import { useState } from "react";
 import {
   Navigate,
   Routes,
   Route,
   Link,
   useLocation,
-} from 'react-router-dom'
+} from "react-router-dom";
 import {
   puedeEntrarAlPanel,
   obtenerUsuarioActivo,
-} from '../data/db'
-import { Navbar, Nav, Container } from 'react-bootstrap'
+} from "../data/db";
+import { Navbar, Nav, Container } from "react-bootstrap";
 
-import OrdersAdmin from './pages/OrdersAdmin'
-import UsersAdmin from './pages/UsersAdmin'
-import AdminProfile from './pages/AdminProfile'
-import { ProductsAdmin } from '../pages/ProductsAdmin'
+import OrdersAdmin from "./pages/OrdersAdmin";
+import UsersAdmin from "./pages/UsersAdmin";
+import AdminProfile from "./pages/AdminProfile";
+import { ProductsAdmin } from "../pages/ProductsAdmin";
 
 export function AdminRoutes() {
-  const autorizado = puedeEntrarAlPanel()
-  const usuario = obtenerUsuarioActivo()
-  const location = useLocation()
-  const [expanded, setExpanded] = useState(false)
+  const usuario = obtenerUsuarioActivo();
+  const autorizado = puedeEntrarAlPanel();
+  const location = useLocation();
+
+  const [expanded, setExpanded] = useState(false);
+
+  const rol = String(usuario?.rol || usuario?.tipo || "")
+    .trim()
+    .toLowerCase();
+
+  const esAdministrador =
+    rol === "admin" || rol === "administrador";
 
   if (!autorizado) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
 
   function cerrarMenu() {
-    setExpanded(false)
+    setExpanded(false);
   }
 
   function claseEnlace(seccion) {
-    const activo = location.pathname.startsWith(`/admin/${seccion}`)
-    return `fw-semibold ${activo ? 'text-primary' : 'text-dark'}`
+    const activo = location.pathname.startsWith(`/admin/${seccion}`);
+
+    return `fw-semibold ${
+      activo ? "text-primary" : "text-dark"
+    }`;
   }
 
   return (
@@ -48,9 +59,9 @@ export function AdminRoutes() {
         <Container>
           <Navbar.Brand
             className="fw-bold"
-            style={{ color: '#5c3d2e' }}
+            style={{ color: "#5c3d2e" }}
           >
-            🍰 Panel Admin ({usuario?.tipo || usuario?.rol || 'Admin'})
+            🍰 Panel {esAdministrador ? "Administrador" : "Vendedor"}
           </Navbar.Brand>
 
           <Navbar.Toggle
@@ -67,7 +78,7 @@ export function AdminRoutes() {
                 as={Link}
                 to="/admin/ordenes"
                 onClick={cerrarMenu}
-                className={claseEnlace('ordenes')}
+                className={claseEnlace("ordenes")}
               >
                 📋 Órdenes
               </Nav.Link>
@@ -76,25 +87,27 @@ export function AdminRoutes() {
                 as={Link}
                 to="/admin/productos"
                 onClick={cerrarMenu}
-                className={claseEnlace('productos')}
+                className={claseEnlace("productos")}
               >
                 🍰 Productos
               </Nav.Link>
 
-              <Nav.Link
-                as={Link}
-                to="/admin/usuarios"
-                onClick={cerrarMenu}
-                className={claseEnlace('usuarios')}
-              >
-                👥 Usuarios
-              </Nav.Link>
+              {esAdministrador && (
+                <Nav.Link
+                  as={Link}
+                  to="/admin/usuarios"
+                  onClick={cerrarMenu}
+                  className={claseEnlace("usuarios")}
+                >
+                  👥 Usuarios
+                </Nav.Link>
+              )}
 
               <Nav.Link
                 as={Link}
                 to="/admin/perfil"
                 onClick={cerrarMenu}
-                className={claseEnlace('perfil')}
+                className={claseEnlace("perfil")}
               >
                 👤 Perfil
               </Nav.Link>
@@ -105,7 +118,7 @@ export function AdminRoutes() {
                 onClick={cerrarMenu}
                 className="text-danger fw-semibold ms-md-3"
               >
-                ← Volver a la Tienda
+                ← Volver a la tienda
               </Nav.Link>
             </Nav>
           </Navbar.Collapse>
@@ -118,9 +131,32 @@ export function AdminRoutes() {
           element={<Navigate to="/admin/ordenes" replace />}
         />
 
-        <Route path="ordenes" element={<OrdersAdmin />} />
-        <Route path="productos" element={<ProductsAdmin />} />
-        <Route path="usuarios" element={<UsersAdmin />} />
+        {/* Administrador y vendedor pueden cambiar estados. */}
+        <Route
+          path="ordenes"
+          element={<OrdersAdmin puedeModificar={true} />}
+        />
+
+        {/* Solo el administrador modifica productos. */}
+        <Route
+          path="productos"
+          element={
+            <ProductsAdmin puedeModificar={esAdministrador} />
+          }
+        />
+
+        {/* Usuarios está reservado al administrador. */}
+        <Route
+          path="usuarios"
+          element={
+            esAdministrador ? (
+              <UsersAdmin />
+            ) : (
+              <Navigate to="/admin/ordenes" replace />
+            )
+          }
+        />
+
         <Route path="perfil" element={<AdminProfile />} />
 
         <Route
@@ -128,13 +164,15 @@ export function AdminRoutes() {
           element={
             <Container className="my-4">
               <h2>Página del panel no encontrada</h2>
-              <Link to="/admin/ordenes">Volver a Órdenes</Link>
+              <Link to="/admin/ordenes">
+                Volver a Órdenes
+              </Link>
             </Container>
           }
         />
       </Routes>
     </div>
-  )
+  );
 }
 
-export default AdminRoutes
+export default AdminRoutes;
