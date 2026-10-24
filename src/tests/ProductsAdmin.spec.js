@@ -21,7 +21,12 @@ const productoInicial = {
 };
 
 function dibujarAdministrador() {
-  render(<ProductsAdmin puedeModificar={true} />);
+  render(
+    <ProductsAdmin
+      puedeModificar={true}
+      modo="listado"
+    />
+  );
 }
 
 function escribir(etiqueta, valor) {
@@ -62,7 +67,6 @@ describe("ProductsAdmin", () => {
       }
     );
 
-    // Evita mover la pantalla real durante las pruebas.
     spyOn(Element.prototype, "scrollIntoView").and.stub();
   });
 
@@ -83,7 +87,6 @@ describe("ProductsAdmin", () => {
     expect(nombre.value).toBe("Torta de Chocolate");
     expect(screen.getByLabelText("Precio").value).toBe("45000");
     expect(screen.getByLabelText("Stock").value).toBe("5");
-
     expect(screen.getByLabelText("Categoría").value).toBe(
       "Tortas Cuadradas"
     );
@@ -110,7 +113,7 @@ describe("ProductsAdmin", () => {
       name: /Torta de Chocolate/,
     });
 
-    expect(within(fila).getByText("Crítico")).toBeTruthy();
+    expect(within(fila).getByText("Agotado")).toBeTruthy();
   });
 
   it("rechaza un stock negativo sin modificar el catálogo", () => {
@@ -154,11 +157,12 @@ describe("ProductsAdmin", () => {
       screen.getByRole("button", { name: "Cancelar" })
     );
 
-    expect(screen.getByLabelText("Nombre").value).toBe("");
+    // El formulario se cierra y vuelve el listado.
+    expect(screen.queryByLabelText("Nombre")).toBeNull();
 
     expect(
       screen.getByRole("heading", {
-        name: "Registrar Nuevo Producto",
+        name: "Listado de Productos",
       })
     ).toBeTruthy();
 
@@ -167,6 +171,13 @@ describe("ProductsAdmin", () => {
     ]);
 
     expect(localStorage.setItem).not.toHaveBeenCalled();
+
+    // Al editar otra vez, se recupera el nombre original.
+    editarProducto();
+
+    expect(screen.getByLabelText("Nombre").value).toBe(
+      "Torta de Chocolate"
+    );
   });
 
   it("informa cuando falla el guardado y mantiene el formulario", () => {
@@ -190,11 +201,20 @@ describe("ProductsAdmin", () => {
     ]);
   });
 
-  it("permite al vendedor consultar sin mostrar controles de modificación", () => {
-    render(<ProductsAdmin puedeModificar={false} />);
+  it("permite al vendedor consultar sin controles de modificación", () => {
+    render(
+      <ProductsAdmin
+        puedeModificar={false}
+        modo="listado"
+      />
+    );
 
     expect(screen.getByText("Torta de Chocolate")).toBeTruthy();
     expect(screen.getByText("Solo consulta")).toBeTruthy();
+
+    expect(
+      screen.getByRole("button", { name: "Ver detalle" })
+    ).toBeTruthy();
 
     expect(
       screen.queryByRole("button", { name: "Editar", exact: true })
@@ -209,7 +229,6 @@ describe("ProductsAdmin", () => {
     ).toBeNull();
 
     expect(screen.queryByLabelText("Nombre")).toBeNull();
-
     expect(localStorage.setItem).not.toHaveBeenCalled();
   });
 });

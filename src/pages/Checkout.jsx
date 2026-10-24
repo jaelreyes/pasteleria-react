@@ -98,7 +98,7 @@ export default function Checkout({
         direccion,
         metodoPago: formData.metodoPago,
         fecha: new Date().toISOString(),
-        estado: 'completado',
+        estado: 'pendiente',
         pagoSimulado: true,
         descuentoUsuario: descuento,
         subtotal,

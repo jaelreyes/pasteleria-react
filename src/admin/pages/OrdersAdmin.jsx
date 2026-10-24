@@ -3,47 +3,52 @@ import {
   obtenerOrdenes,
   actualizarEstadoOrden,
 } from "../../data/db";
-import {
-  Table,
-  Container,
-  Row,
-  Col,
-  Card,
-  Badge,
-  Form,
-  Button,
-  Alert,
-} from "react-bootstrap";
+import { Form, Button, Alert } from "react-bootstrap";
+import "../../styles/OrdersAdmin.css";
 
-const ESTADOS = [
-  "pendiente",
-  "procesando",
-  "completado",
-  "cancelado",
-];
+const ESTADOS = {
+  pendiente: "Pendiente",
+  procesando: "En preparación",
+  completado: "Completado",
+  cancelado: "Cancelado",
+};
+
+function estadoOrden(orden) {
+  return orden.estado || "pendiente";
+}
 
 function formatearMonto(valor) {
   return `$${Number(valor || 0).toLocaleString("es-CL")}`;
 }
 
-function escaparHTML(valor) {
-  return String(valor ?? "").replace(/[&<>"']/g, (caracter) => {
-    const equivalencias = {
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    };
+function formatearFecha(valor) {
+  if (!valor) return "Sin fecha";
 
-    return equivalencias[caracter];
-  });
+  const fecha = new Date(valor);
+
+  return Number.isNaN(fecha.getTime())
+    ? "Sin fecha"
+    : fecha.toLocaleDateString("es-CL");
+}
+
+function escaparHTML(valor) {
+  const equivalencias = {
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  };
+
+  return String(valor ?? "").replace(
+    /[&<>"']/g,
+    (caracter) => equivalencias[caracter]
+  );
 }
 
 function celdaCSV(valor) {
   let texto = String(valor ?? "");
 
-  // Evita interpretar texto como una fórmula al abrir la planilla.
   if (/^\s*[=+\-@]/.test(texto)) {
     texto = `'${texto}`;
   }
@@ -54,11 +59,27 @@ function celdaCSV(valor) {
 export function OrdersAdmin({ puedeModificar = false }) {
   const [ordenes, setOrdenes] = useState(() => obtenerOrdenes());
   const [filtroEstado, setFiltroEstado] = useState("");
+  const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
+  function actualizarListado() {
+    try {
+      setOrdenes(obtenerOrdenes());
+      setError("");
+      setMensaje("Listado actualizado.");
+    } catch {
+      setError("No se pudo actualizar el listado.");
+    }
+  }
+
   function cambiarEstado(id, nuevoEstado) {
-    if (!puedeModificar || !ESTADOS.includes(nuevoEstado)) return;
+    if (
+      !puedeModificar ||
+      !Object.prototype.hasOwnProperty.call(ESTADOS, nuevoEstado)
+    ) {
+      return;
+    }
 
     setError("");
     setMensaje("");
@@ -67,11 +88,11 @@ export function OrdersAdmin({ puedeModificar = false }) {
       actualizarEstadoOrden(id, nuevoEstado);
 
       const actualizadas = obtenerOrdenes();
-      const ordenActualizada = actualizadas.find(
+      const actualizada = actualizadas.find(
         (orden) => String(orden.id) === String(id)
       );
 
-      if (!ordenActualizada || ordenActualizada.estado !== nuevoEstado) {
+      if (!actualizada || actualizada.estado !== nuevoEstado) {
         setError("No se pudo actualizar el estado de la orden.");
         return;
       }
@@ -83,20 +104,9 @@ export function OrdersAdmin({ puedeModificar = false }) {
     }
   }
 
-  function obtenerColorBadge(estado) {
-    switch (estado) {
-      case "completado":
-        return "success";
-      case "procesando":
-        return "warning";
-      case "cancelado":
-        return "danger";
-      default:
-        return "secondary";
-    }
-  }
-
   function exportarCSV() {
+    setError("");
+
     const actuales = obtenerOrdenes();
 
     if (actuales.length === 0) {
@@ -104,16 +114,16 @@ export function OrdersAdmin({ puedeModificar = false }) {
       return;
     }
 
-    setError("");
-
     const filas = [
-      ["ID", "Cliente", "Correo", "Total", "Estado"],
+      ["ID", "Fecha", "Cliente", "Correo", "Dirección", "Total", "Estado"],
       ...actuales.map((orden) => [
         orden.id,
+        formatearFecha(orden.fecha),
         orden.nombre,
         orden.email || orden.correo,
+        orden.direccion,
         Number(orden.total) || 0,
-        orden.estado || "pendiente",
+        estadoOrden(orden),
       ]),
     ];
 
@@ -142,60 +152,60 @@ export function OrdersAdmin({ puedeModificar = false }) {
     setError("");
 
     const actuales = obtenerOrdenes();
-    const montoTotal = actuales.reduce(
-      (suma, orden) => suma + (Number(orden.total) || 0),
-      0
-    );
 
-    const ventana = window.open("", "", "height=700,width=900");
+    if (actuales.length === 0) {
+      setError("No hay órdenes para exportar.");
+      return;
+    }
+
+    const ventana = window.open("", "", "height=700,width=1000");
 
     if (!ventana) {
       setError(
-        "El navegador bloqueó la ventana del reporte. Permite las ventanas emergentes e inténtalo nuevamente."
+        "Permite las ventanas emergentes del navegador para abrir el reporte."
       );
       return;
     }
 
-    const filas = actuales.length
-      ? actuales
-          .map(
-            (orden) => `
-              <tr>
-                <td>${escaparHTML(orden.id)}</td>
-                <td>${escaparHTML(orden.nombre)}</td>
-                <td>${escaparHTML(orden.email || orden.correo)}</td>
-                <td>${escaparHTML(orden.direccion || "Sin registrar")}</td>
-                <td>${escaparHTML(formatearMonto(orden.total))}</td>
-                <td>${escaparHTML(orden.estado || "pendiente")}</td>
-              </tr>
-            `
-          )
-          .join("")
-      : `<tr><td colspan="6">No hay órdenes registradas.</td></tr>`;
+    const filas = actuales
+      .map(
+        (orden) => `
+          <tr>
+            <td>${escaparHTML(orden.id)}</td>
+            <td>${escaparHTML(formatearFecha(orden.fecha))}</td>
+            <td>${escaparHTML(orden.nombre)}</td>
+            <td>${escaparHTML(orden.email || orden.correo)}</td>
+            <td>${escaparHTML(orden.direccion)}</td>
+            <td>${escaparHTML(formatearMonto(orden.total))}</td>
+            <td>${escaparHTML(
+              ESTADOS[estadoOrden(orden)] || estadoOrden(orden)
+            )}</td>
+          </tr>
+        `
+      )
+      .join("");
+
+    const monto = actuales.reduce(
+      (suma, orden) => suma + (Number(orden.total) || 0),
+      0
+    );
 
     ventana.document.write(`
       <!doctype html>
       <html lang="es">
         <head>
           <meta charset="UTF-8">
-          <title>Reporte de Órdenes - Pastelería 1000 Sabores</title>
+          <title>Reporte de Órdenes</title>
           <style>
             body {
               font-family: Arial, sans-serif;
-              color: #333;
+              color: #5d4037;
               padding: 20px;
             }
 
-            h2 {
-              color: #5c3d2e;
-              border-bottom: 2px solid #5c3d2e;
-              padding-bottom: 8px;
-            }
-
-            .resumen {
-              padding: 15px;
-              background: #f8f9fa;
-              margin-bottom: 20px;
+            h1 {
+              font-size: 24px;
+              color: #8b4513;
             }
 
             table {
@@ -205,40 +215,34 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
             th, td {
               border: 1px solid #ddd;
-              padding: 10px;
+              padding: 8px;
               text-align: left;
-              font-size: 12px;
+              font-size: 11px;
               overflow-wrap: anywhere;
             }
 
             th {
-              background: #5c3d2e;
-              color: white;
+              background: #fff5e1;
             }
 
-            tr:nth-child(even) {
-              background: #f9f9f9;
+            @page {
+              size: landscape;
+              margin: 15mm;
             }
           </style>
         </head>
 
         <body>
-          <h2>Reporte General de Órdenes</h2>
-
-          <p>
-            Fecha de emisión:
-            ${new Date().toLocaleDateString("es-CL")}
-          </p>
-
-          <div class="resumen">
-            <p>Total de órdenes: ${actuales.length}</p>
-            <p>Monto total de órdenes: ${formatearMonto(montoTotal)}</p>
-          </div>
+          <h1>Órdenes — Pastelería 1000 Sabores</h1>
+          <p>Fecha: ${new Date().toLocaleDateString("es-CL")}</p>
+          <p>Total de órdenes: ${actuales.length}</p>
+          <p>Monto total registrado: ${formatearMonto(monto)}</p>
 
           <table>
             <thead>
               <tr>
                 <th>ID</th>
+                <th>Fecha</th>
                 <th>Cliente</th>
                 <th>Correo</th>
                 <th>Dirección</th>
@@ -246,7 +250,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
                 <th>Estado</th>
               </tr>
             </thead>
-
             <tbody>${filas}</tbody>
           </table>
         </body>
@@ -257,59 +260,103 @@ export function OrdersAdmin({ puedeModificar = false }) {
     ventana.focus();
 
     setTimeout(() => {
-      if (!ventana.closed) {
-        ventana.print();
-      }
+      if (!ventana.closed) ventana.print();
     }, 500);
   }
 
-  const ordenesFiltradas = ordenes.filter((orden) => {
-    if (!filtroEstado) return true;
+  const ordenesFiltradas = ordenes
+    .filter((orden) => {
+      const texto = [
+        orden.id,
+        orden.nombre,
+        orden.email || orden.correo,
+      ]
+        .join(" ")
+        .toLowerCase();
 
-    return (orden.estado || "pendiente") === filtroEstado;
-  });
+      return (
+        texto.includes(busqueda.trim().toLowerCase()) &&
+        (!filtroEstado || estadoOrden(orden) === filtroEstado)
+      );
+    })
+    .sort((a, b) => {
+      const fechaA = new Date(a.fecha).getTime() || 0;
+      const fechaB = new Date(b.fecha).getTime() || 0;
+      return fechaB - fechaA;
+    });
 
-  const totalCompletadas = ordenes.filter(
-    (orden) => orden.estado === "completado"
-  ).length;
+  const indicadores = [
+    { titulo: "Total de órdenes", valor: ordenes.length },
+    {
+      titulo: "Pendientes",
+      valor: ordenes.filter((o) => estadoOrden(o) === "pendiente").length,
+    },
+    {
+      titulo: "En preparación",
+      valor: ordenes.filter((o) => estadoOrden(o) === "procesando").length,
+    },
+    {
+      titulo: "Completadas",
+      valor: ordenes.filter((o) => estadoOrden(o) === "completado").length,
+    },
+  ];
 
-  const totalPendientes = ordenes.filter(
-    (orden) => !orden.estado || orden.estado === "pendiente"
-  ).length;
+  function mostrarEstado(orden) {
+    const estado = estadoOrden(orden);
 
-  const montoTotal = ordenes.reduce(
-    (suma, orden) => suma + (Number(orden.total) || 0),
-    0
-  );
+    return (
+      <span className={`orden-estado estado-${estado}`}>
+        {ESTADOS[estado] || estado}
+      </span>
+    );
+  }
+
+  function selectorEstado(orden) {
+    return puedeModificar ? (
+      <Form.Select
+        aria-label={`Cambiar estado de la orden ${orden.id}`}
+        value={estadoOrden(orden)}
+        onChange={(evento) =>
+          cambiarEstado(orden.id, evento.target.value)
+        }
+      >
+        {Object.entries(ESTADOS).map(([valor, etiqueta]) => (
+          <option key={valor} value={valor}>
+            {etiqueta}
+          </option>
+        ))}
+      </Form.Select>
+    ) : (
+      <span className="text-muted">Solo consulta</span>
+    );
+  }
 
   return (
-    <Container className="my-4">
-      <Row className="mb-4 align-items-center g-3">
-        <Col>
-          <h2 style={{ color: "#5c3d2e", fontWeight: "bold" }}>
-            Gestión de Órdenes
-          </h2>
+    <section className="ordenes-admin">
+      <div className="ordenes-cabecera">
+        <div>
+          <h1>Gestión de Órdenes</h1>
+          <p>Revisa las compras y actualiza el estado de los pedidos.</p>
+        </div>
 
-          <p className="text-muted">
-            Consulta de pedidos y actualización de estados.
-          </p>
-        </Col>
-
-        <Col xs="auto" className="d-flex flex-wrap gap-2">
-          <Button variant="success" onClick={exportarCSV}>
-            Reporte CSV
+        <div className="ordenes-exportaciones">
+          <Button variant="outline-secondary" onClick={actualizarListado}>
+            Actualizar
           </Button>
 
-          <Button variant="danger" onClick={exportarPDF}>
+          <Button variant="outline-secondary" onClick={exportarCSV}>
+            Exportar CSV
+          </Button>
+
+          <Button className="ordenes-boton-principal" onClick={exportarPDF}>
             Exportar PDF
           </Button>
-        </Col>
-      </Row>
+        </div>
+      </div>
 
       {!puedeModificar && (
         <Alert variant="info">
-          Tu acceso es de consulta. Puedes revisar, filtrar y exportar
-          órdenes. El cambio de estado corresponde al administrador.
+          Tu acceso es de consulta. Puedes revisar y exportar órdenes.
         </Alert>
       )}
 
@@ -325,158 +372,153 @@ export function OrdersAdmin({ puedeModificar = false }) {
         </Alert>
       )}
 
-      <Row className="mb-4 g-3">
-        <Col xs={12} sm={6} lg={3}>
-          <Card className="shadow-sm border-0 text-center p-3">
-            <h6 className="text-muted">Total Órdenes</h6>
-            <h3 className="fw-bold mb-0">{ordenes.length}</h3>
-          </Card>
-        </Col>
+      <div className="ordenes-indicadores">
+        {indicadores.map((indicador) => (
+          <article key={indicador.titulo}>
+            <h2>{indicador.titulo}</h2>
+            <p>{indicador.valor}</p>
+          </article>
+        ))}
+      </div>
 
-        <Col xs={12} sm={6} lg={3}>
-          <Card className="shadow-sm border-0 text-center p-3">
-            <h6 className="text-muted">Completadas</h6>
-            <h3 className="fw-bold mb-0 text-success">
-              {totalCompletadas}
-            </h3>
-          </Card>
-        </Col>
+      <div className="ordenes-filtros">
+        <Form.Group controlId="ordenes-busqueda">
+          <Form.Label>Buscar orden</Form.Label>
+          <Form.Control
+            type="search"
+            placeholder="ID, nombre o correo"
+            value={busqueda}
+            onChange={(evento) => setBusqueda(evento.target.value)}
+          />
+        </Form.Group>
 
-        <Col xs={12} sm={6} lg={3}>
-          <Card className="shadow-sm border-0 text-center p-3">
-            <h6 className="text-muted">Pendientes</h6>
-            <h3 className="fw-bold mb-0 text-warning">
-              {totalPendientes}
-            </h3>
-          </Card>
-        </Col>
+        <Form.Group controlId="filtro-estado-orden">
+          <Form.Label>Filtrar por estado</Form.Label>
+          <Form.Select
+            value={filtroEstado}
+            onChange={(evento) => setFiltroEstado(evento.target.value)}
+          >
+            <option value="">Todos los estados</option>
 
-        <Col xs={12} sm={6} lg={3}>
-          <Card className="shadow-sm border-0 text-center p-3">
-            <h6 className="text-muted">Monto total de órdenes</h6>
-            <h3 className="fw-bold mb-0 text-primary fs-4">
-              {formatearMonto(montoTotal)}
-            </h3>
-          </Card>
-        </Col>
-      </Row>
+            {Object.entries(ESTADOS).map(([valor, etiqueta]) => (
+              <option key={valor} value={valor}>
+                {etiqueta}
+              </option>
+            ))}
+          </Form.Select>
+        </Form.Group>
 
-      <Card className="shadow-sm border-0 mb-4 p-3">
-        <Row>
-          <Col xs={12} md={4}>
-            <Form.Group controlId="filtro-estado-orden">
-              <Form.Label>Filtrar por estado</Form.Label>
+        <Button
+          variant="outline-secondary"
+          onClick={() => {
+            setBusqueda("");
+            setFiltroEstado("");
+          }}
+        >
+          Limpiar filtros
+        </Button>
+      </div>
 
-              <Form.Select
-                value={filtroEstado}
-                onChange={(evento) =>
-                  setFiltroEstado(evento.target.value)
-                }
-              >
-                <option value="">Todos los estados</option>
+      <p className="ordenes-contador" role="status">
+        Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes.
+        {" "}Las exportaciones incluyen todas las órdenes.
+      </p>
 
-                {ESTADOS.map((estado) => (
-                  <option key={estado} value={estado}>
-                    {estado.charAt(0).toUpperCase() + estado.slice(1)}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
-          </Col>
-        </Row>
-      </Card>
-
-      <Card className="shadow-sm border-0">
-        <Card.Body className="p-0">
-          <Table responsive hover striped className="mb-0 align-middle">
-            <thead>
-              <tr>
-                <th className="py-3 px-4">ID Orden</th>
-                <th>Cliente / Correo</th>
-                <th>Dirección</th>
-                <th>Total</th>
-                <th>Estado</th>
-                <th className="text-center">Acciones</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {ordenesFiltradas.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="text-center py-5 text-muted">
-                    {ordenes.length === 0
-                      ? "No hay órdenes registradas."
-                      : "No hay órdenes con ese estado."}
-                  </td>
-                </tr>
-              ) : (
-                ordenesFiltradas.map((orden) => (
-                  <tr key={orden.id}>
-                    <td
-                      className="px-4 fw-bold text-primary"
-                      style={{ overflowWrap: "anywhere" }}
-                    >
-                      {orden.id}
-                    </td>
-
-                    <td>
-                      <div>
-                        <strong>{orden.nombre}</strong>
-                      </div>
-                      <small>{orden.email || orden.correo}</small>
-                    </td>
-
-                    <td>
-                      {orden.direccion}
-                      {orden.comuna ? ` (${orden.comuna})` : ""}
-                    </td>
-
-                    <td className="fw-bold text-success">
-                      {formatearMonto(orden.total)}
-                    </td>
-
-                    <td>
-                      <Badge
-                        bg={obtenerColorBadge(orden.estado)}
-                        className="text-uppercase"
-                      >
-                        {orden.estado || "pendiente"}
-                      </Badge>
-                    </td>
-
-                    <td className="text-center">
-                      {puedeModificar ? (
-                        <Form.Select
-                          size="sm"
-                          aria-label={`Cambiar estado de la orden ${orden.id}`}
-                          value={orden.estado || "pendiente"}
-                          onChange={(evento) =>
-                            cambiarEstado(orden.id, evento.target.value)
-                          }
-                        >
-                          {ESTADOS.map((estado) => (
-                            <option key={estado} value={estado}>
-                              {estado.charAt(0).toUpperCase() +
-                                estado.slice(1)}
-                            </option>
-                          ))}
-                        </Form.Select>
-                      ) : (
-                        <span className="text-muted">Solo consulta</span>
-                      )}
-                    </td>
+      {ordenesFiltradas.length === 0 ? (
+        <div className="ordenes-vacio">
+          {ordenes.length === 0
+            ? "Todavía no hay órdenes registradas."
+            : "No se encontraron órdenes con esos filtros."}
+        </div>
+      ) : (
+        <>
+          <div className="ordenes-vista-tabla">
+            <div
+              className="ordenes-tabla-scroll"
+              tabIndex={0}
+              role="region"
+              aria-label="Tabla de órdenes"
+            >
+              <table className="ordenes-tabla">
+                <thead>
+                  <tr>
+                    <th>Orden / Fecha</th>
+                    <th>Cliente</th>
+                    <th>Dirección</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Cambiar estado</th>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
-        </Card.Body>
+                </thead>
 
-        <Card.Footer className="bg-white text-muted small py-3">
-          Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes.
-        </Card.Footer>
-      </Card>
-    </Container>
+                <tbody>
+                  {ordenesFiltradas.map((orden) => (
+                    <tr key={orden.id}>
+                      <td>
+                        <strong className="orden-id">{orden.id}</strong>
+                        <small>{formatearFecha(orden.fecha)}</small>
+                      </td>
+
+                      <td>
+                        <strong>{orden.nombre}</strong>
+                        <small>{orden.email || orden.correo}</small>
+                      </td>
+
+                      <td>
+                        {orden.direccion || "Sin registrar"}
+                        {orden.comuna ? `, ${orden.comuna}` : ""}
+                      </td>
+
+                      <td className="orden-monto">
+                        {formatearMonto(orden.total)}
+                      </td>
+
+                      <td>{mostrarEstado(orden)}</td>
+                      <td>{selectorEstado(orden)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="ordenes-vista-tarjetas">
+            {ordenesFiltradas.map((orden) => (
+              <article className="orden-tarjeta" key={orden.id}>
+                <div className="orden-tarjeta-cabecera">
+                  {mostrarEstado(orden)}
+                  <span>{formatearFecha(orden.fecha)}</span>
+                </div>
+
+                <h2>{orden.nombre}</h2>
+                <p className="orden-id">{orden.id}</p>
+
+                <dl>
+                  <dt>Correo</dt>
+                  <dd>{orden.email || orden.correo || "Sin registrar"}</dd>
+
+                  <dt>Dirección</dt>
+                  <dd>
+                    {orden.direccion || "Sin registrar"}
+                    {orden.comuna ? `, ${orden.comuna}` : ""}
+                  </dd>
+
+                  <dt>Total</dt>
+                  <dd className="orden-monto">
+                    {formatearMonto(orden.total)}
+                  </dd>
+                </dl>
+
+                <div className="orden-tarjeta-accion">
+                  <p>Cambiar estado</p>
+                  {selectorEstado(orden)}
+                </div>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
+    </section>
   );
 }
 

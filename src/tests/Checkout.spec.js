@@ -231,7 +231,7 @@ describe('Checkout', () => {
         subtotal: 90000,
         ahorro: 45000,
         total: 45000,
-        estado: 'completado',
+        estado: 'pendiente',
         pagoSimulado: true,
         metodoPago: 'webpay',
       })
