@@ -1,6 +1,15 @@
 import { useState } from "react";
-import { Navigate, Routes, Route, Link, NavLink } from "react-router-dom";
-import { puedeEntrarAlPanel, obtenerUsuarioActivo } from "../data/db";
+import {
+  Navigate,
+  Routes,
+  Route,
+  Link,
+  NavLink,
+} from "react-router-dom";
+import {
+  puedeEntrarAlPanel,
+  obtenerUsuarioActivo,
+} from "../data/db";
 
 import AdminHome from "./pages/AdminHome";
 import OrdersAdmin from "./pages/OrdersAdmin";
@@ -20,7 +29,8 @@ export function AdminRoutes() {
     .trim()
     .toLowerCase();
 
-  const esAdministrador = rol === "admin" || rol === "administrador";
+  const esAdministrador =
+    rol === "admin" || rol === "administrador";
 
   if (!autorizado) {
     return <Navigate to="/login" replace />;
@@ -32,8 +42,6 @@ export function AdminRoutes() {
 
   function cerrarSesion() {
     localStorage.removeItem("usuarioActivo");
-
-    // Recarga la aplicación para limpiar también la sesión de App.
     window.location.assign("/login");
   }
 
@@ -45,19 +53,65 @@ export function AdminRoutes() {
     <div className="admin-layout">
       <header className="admin-header">
         <div className="admin-header-contenido">
-          <Link to="/admin" className="admin-logo" onClick={cerrarMenu}>
+          <Link
+            to="/admin"
+            className="admin-logo"
+            onClick={cerrarMenu}
+          >
             <img src="/images/logo.png" alt="" />
             <span>Panel de Administración</span>
           </Link>
 
-          <div className="admin-header-acciones">
+          <button
+            type="button"
+            className="admin-menu-toggle"
+            aria-expanded={menuAbierto}
+            aria-controls="admin-menu-lateral admin-sesion"
+            aria-label={
+              menuAbierto
+                ? "Cerrar menú de administración"
+                : "Abrir menú de administración"
+            }
+            onClick={() => setMenuAbierto((actual) => !actual)}
+          >
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              {menuAbierto ? (
+                <>
+                  <path d="M6 6l12 12" />
+                  <path d="M18 6L6 18" />
+                </>
+              ) : (
+                <>
+                  <path d="M3 6h18" />
+                  <path d="M3 12h18" />
+                  <path d="M3 18h18" />
+                </>
+              )}
+            </svg>
+          </button>
+
+          <div
+            id="admin-sesion"
+            className={`admin-header-acciones${
+              menuAbierto ? " abierto" : ""
+            }`}
+          >
             <span>Hola, {usuario?.nombre || "Usuario"}</span>
 
             <span className="admin-rol">
               {esAdministrador ? "Administrador" : "Vendedor"}
             </span>
 
-            <Link to="/" className="admin-ver-tienda">
+            <Link to="/" className="admin-ver-tienda" onClick={cerrarMenu}>
               Ver tienda
             </Link>
 
@@ -73,16 +127,6 @@ export function AdminRoutes() {
       </header>
 
       <div className="admin-estructura">
-        <button
-          type="button"
-          className="admin-menu-toggle"
-          aria-expanded={menuAbierto}
-          aria-controls="admin-menu-lateral"
-          onClick={() => setMenuAbierto((actual) => !actual)}
-        >
-          {menuAbierto ? "Cerrar menú" : "Abrir menú del panel"}
-        </button>
-
         <aside
           id="admin-menu-lateral"
           className={`admin-sidebar${menuAbierto ? " abierto" : ""}`}
@@ -163,7 +207,11 @@ export function AdminRoutes() {
 
             <p className="admin-menu-grupo">Tienda</p>
 
-            <Link to="/" className="admin-menu-enlace" onClick={cerrarMenu}>
+            <Link
+              to="/"
+              className="admin-menu-enlace"
+              onClick={cerrarMenu}
+            >
               Volver a la tienda
             </Link>
           </nav>
@@ -256,7 +304,9 @@ export function AdminRoutes() {
             <Link to="/admin/productos">Productos</Link>
             <Link to="/admin/ordenes">Órdenes</Link>
 
-            {esAdministrador && <Link to="/admin/usuarios">Usuarios</Link>}
+            {esAdministrador && (
+              <Link to="/admin/usuarios">Usuarios</Link>
+            )}
           </div>
 
           <div>
