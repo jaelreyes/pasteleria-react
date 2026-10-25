@@ -138,27 +138,116 @@ export const eliminarProducto = (id) => {
 
 // --- CATEGORÍAS ---
 
-export const obtenerCategorias = () => {
-  const categoriasOriginales = [
-    "Tortas Cuadradas",
-    "Tortas Circulares",
-    "Postres Individuales",
-    "Productos Sin Azúcar",
-    "Pastelería Tradicional",
-    "Productos Sin Gluten",
-    "Productos Veganos",
-    "Tortas Especiales",
-  ];
+const CATEGORIAS_INICIALES = [
+  "Tortas Cuadradas",
+  "Tortas Circulares",
+  "Postres Individuales",
+  "Productos Sin Azúcar",
+  "Pastelería Tradicional",
+  "Productos Sin Gluten",
+  "Productos Veganos",
+  "Tortas Especiales",
+];
 
+function leerCategoriasGuardadas() {
+  const guardadas = localStorage.getItem("categorias");
+
+  // Solo lectura: se guardan recién cuando alguien crea, edita o elimina.
+  if (guardadas === null) {
+    return [...CATEGORIAS_INICIALES];
+  }
+
+  const categorias = JSON.parse(guardadas);
+
+  if (!Array.isArray(categorias)) {
+    throw new Error("Las categorías guardadas no tienen un formato válido.");
+  }
+
+  return categorias;
+}
+
+function mismoNombre(a, b) {
+  return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
+}
+
+// Leer: categorías guardadas más las que usan los productos.
+export const obtenerCategorias = () => {
   return [
     ...new Set([
-      ...categoriasOriginales,
+      ...leerCategoriasGuardadas(),
       ...obtenerProductos()
         .map((producto) => producto.categoria)
         .filter(Boolean),
     ]),
   ];
 };
+
+// Cuántos productos pertenecen a una categoría.
+export const contarProductosPorCategoria = (nombre) =>
+  obtenerProductos().filter((producto) => producto.categoria === nombre)
+    .length;
+
+// Crear (sin nombreAnterior) o editar (con nombreAnterior).
+// Al renombrar, también actualiza la categoría de sus productos.
+export const guardarCategoria = (nombre, nombreAnterior = null) => {
+  const limpio = String(nombre || "").trim();
+
+  if (limpio.length < 3 || limpio.length > 50) {
+    throw new Error("El nombre debe tener entre 3 y 50 caracteres.");
+  }
+
+  const categorias = obtenerCategorias();
+
+  const repetida = categorias.some(
+    (actual) => mismoNombre(actual, limpio) && actual !== nombreAnterior,
+  );
+
+  if (repetida) {
+    throw new Error(`Ya existe la categoría "${limpio}".`);
+  }
+
+  if (nombreAnterior === null) {
+    localStorage.setItem("categorias", JSON.stringify([...categorias, limpio]));
+    return limpio;
+  }
+
+  if (!categorias.includes(nombreAnterior)) {
+    throw new Error("No encontramos la categoría a editar.");
+  }
+
+  localStorage.setItem(
+    "categorias",
+    JSON.stringify(
+      categorias.map((actual) => (actual === nombreAnterior ? limpio : actual)),
+    ),
+  );
+
+  const productos = obtenerProductos().map((producto) =>
+    producto.categoria === nombreAnterior
+      ? { ...producto, categoria: limpio }
+      : producto,
+  );
+
+  localStorage.setItem("productos", JSON.stringify(productos));
+  return limpio;
+};
+
+// Eliminar: solo si ningún producto la usa.
+export const eliminarCategoria = (nombre) => {
+  const cantidad = contarProductosPorCategoria(nombre);
+
+  if (cantidad > 0) {
+    throw new Error(
+      `No se puede eliminar "${nombre}" porque tiene ${cantidad} producto(s).`,
+    );
+  }
+
+  localStorage.setItem(
+    "categorias",
+    JSON.stringify(obtenerCategorias().filter((actual) => actual !== nombre)),
+  );
+};
+
 
 // --- ÓRDENES ---
 

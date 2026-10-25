@@ -17,6 +17,7 @@ import UsersAdmin from "./pages/UsersAdmin";
 import AdminProfile from "./pages/AdminProfile";
 import { ProductsAdmin } from "../pages/ProductsAdmin";
 import UserCreateAdmin from "./pages/UserCreateAdmin";
+import CategoriasAdmin from "./pages/CategoriasAdmin";
 import "../styles/Admin.css";
 
 export function AdminRoutes() {
@@ -161,6 +162,15 @@ export function AdminRoutes() {
                 Nuevo Producto
               </NavLink>
             )}
+                        {esAdministrador && (
+              <NavLink
+                to="/admin/categorias"
+                className={claseEnlace}
+                onClick={cerrarMenu}
+              >
+                Categorías
+              </NavLink>
+            )}
 
             <p className="admin-menu-grupo">Pedidos</p>
 
@@ -227,6 +237,18 @@ export function AdminRoutes() {
             <Route
               path="ordenes"
               element={<OrdersAdmin puedeModificar={true} />}
+            />
+
+            
+            <Route
+              path="categorias"
+              element={
+                esAdministrador ? (
+                  <CategoriasAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
             />
 
             <Route
