@@ -1,191 +1,159 @@
-import { useState, useRef } from 'react'
-import { Navigate, Link, useNavigate } from 'react-router-dom'
-import { Form, Button, Alert } from 'react-bootstrap'
-import {
-  obtenerUsuarioActivo,
-  guardarOrden,
-  obtenerOrdenPorId,
-} from '../data/db'
+import { useState, useRef } from "react";
+import { Navigate, Link, useNavigate } from "react-router-dom";
+import { Form, Button, Alert } from "react-bootstrap";
+import { obtenerUsuarioActivo, confirmarCompra } from "../data/db";
 import {
   calcularTotales,
   calcularPrecioProducto,
   formatearPrecio,
-} from '../utils/precios'
-import { validarTelefono } from '../utils/validaciones'
+} from "../utils/precios";
+import { validarTelefono } from "../utils/validaciones";
 
 export default function Checkout({
   carrito,
   descuento = 0,
   onCompraConfirmada,
 }) {
-  const navigate = useNavigate()
-  const procesandoRef = useRef(false)
+  const navigate = useNavigate();
+  const procesandoRef = useRef(false);
 
-  const [error, setError] = useState('')
-  const [procesando, setProcesando] = useState(false)
+  const [error, setError] = useState("");
+  const [procesando, setProcesando] = useState(false);
 
   const [formData, setFormData] = useState(() => {
-    const usuario = obtenerUsuarioActivo()
+    const usuario = obtenerUsuarioActivo();
 
     return {
       nombre: usuario
-        ? `${usuario.nombre || ''} ${usuario.apellidos || ''}`.trim()
-        : '',
-      email: usuario?.correo || usuario?.email || '',
-      telefono: usuario?.telefono || '',
-      direccion: usuario?.direccion || '',
-      metodoPago: 'webpay',
-    }
-  })
+        ? `${usuario.nombre || ""} ${usuario.apellidos || ""}`.trim()
+        : "",
+      email: usuario?.correo || usuario?.email || "",
+      telefono: usuario?.telefono || "",
+      direccion: usuario?.direccion || "",
+      metodoPago: "webpay",
+    };
+  });
 
-  const { subtotal, ahorro, total } = calcularTotales(
-    carrito,
-    descuento
-  )
+  const { subtotal, ahorro, total } = calcularTotales(carrito, descuento);
 
-  // Impide entrar directamente si no hay productos.
   if (carrito.length === 0) {
-    return <Navigate to="/carrito" replace />
+    return <Navigate to="/carrito" replace />;
   }
 
   function handleChange(evento) {
-    const { name, value } = evento.target
+    const { name, value } = evento.target;
 
-    setFormData(actual => ({
+    setFormData((actual) => ({
       ...actual,
       [name]: value,
-    }))
+    }));
 
-    setError('')
+    setError("");
   }
 
   function handleSubmit(evento) {
-    evento.preventDefault()
+    evento.preventDefault();
 
-    // Evita guardar dos órdenes por clics consecutivos.
-    if (procesandoRef.current) return
+    if (procesandoRef.current) return;
 
-    const nombre = formData.nombre.trim()
-    const email = formData.email.trim().toLowerCase()
-    const telefono = formData.telefono.trim()
-    const direccion = formData.direccion.trim()
+    const nombre = formData.nombre.trim();
+    const email = formData.email.trim().toLowerCase();
+    const telefono = formData.telefono.trim();
+    const direccion = formData.direccion.trim();
 
     if (!nombre || !email || !telefono || !direccion) {
-      setError('Completa todos los campos obligatorios de despacho.')
-      return
+      setError("Completa todos los campos obligatorios de despacho.");
+      return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Ingresa un correo electrónico válido.')
-      return
+    if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Ingresa un correo electrónico válido.");
+      return;
     }
 
     if (!validarTelefono(telefono)) {
-      setError('Ingresa un teléfono válido de 8 a 15 dígitos.')
-      return
+      setError("Ingresa un teléfono válido de 8 a 15 dígitos.");
+      return;
     }
 
-    procesandoRef.current = true
-    setProcesando(true)
-    setError('')
+    if (nombre.length > 150 || direccion.length > 300) {
+      setError("El nombre o la dirección superan el largo permitido.");
+      return;
+    }
+
+    if (!["webpay", "transferencia"].includes(formData.metodoPago)) {
+      setError("Selecciona un medio de pago válido.");
+      return;
+    }
+
+    procesandoRef.current = true;
+    setProcesando(true);
+    setError("");
+
+    let ordenGuardada;
 
     try {
-      const nuevaOrden = {
-        id: `ORD-${crypto.randomUUID()}`,
-        nombre,
-        email,
-        telefono,
-        direccion,
-        metodoPago: formData.metodoPago,
-        fecha: new Date().toISOString(),
-        estado: 'pendiente',
-        pagoSimulado: true,
-        descuentoUsuario: descuento,
-        subtotal,
-        ahorro,
-        total,
-
-        // Conserva una copia de los productos y precios de esta compra.
-        productos: carrito.map(producto => {
-          const {
-            precioBase,
-            precioFinal,
-            descuento: descuentoAplicado,
-          } = calcularPrecioProducto(producto, descuento)
-
-          return {
-            id: producto.id,
-            codigo: producto.codigo,
-            nombre: producto.nombre,
-            imagen: producto.imagen,
-            cantidad: producto.cantidad,
-            precioBase,
-            precioFinal,
-            descuentoAplicado,
-          }
-        }),
-      }
-
-      guardarOrden(nuevaOrden)
-
-      // guardarOrden captura sus errores: verificamos que se haya guardado.
-      const ordenGuardada = obtenerOrdenPorId(nuevaOrden.id)
-
-      if (!ordenGuardada) {
-        throw new Error('No se pudo guardar la orden.')
-      }
-
-      onCompraConfirmada()
-
-      navigate(`/pago/exito/${nuevaOrden.id}`, {
-        replace: true,
-      })
-    } catch {
+      ordenGuardada = confirmarCompra(
+        {
+          id: `ORD-${crypto.randomUUID()}`,
+          nombre,
+          email,
+          telefono,
+          direccion,
+          metodoPago: formData.metodoPago,
+          fecha: new Date().toISOString(),
+        },
+        carrito,
+        descuento,
+      );
+    } catch (errorCompra) {
       setError(
-        'No se pudo completar la compra. Revisa el carrito antes de volver a intentarlo.'
-      )
-      procesandoRef.current = false
-      setProcesando(false)
+        errorCompra instanceof Error
+          ? errorCompra.message
+          : "No se pudo completar la compra.",
+      );
+
+      procesandoRef.current = false;
+      setProcesando(false);
+      return;
     }
+
+    // Solo vacía el carrito después de guardar la compra y el stock.
+    onCompraConfirmada();
+
+    navigate(`/pago/exito/${ordenGuardada.id}`, {
+      replace: true,
+    });
   }
 
   return (
-    <section
-      className="container my-5"
-      style={{ maxWidth: '700px' }}
-    >
-      <h1 className="mb-4" style={{ color: '#5c3d2e' }}>
+    <section className="container my-5" style={{ maxWidth: "700px" }}>
+      <h1 className="mb-4" style={{ color: "#5c3d2e" }}>
         Finalizar compra
       </h1>
 
-      <Alert variant="info">
-        Pago simulado para el proyecto académico. No se realiza
-        ningún cobro real.
+      <Alert variant="info" role="note">
+        Pago simulado para el proyecto académico. No se realiza ningún cobro
+        real.
       </Alert>
-
       <div className="p-4 bg-white shadow-sm rounded mb-4">
         <h2 className="h4">Resumen de compra</h2>
 
         <ul>
-          {carrito.map(producto => {
-            const { precioFinal } = calcularPrecioProducto(
-              producto,
-              descuento
-            )
+          {carrito.map((producto) => {
+            const { precioFinal } = calcularPrecioProducto(producto, descuento);
 
             return (
               <li key={producto.id}>
                 {producto.nombre} × {producto.cantidad}
-                {' — '}
+                {" — "}
                 {formatearPrecio(precioFinal * producto.cantidad)}
               </li>
-            )
+            );
           })}
         </ul>
 
-        <p>
-          Subtotal sin descuentos: {formatearPrecio(subtotal)}
-        </p>
+        <p>Subtotal sin descuentos: {formatearPrecio(subtotal)}</p>
 
         {ahorro > 0 && (
           <p className="text-success">
@@ -201,6 +169,9 @@ export default function Checkout({
       {error && (
         <Alert variant="danger" role="alert">
           {error}
+          <div className="mt-2">
+            <Link to="/carrito">Volver a revisar el carrito</Link>
+          </div>
         </Alert>
       )}
 
@@ -214,6 +185,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-nombre">
             <Form.Label>Nombre y apellidos *</Form.Label>
+
             <Form.Control
               name="nombre"
               autoComplete="name"
@@ -226,6 +198,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-email">
             <Form.Label>Correo electrónico *</Form.Label>
+
             <Form.Control
               type="email"
               name="email"
@@ -239,6 +212,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-telefono">
             <Form.Label>Teléfono *</Form.Label>
+
             <Form.Control
               type="tel"
               name="telefono"
@@ -252,6 +226,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-direccion">
             <Form.Label>Dirección de despacho *</Form.Label>
+
             <Form.Control
               name="direccion"
               autoComplete="street-address"
@@ -264,6 +239,7 @@ export default function Checkout({
 
           <Form.Group className="mb-4" controlId="checkout-pago">
             <Form.Label>Medio de pago simulado</Form.Label>
+
             <Form.Select
               name="metodoPago"
               value={formData.metodoPago}
@@ -277,9 +253,9 @@ export default function Checkout({
           <Button
             type="submit"
             className="w-100"
-            style={{ background: '#8d5524', border: 'none' }}
+            style={{ background: "#8d5524", border: "none" }}
           >
-            {procesando ? 'Procesando...' : 'Confirmar compra simulada'}
+            {procesando ? "Procesando..." : "Confirmar compra simulada"}
           </Button>
         </fieldset>
       </Form>
@@ -288,5 +264,5 @@ export default function Checkout({
         <Link to="/carrito">Volver al carrito</Link>
       </p>
     </section>
-  )
+  );
 }

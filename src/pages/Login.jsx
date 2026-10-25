@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { Form, Alert } from "react-bootstrap";
 import { obtenerUsuarios } from "../data/db";
 import "../styles/Auth.css";
+import { validarCorreo } from "../utils/validaciones";
 
 export default function Login({ onIniciarSesion }) {
   const [correo, setCorreo] = useState("");
@@ -23,12 +24,9 @@ export default function Login({ onIniciarSesion }) {
     const correoPermitido =
       /^[^\s@]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$/i;
 
-    if (
-      correoNormalizado.length > 100 ||
-      !correoPermitido.test(correoNormalizado)
-    ) {
+    if (!validarCorreo(correoNormalizado)) {
       nuevosErrores.correo =
-        "Ingresa un correo @duoc.cl, @profesor.duoc.cl o @gmail.com.";
+        "Ingresa un correo @duoc.cl, @profesor.duoc.cl, @duocuc.cl o @gmail.com.";
     }
 
     if (password.length < 4 || password.length > 10) {
@@ -41,9 +39,7 @@ export default function Login({ onIniciarSesion }) {
     const primerError = Object.keys(nuevosErrores)[0];
 
     if (primerError) {
-      formularioRef.current?.elements
-        .namedItem(primerError)
-        ?.focus();
+      formularioRef.current?.elements.namedItem(primerError)?.focus();
       return;
     }
 
@@ -51,15 +47,12 @@ export default function Login({ onIniciarSesion }) {
       const usuarios = obtenerUsuarios();
 
       const usuarioEncontrado = usuarios.find((usuario) => {
-        const correoUsuario = String(
-          usuario.email || usuario.correo || ""
-        )
+        const correoUsuario = String(usuario.email || usuario.correo || "")
           .trim()
           .toLowerCase();
 
         return (
-          correoUsuario === correoNormalizado &&
-          usuario.password === password
+          correoUsuario === correoNormalizado && usuario.password === password
         );
       });
 
@@ -70,9 +63,7 @@ export default function Login({ onIniciarSesion }) {
 
       onIniciarSesion(usuarioEncontrado);
 
-      const rol = String(
-        usuarioEncontrado.rol || usuarioEncontrado.tipo || ""
-      )
+      const rol = String(usuarioEncontrado.rol || usuarioEncontrado.tipo || "")
         .trim()
         .toLowerCase();
 
@@ -88,10 +79,7 @@ export default function Login({ onIniciarSesion }) {
 
   return (
     <div className="login-page">
-      <section
-        className="login-container"
-        aria-labelledby="login-titulo"
-      >
+      <section className="login-container" aria-labelledby="login-titulo">
         <div className="login-card">
           <div className="login-header">
             <img
@@ -142,14 +130,11 @@ export default function Login({ onIniciarSesion }) {
               />
 
               <small id="login-ayuda-correo" className="login-ayuda">
-                Solo @duoc.cl, @profesor.duoc.cl y @gmail.com
-                (máx. 100 caracteres).
+                Solo @duoc.cl, @profesor.duoc.cl, @duocuc.cl y @gmail.com (máx.
+                100 caracteres).
               </small>
 
-              <Form.Control.Feedback
-                type="invalid"
-                id="login-error-correo"
-              >
+              <Form.Control.Feedback type="invalid" id="login-error-correo">
                 {errores.correo}
               </Form.Control.Feedback>
             </Form.Group>
@@ -181,10 +166,7 @@ export default function Login({ onIniciarSesion }) {
                 Entre 4 y 10 caracteres.
               </small>
 
-              <Form.Control.Feedback
-                type="invalid"
-                id="login-error-password"
-              >
+              <Form.Control.Feedback type="invalid" id="login-error-password">
                 {errores.password}
               </Form.Control.Feedback>
             </Form.Group>
@@ -196,8 +178,7 @@ export default function Login({ onIniciarSesion }) {
 
           <div className="login-footer">
             <p>
-              ¿No tienes cuenta?{" "}
-              <Link to="/registro">Regístrate aquí</Link>
+              ¿No tienes cuenta? <Link to="/registro">Regístrate aquí</Link>
             </p>
           </div>
 
