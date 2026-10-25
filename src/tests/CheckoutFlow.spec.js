@@ -111,6 +111,14 @@ describe("Flujo de confirmación de compra", () => {
       target: { value: "Calle Las Flores 123" },
     });
 
+    fireEvent.change(screen.getByLabelText(/^Región/), {
+      target: { value: "Valparaíso" },
+    });
+
+    fireEvent.change(screen.getByLabelText(/^Comuna/), {
+      target: { value: "Viña del Mar" },
+    });
+
     fireEvent.click(
       screen.getByRole("button", {
         name: "Confirmar compra simulada",

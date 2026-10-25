@@ -86,7 +86,9 @@ function completarDespacho() {
   escribir(/^Nombre y apellidos/, "Ana Soto");
   escribir(/^Correo electrónico/, "ana@gmail.com");
   escribir(/^Teléfono/, "+56 9 1234 5678");
-  escribir(/^Dirección de despacho/, "Calle Las Flores 123");
+    escribir(/^Dirección de despacho/, "Calle Las Flores 123");
+  escribir(/^Región/, "Valparaíso");
+  escribir(/^Comuna/, "Viña del Mar");
 }
 
 function confirmarCompra() {
@@ -237,7 +239,9 @@ describe("Checkout", () => {
         nombre: "Ana Soto",
         email: "ana@gmail.com",
         telefono: "+56 9 1234 5678",
-        direccion: "Calle Las Flores 123",
+        direccion: "Calle Las Flores 123, Viña del Mar, Valparaíso",
+        region: "Valparaíso",
+        comuna: "Viña del Mar",
         subtotal: 90000,
         ahorro: 45000,
         total: 45000,

@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Navigate, Link } from "react-router-dom";
-import { Form, Button, Alert } from "react-bootstrap";
+import { Form, Button, Alert, Row, Col } from "react-bootstrap";
 import {
   obtenerUsuarioActivo,
   confirmarCompra,
@@ -11,6 +11,8 @@ import {
   formatearPrecio,
 } from "../utils/precios";
 import { validarTelefono } from "../utils/validaciones";
+import { armarDireccion } from "../utils/direccion";
+import regionesComunas from "../data/regiones-comunas";
 
 export default function Checkout({
   carrito,
@@ -22,6 +24,7 @@ export default function Checkout({
   const [error, setError] = useState("");
   const [procesando, setProcesando] = useState(false);
   const [idOrdenConfirmada, setIdOrdenConfirmada] = useState(null);
+  const [pagoRechazado, setPagoRechazado] = useState(null);
 
   const [formData, setFormData] = useState(() => {
     const usuario = obtenerUsuarioActivo();
@@ -33,9 +36,22 @@ export default function Checkout({
       email: usuario?.correo || usuario?.email || "",
       telefono: usuario?.telefono || "",
       direccion: usuario?.direccion || "",
+      departamento: "",
+      region: usuario?.region || "",
+      comuna: usuario?.comuna || "",
+      indicaciones: "",
       metodoPago: "webpay",
+      simularRechazo: false,
     };
   });
+
+  const regionSeleccionada = regionesComunas.find(
+    (item) => item.region === formData.region
+  );
+
+  const comunas = regionSeleccionada
+    ? [...new Set(regionSeleccionada.comunas)]
+    : [];
 
   const { subtotal, ahorro, total } = calcularTotales(
     carrito,
@@ -52,17 +68,30 @@ export default function Checkout({
     );
   }
 
+  // Pago rechazado: muestra el resumen sin guardar la orden.
+  if (pagoRechazado) {
+    return (
+      <Navigate
+        to="/pago/error"
+        state={{ pago: pagoRechazado }}
+        replace
+      />
+    );
+  }
+
   // Solo vuelve al carrito si no hay una compra recién confirmada.
   if (carrito.length === 0) {
     return <Navigate to="/carrito" replace />;
   }
 
   function handleChange(evento) {
-    const { name, value } = evento.target;
+    const { name, value, type, checked } = evento.target;
 
     setFormData((actual) => ({
       ...actual,
-      [name]: value,
+      [name]: type === "checkbox" ? checked : value,
+      // Al cambiar de región, la comuna anterior deja de ser válida.
+      ...(name === "region" ? { comuna: "" } : {}),
     }));
 
     setError("");
@@ -77,6 +106,8 @@ export default function Checkout({
     const email = formData.email.trim().toLowerCase();
     const telefono = formData.telefono.trim();
     const direccion = formData.direccion.trim();
+    const departamento = formData.departamento.trim();
+    const indicaciones = formData.indicaciones.trim();
 
     if (!nombre || !email || !telefono || !direccion) {
       setError("Completa todos los campos obligatorios de despacho.");
@@ -101,6 +132,58 @@ export default function Checkout({
       return;
     }
 
+    if (!regionSeleccionada) {
+      setError("Selecciona la región de despacho.");
+      return;
+    }
+
+    if (!comunas.includes(formData.comuna)) {
+      setError("Selecciona una comuna de la región elegida.");
+      return;
+    }
+
+    if (departamento.length > 50 || indicaciones.length > 300) {
+      setError("El departamento o las indicaciones superan el largo permitido.");
+      return;
+    }
+
+    const datosCompra = {
+      id: `ORD-${crypto.randomUUID()}`,
+      nombre,
+      email,
+      telefono,
+      direccion: armarDireccion({
+        direccion,
+        departamento,
+        comuna: formData.comuna,
+        region: formData.region,
+      }),
+      calle: direccion,
+      departamento,
+      region: formData.region,
+      comuna: formData.comuna,
+      indicaciones,
+      metodoPago: formData.metodoPago,
+      fecha: new Date().toISOString(),
+    };
+
+    // Simulación de rechazo: no descuenta stock ni guarda la orden.
+    if (formData.simularRechazo) {
+      setPagoRechazado({
+        ...datosCompra,
+        total,
+        productos: carrito.map((producto) => ({
+          id: producto.id,
+          nombre: producto.nombre,
+          imagen: producto.imagen,
+          cantidad: producto.cantidad,
+          precioFinal: calcularPrecioProducto(producto, descuento)
+            .precioFinal,
+        })),
+      });
+      return;
+    }
+
     if (!["webpay", "transferencia"].includes(formData.metodoPago)) {
       setError("Selecciona un medio de pago válido.");
       return;
@@ -113,19 +196,7 @@ export default function Checkout({
     let ordenGuardada;
 
     try {
-      ordenGuardada = confirmarCompra(
-        {
-          id: `ORD-${crypto.randomUUID()}`,
-          nombre,
-          email,
-          telefono,
-          direccion,
-          metodoPago: formData.metodoPago,
-          fecha: new Date().toISOString(),
-        },
-        carrito,
-        descuento
-      );
+      ordenGuardada = confirmarCompra(datosCompra, carrito, descuento);
     } catch (errorCompra) {
       setError(
         errorCompra instanceof Error
@@ -253,20 +324,98 @@ export default function Checkout({
             />
           </Form.Group>
 
-          <Form.Group className="mb-3" controlId="checkout-direccion">
-            <Form.Label>Dirección de despacho *</Form.Label>
+          <Row className="g-3 mb-3">
+            <Col md={8}>
+              <Form.Group controlId="checkout-direccion">
+                <Form.Label>Dirección de despacho *</Form.Label>
+
+                <Form.Control
+                  name="direccion"
+                  autoComplete="street-address"
+                  placeholder="Calle y número"
+                  maxLength={300}
+                  value={formData.direccion}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+            </Col>
+
+            <Col md={4}>
+              <Form.Group controlId="checkout-departamento">
+                <Form.Label>Departamento (opcional)</Form.Label>
+
+                <Form.Control
+                  name="departamento"
+                  placeholder="Ej: 603"
+                  maxLength={50}
+                  value={formData.departamento}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row className="g-3 mb-3">
+            <Col md={6}>
+              <Form.Group controlId="checkout-region">
+                <Form.Label>Región *</Form.Label>
+
+                <Form.Select
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Selecciona una región</option>
+
+                  {regionesComunas.map((item) => (
+                    <option key={item.region} value={item.region}>
+                      {item.region}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Col>
+
+            <Col md={6}>
+              <Form.Group controlId="checkout-comuna">
+                <Form.Label>Comuna *</Form.Label>
+
+                <Form.Select
+                  name="comuna"
+                  value={formData.comuna}
+                  onChange={handleChange}
+                  disabled={!regionSeleccionada}
+                  required
+                >
+                  <option value="">Selecciona una comuna</option>
+
+                  {comunas.map((comuna) => (
+                    <option key={comuna} value={comuna}>
+                      {comuna}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Form.Group className="mb-3" controlId="checkout-indicaciones">
+            <Form.Label>Indicaciones para la entrega (opcional)</Form.Label>
 
             <Form.Control
-              name="direccion"
-              autoComplete="street-address"
+              as="textarea"
+              rows={2}
+              name="indicaciones"
+              placeholder="Ej: entre calles, color del edificio, no tiene timbre."
               maxLength={300}
-              value={formData.direccion}
+              value={formData.indicaciones}
               onChange={handleChange}
-              required
             />
           </Form.Group>
 
-          <Form.Group className="mb-4" controlId="checkout-pago">
+          <Form.Group className="mb-3" controlId="checkout-pago">
             <Form.Label>Medio de pago simulado</Form.Label>
 
             <Form.Select
@@ -278,6 +427,16 @@ export default function Checkout({
               <option value="transferencia">Transferencia</option>
             </Form.Select>
           </Form.Group>
+
+          <Form.Check
+            type="checkbox"
+            id="checkout-simular-rechazo"
+            name="simularRechazo"
+            className="mb-4"
+            label="Simular pago rechazado (para probar la vista de error)"
+            checked={formData.simularRechazo}
+            onChange={handleChange}
+          />
 
           <Button
             type="submit"

@@ -1,23 +1,85 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from "react-router-dom";
+import { Alert, Button, Card, Col, Row, Table } from "react-bootstrap";
+import { formatearPrecio } from "../utils/precios";
 
-export const PagoFallo = () => {
+// Vista de pago rechazado. Recibe los datos de la compra desde el Checkout
+// (state de la navegación). La orden no se guarda y el carrito se conserva.
+export default function PagoFallo() {
+  const { state } = useLocation();
+  const pago = state?.pago;
+
   return (
-    <div style={{ maxWidth: '600px', margin: '40px auto', padding: '30px', background: '#fff', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.08)', textAlign: 'center' }}>
-      <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: '#f8d7da', color: '#dc3545', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', margin: '0 auto 20px' }}>
-        ✕
-      </div>
-      <h2 style={{ color: '#dc3545', marginBottom: '10px' }}>Error al Procesar el Pago</h2>
-      <p style={{ color: '#6c757d', fontSize: '1.1rem' }}>No se pudo completar la transacción. Por favor intenta nuevamente.</p>
-      <div style={{ display: 'flex', gap: '15px', justifyContent: 'center', marginTop: '25px' }}>
-        <Link to="/checkout" style={{ padding: '10px 20px', background: '#e83e8c', color: '#fff', textDecoration: 'none', borderRadius: '4px', fontWeight: 'bold' }}>
-          Reintentar Pago
-        </Link>
-        <Link to="/" style={{ padding: '10px 20px', background: '#6c757d', color: '#fff', textDecoration: 'none', borderRadius: '4px' }}>
-          Volver al Inicio
-        </Link>
-      </div>
-    </div>
-  );
-};
+    <section className="container my-5" style={{ maxWidth: "760px" }}>
+      <Card className="shadow-sm">
+        <Card.Body className="p-4">
+          <h1 className="h3 text-danger">
+            ✕ No se pudo realizar el pago
+            {pago && <small className="d-block fs-6 text-muted mt-1">Orden {pago.id}</small>}
+          </h1>
 
-export default PagoFallo;
+          <Alert variant="danger" className="mt-3">
+            La transacción fue rechazada. No se realizó ningún cobro y tus
+            productos siguen en el carrito.
+          </Alert>
+
+          <div className="d-flex flex-wrap gap-2 mb-4">
+            <Button as={Link} to="/checkout" variant="success">
+              Volver a realizar el pago
+            </Button>
+            <Button as={Link} to="/carrito" variant="outline-secondary">
+              Revisar el carrito
+            </Button>
+          </div>
+
+          {pago ? (
+            <>
+              <h2 className="h5">Datos del cliente</h2>
+              <Row className="mb-3">
+                <Col sm={6}><strong>Nombre:</strong> {pago.nombre}</Col>
+                <Col sm={6}><strong>Correo:</strong> {pago.email}</Col>
+              </Row>
+
+              <h2 className="h5">Dirección de entrega</h2>
+              <p className="mb-1">{pago.direccion}</p>
+              {pago.indicaciones && (
+                <p className="text-muted">Indicaciones: {pago.indicaciones}</p>
+              )}
+
+              <Table responsive size="sm" className="mt-3 align-middle">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th className="text-end">Precio</th>
+                    <th className="text-end">Cantidad</th>
+                    <th className="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pago.productos.map((producto) => (
+                    <tr key={producto.id}>
+                      <td>{producto.nombre}</td>
+                      <td className="text-end">{formatearPrecio(producto.precioFinal)}</td>
+                      <td className="text-end">{producto.cantidad}</td>
+                      <td className="text-end">
+                        {formatearPrecio(producto.precioFinal * producto.cantidad)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </Table>
+
+              <p className="fs-5 text-end mb-0">
+                <strong>Total no cobrado: {formatearPrecio(pago.total)}</strong>
+              </p>
+            </>
+          ) : (
+            <p className="mb-0">
+              No hay datos de una compra reciente.{" "}
+              <Link to="/">Volver al inicio</Link>
+            </p>
+          )}
+        </Card.Body>
+      </Card>
+    </section>
+  );
+}
