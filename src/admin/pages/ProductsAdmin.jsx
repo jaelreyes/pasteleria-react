@@ -4,7 +4,7 @@ import {
   guardarProducto,
   eliminarProducto,
   obtenerCategorias,
-} from "../data/db";
+} from "../../data/db";
 import {
   Table,
   Button,
@@ -14,7 +14,7 @@ import {
   Col,
   Alert,
 } from "react-bootstrap";
-import ProductDetailModal from "../admin/components/ProductDetailModal";
+import ProductDetailModal from "../components/ProductDetailModal";
 
 const formularioInicial = {
   id: "",

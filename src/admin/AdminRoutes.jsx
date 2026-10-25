@@ -15,7 +15,7 @@ import AdminHome from "./pages/AdminHome";
 import OrdersAdmin from "./pages/OrdersAdmin";
 import UsersAdmin from "./pages/UsersAdmin";
 import AdminProfile from "./pages/AdminProfile";
-import { ProductsAdmin } from "../pages/ProductsAdmin";
+import { ProductsAdmin } from "./pages/ProductsAdmin";
 import UserCreateAdmin from "./pages/UserCreateAdmin";
 import CategoriasAdmin from "./pages/CategoriasAdmin";
 import ReportesAdmin from "./pages/ReportesAdmin";

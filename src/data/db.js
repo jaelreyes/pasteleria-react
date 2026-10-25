@@ -248,7 +248,6 @@ export const eliminarCategoria = (nombre) => {
   );
 };
 
-
 // --- ÓRDENES ---
 
 export const obtenerOrdenes = () => {
