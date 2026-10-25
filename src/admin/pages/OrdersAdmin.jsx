@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { obtenerOrdenes, actualizarEstadoOrden } from "../../data/db";
 import { Form, Button, Alert } from "react-bootstrap";
 import "../../styles/OrdersAdmin.css";
@@ -450,8 +451,11 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   {ordenesFiltradas.map((orden) => (
                     <tr key={orden.id}>
                       <td>
-                        <strong className="orden-id">{orden.id}</strong>
+                                                <strong className="orden-id">{orden.id}</strong>
                         <small>{formatearFecha(orden.fecha)}</small>
+                        <Link to={`/admin/ordenes/${encodeURIComponent(orden.id)}`}>
+                          Ver boleta
+                        </Link>
                       </td>
 
                       <td>
@@ -461,7 +465,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
                       <td>
                         {orden.direccion || "Sin registrar"}
-                        {orden.comuna ? `, ${orden.comuna}` : ""}
                       </td>
 
                       <td className="orden-monto">
@@ -485,8 +488,11 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   <span>{formatearFecha(orden.fecha)}</span>
                 </div>
 
-                <h2>{orden.nombre}</h2>
+                                <h2>{orden.nombre}</h2>
                 <p className="orden-id">{orden.id}</p>
+                <Link to={`/admin/ordenes/${encodeURIComponent(orden.id)}`}>
+                  Ver boleta
+                </Link>
 
                 <dl>
                   <dt>Correo</dt>
@@ -495,7 +501,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   <dt>Dirección</dt>
                   <dd>
                     {orden.direccion || "Sin registrar"}
-                    {orden.comuna ? `, ${orden.comuna}` : ""}
                   </dd>
 
                   <dt>Total</dt>

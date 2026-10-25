@@ -19,6 +19,8 @@ import { ProductsAdmin } from "../pages/ProductsAdmin";
 import UserCreateAdmin from "./pages/UserCreateAdmin";
 import CategoriasAdmin from "./pages/CategoriasAdmin";
 import ReportesAdmin from "./pages/ReportesAdmin";
+import BoletaAdmin from "./pages/BoletaAdmin";
+import HistorialUsuario from "./pages/HistorialUsuario";
 import "../styles/Admin.css";
 
 export function AdminRoutes() {
@@ -251,6 +253,8 @@ export function AdminRoutes() {
               element={<OrdersAdmin puedeModificar={true} />}
             />
 
+            <Route path="ordenes/:id" element={<BoletaAdmin />} />
+
             <Route
               path="categorias"
               element={
@@ -304,6 +308,17 @@ export function AdminRoutes() {
               element={
                 esAdministrador ? (
                   <UsersAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
+            <Route
+              path="usuarios/:correo/historial"
+              element={
+                esAdministrador ? (
+                  <HistorialUsuario />
                 ) : (
                   <Navigate to="/admin" replace />
                 )
