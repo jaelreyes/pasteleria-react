@@ -1,8 +1,5 @@
 import { useState } from "react";
-import {
-  obtenerOrdenes,
-  actualizarEstadoOrden,
-} from "../../data/db";
+import { obtenerOrdenes, actualizarEstadoOrden } from "../../data/db";
 import { Form, Button, Alert } from "react-bootstrap";
 import "../../styles/OrdersAdmin.css";
 
@@ -42,7 +39,7 @@ function escaparHTML(valor) {
 
   return String(valor ?? "").replace(
     /[&<>"']/g,
-    (caracter) => equivalencias[caracter]
+    (caracter) => equivalencias[caracter],
   );
 }
 
@@ -85,25 +82,27 @@ export function OrdersAdmin({ puedeModificar = false }) {
     setMensaje("");
 
     try {
-      actualizarEstadoOrden(id, nuevoEstado);
+      const actualizada = actualizarEstadoOrden(id, nuevoEstado);
 
-      const actualizadas = obtenerOrdenes();
-      const actualizada = actualizadas.find(
-        (orden) => String(orden.id) === String(id)
-      );
+      setOrdenes(obtenerOrdenes());
 
-      if (!actualizada || actualizada.estado !== nuevoEstado) {
-        setError("No se pudo actualizar el estado de la orden.");
-        return;
+      if (nuevoEstado === "cancelado") {
+        setMensaje(
+          actualizada.stockRestituido === true
+            ? "Orden cancelada. Las unidades fueron devueltas al inventario."
+            : "Orden cancelada. Es una orden sin registro de descuento de stock; el inventario no se modificó.",
+        );
+      } else {
+        setMensaje("Estado actualizado correctamente.");
       }
-
-      setOrdenes(actualizadas);
-      setMensaje("Estado actualizado correctamente.");
-    } catch {
-      setError("Ocurrió un error al actualizar la orden.");
+    } catch (errorEstado) {
+      setError(
+        errorEstado instanceof Error
+          ? errorEstado.message
+          : "Ocurrió un error al actualizar la orden.",
+      );
     }
   }
-
   function exportarCSV() {
     setError("");
 
@@ -162,7 +161,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
     if (!ventana) {
       setError(
-        "Permite las ventanas emergentes del navegador para abrir el reporte."
+        "Permite las ventanas emergentes del navegador para abrir el reporte.",
       );
       return;
     }
@@ -178,16 +177,16 @@ export function OrdersAdmin({ puedeModificar = false }) {
             <td>${escaparHTML(orden.direccion)}</td>
             <td>${escaparHTML(formatearMonto(orden.total))}</td>
             <td>${escaparHTML(
-              ESTADOS[estadoOrden(orden)] || estadoOrden(orden)
+              ESTADOS[estadoOrden(orden)] || estadoOrden(orden),
             )}</td>
           </tr>
-        `
+        `,
       )
       .join("");
 
     const monto = actuales.reduce(
       (suma, orden) => suma + (Number(orden.total) || 0),
-      0
+      0,
     );
 
     ventana.document.write(`
@@ -266,11 +265,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
   const ordenesFiltradas = ordenes
     .filter((orden) => {
-      const texto = [
-        orden.id,
-        orden.nombre,
-        orden.email || orden.correo,
-      ]
+      const texto = [orden.id, orden.nombre, orden.email || orden.correo]
         .join(" ")
         .toLowerCase();
 
@@ -314,11 +309,10 @@ export function OrdersAdmin({ puedeModificar = false }) {
   function selectorEstado(orden) {
     return puedeModificar ? (
       <Form.Select
+        disabled={estadoOrden(orden) === "cancelado"}
         aria-label={`Cambiar estado de la orden ${orden.id}`}
         value={estadoOrden(orden)}
-        onChange={(evento) =>
-          cambiarEstado(orden.id, evento.target.value)
-        }
+        onChange={(evento) => cambiarEstado(orden.id, evento.target.value)}
       >
         {Object.entries(ESTADOS).map(([valor, etiqueta]) => (
           <option key={valor} value={valor}>
@@ -420,8 +414,8 @@ export function OrdersAdmin({ puedeModificar = false }) {
       </div>
 
       <p className="ordenes-contador" role="status">
-        Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes.
-        {" "}Las exportaciones incluyen todas las órdenes.
+        Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes. Las
+        exportaciones incluyen todas las órdenes.
       </p>
 
       {ordenesFiltradas.length === 0 ? (
@@ -504,9 +498,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   </dd>
 
                   <dt>Total</dt>
-                  <dd className="orden-monto">
-                    {formatearMonto(orden.total)}
-                  </dd>
+                  <dd className="orden-monto">{formatearMonto(orden.total)}</dd>
                 </dl>
 
                 <div className="orden-tarjeta-accion">

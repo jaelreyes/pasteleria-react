@@ -63,7 +63,8 @@ export const obtenerUsuarioActivo = () => {
 export const eliminarUsuario = (email) => {
   try {
     const usuarios = obtenerUsuarios().filter(
-      (usuario) => String(usuario.email || usuario.correo) !== String(email)
+      (usuario) =>
+        String(usuario.email || usuario.correo) !== String(email)
     );
 
     localStorage.setItem("usuarios", JSON.stringify(usuarios));
@@ -162,11 +163,14 @@ export const obtenerCategorias = () => {
     ]),
   ];
 };
+
 // --- ÓRDENES ---
 
 export const obtenerOrdenes = () => {
   try {
-    const ordenes = JSON.parse(localStorage.getItem("ordenes") || "[]");
+    const ordenes = JSON.parse(
+      localStorage.getItem("ordenes") || "[]"
+    );
 
     return Array.isArray(ordenes) ? ordenes : [];
   } catch {
@@ -196,61 +200,242 @@ export const obtenerOrdenPorId = (id) => {
   }
 };
 
+// Cambia el estado y devuelve stock al cancelar, cuando corresponde.
 export const actualizarEstadoOrden = (id, nuevoEstado) => {
-  try {
-    const ordenes = obtenerOrdenes().map((orden) =>
-      String(orden.id) === String(id)
-        ? { ...orden, estado: nuevoEstado }
-        : orden
-    );
+  const estadosPermitidos = [
+    "pendiente",
+    "procesando",
+    "completado",
+    "cancelado",
+  ];
 
-    localStorage.setItem("ordenes", JSON.stringify(ordenes));
-  } catch (error) {
-    console.error("Error al actualizar la orden:", error);
-  }
-};
-
-// --- CONFIRMACIÓN DE COMPRA ---
-
-export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
-  if (!Array.isArray(carrito) || carrito.length === 0) {
-    throw new Error("El carrito está vacío.");
+  if (!estadosPermitidos.includes(nuevoEstado)) {
+    throw new Error("El estado seleccionado no es válido.");
   }
 
-  if (!datosOrden.id) {
-    throw new Error("La compra no tiene un identificador válido.");
-  }
-
-  const catalogo = obtenerProductos();
-
-  // Conserva el catálogo anterior por si falla el guardado de la orden.
-  const productosAnteriores = localStorage.getItem("productos");
-
-  const ordenes = JSON.parse(localStorage.getItem("ordenes") || "[]");
+  const ordenes = JSON.parse(
+    localStorage.getItem("ordenes") || "[]"
+  );
 
   if (!Array.isArray(ordenes)) {
     throw new Error("Las órdenes guardadas no tienen un formato válido.");
   }
 
-  if (ordenes.some((orden) => String(orden.id) === String(datosOrden.id))) {
+  const indice = ordenes.findIndex(
+    (orden) => String(orden.id) === String(id)
+  );
+
+  if (indice === -1) {
+    throw new Error("No encontramos la orden.");
+  }
+
+  const orden = ordenes[indice];
+  const estadoActual = orden.estado || "pendiente";
+
+  // No repite movimientos de stock si el estado no cambia.
+  if (estadoActual === nuevoEstado) {
+    return orden;
+  }
+
+  if (estadoActual === "cancelado") {
+    throw new Error(
+      "Una orden cancelada no se puede reactivar. Debe realizarse una compra nueva."
+    );
+  }
+
+  const debeRestituirStock =
+    nuevoEstado === "cancelado" &&
+    orden.stockDescontado === true &&
+    orden.stockRestituido !== true;
+
+  let productosAnteriores = null;
+  let productosActualizados = null;
+
+  if (debeRestituirStock) {
+    if (
+      !Array.isArray(orden.productos) ||
+      orden.productos.length === 0
+    ) {
+      throw new Error(
+        "La orden no tiene productos válidos para devolver al inventario."
+      );
+    }
+
+    const catalogo = obtenerProductos();
+    productosAnteriores = localStorage.getItem("productos");
+
+    const cantidadesADevolver = new Map();
+
+    for (const item of orden.productos) {
+      if (
+        !item ||
+        item.id === null ||
+        item.id === undefined ||
+        !Number.isSafeInteger(item.cantidad) ||
+        item.cantidad < 1
+      ) {
+        throw new Error(
+          "La orden contiene cantidades inválidas. Revisa sus productos antes de cancelarla."
+        );
+      }
+
+      const idProducto = String(item.id);
+
+      const producto = catalogo.find(
+        (actual) => String(actual.id) === idProducto
+      );
+
+      if (!producto) {
+        throw new Error(
+          `No se puede devolver "${item.nombre || idProducto}" porque ya no existe en el catálogo.`
+        );
+      }
+
+      const cantidad =
+        (cantidadesADevolver.get(idProducto) || 0) +
+        item.cantidad;
+
+      if (!Number.isSafeInteger(cantidad)) {
+        throw new Error("La cantidad a devolver no es válida.");
+      }
+
+      cantidadesADevolver.set(idProducto, cantidad);
+    }
+
+    productosActualizados = catalogo.map((producto) => {
+      const cantidad = cantidadesADevolver.get(
+        String(producto.id)
+      );
+
+      if (cantidad === undefined) return producto;
+
+      const stockActual = Number(producto.stock);
+      const nuevoStock = stockActual + cantidad;
+
+      if (
+        !Number.isSafeInteger(stockActual) ||
+        stockActual < 0 ||
+        !Number.isSafeInteger(nuevoStock)
+      ) {
+        throw new Error(
+          `El stock de "${producto.nombre}" no es válido.`
+        );
+      }
+
+      return {
+        ...producto,
+        stock: nuevoStock,
+      };
+    });
+  }
+
+  const ordenActualizada = {
+    ...orden,
+    estado: nuevoEstado,
+    ...(debeRestituirStock
+      ? { stockRestituido: true }
+      : {}),
+  };
+
+  const ordenesActualizadas = ordenes.map((actual, posicion) =>
+    posicion === indice ? ordenActualizada : actual
+  );
+
+  let stockGuardado = false;
+
+  try {
+    if (debeRestituirStock) {
+      localStorage.setItem(
+        "productos",
+        JSON.stringify(productosActualizados)
+      );
+
+      stockGuardado = true;
+    }
+
+    localStorage.setItem(
+      "ordenes",
+      JSON.stringify(ordenesActualizadas)
+    );
+  } catch {
+    if (stockGuardado) {
+      try {
+        if (productosAnteriores === null) {
+          localStorage.removeItem("productos");
+        } else {
+          localStorage.setItem("productos", productosAnteriores);
+        }
+      } catch {
+        throw new Error(
+          "No se pudo actualizar la orden ni restaurar el inventario. Revisa el stock antes de intentar nuevamente."
+        );
+      }
+    }
+
+    throw new Error("No se pudo guardar el cambio de estado.");
+  }
+
+  return ordenActualizada;
+};
+
+// --- CONFIRMACIÓN DE COMPRA ---
+
+export function confirmarCompra(
+  datosOrden,
+  carrito,
+  descuentoUsuario = 0
+) {
+  if (!Array.isArray(carrito) || carrito.length === 0) {
+    throw new Error("El carrito está vacío.");
+  }
+
+  if (!datosOrden?.id) {
+    throw new Error("La compra no tiene un identificador válido.");
+  }
+
+  const catalogo = obtenerProductos();
+  const productosAnteriores = localStorage.getItem("productos");
+
+  const ordenes = JSON.parse(
+    localStorage.getItem("ordenes") || "[]"
+  );
+
+  if (!Array.isArray(ordenes)) {
+    throw new Error("Las órdenes guardadas no tienen un formato válido.");
+  }
+
+  if (
+    ordenes.some(
+      (orden) => String(orden.id) === String(datosOrden.id)
+    )
+  ) {
     throw new Error("Esta orden ya fue registrada.");
   }
 
   const idsRevisados = new Set();
 
   const productosCompra = carrito.map((item) => {
-    if (idsRevisados.has(item.id)) {
+    if (!item || item.id === null || item.id === undefined) {
+      throw new Error("Hay un producto inválido en el carrito.");
+    }
+
+    const id = String(item.id);
+
+    if (idsRevisados.has(id)) {
       throw new Error("Hay productos repetidos. Revisa el carrito.");
     }
 
-    idsRevisados.add(item.id);
+    idsRevisados.add(id);
 
-    if (!Number.isInteger(item.cantidad) || item.cantidad < 1) {
+    if (
+      !Number.isSafeInteger(item.cantidad) ||
+      item.cantidad < 1
+    ) {
       throw new Error("Hay una cantidad inválida en el carrito.");
     }
 
     const productoActual = catalogo.find(
-      (producto) => producto.id === item.id
+      (producto) => String(producto.id) === id
     );
 
     if (!productoActual) {
@@ -261,7 +446,7 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
 
     const stock = Number(productoActual.stock);
 
-    if (!Number.isInteger(stock) || stock < 0) {
+    if (!Number.isSafeInteger(stock) || stock < 0) {
       throw new Error(
         `El stock de "${productoActual.nombre}" no es válido.`
       );
@@ -281,7 +466,11 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
       );
     }
 
-    const precioAnterior = calcularPrecioProducto(item, descuentoUsuario);
+    const precioAnterior = calcularPrecioProducto(
+      item,
+      descuentoUsuario
+    );
+
     const precioActual = calcularPrecioProducto(
       productoActual,
       descuentoUsuario
@@ -311,6 +500,8 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
     ...datosOrden,
     estado: "pendiente",
     pagoSimulado: true,
+    stockDescontado: true,
+    stockRestituido: false,
     descuentoUsuario,
     subtotal,
     ahorro,
@@ -338,13 +529,15 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
 
   const cantidadesCompradas = new Map(
     productosCompra.map((producto) => [
-      producto.id,
+      String(producto.id),
       producto.cantidad,
     ])
   );
 
   const catalogoActualizado = catalogo.map((producto) => {
-    const cantidad = cantidadesCompradas.get(producto.id);
+    const cantidad = cantidadesCompradas.get(
+      String(producto.id)
+    );
 
     if (cantidad === undefined) return producto;
 
