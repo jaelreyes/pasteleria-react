@@ -11,10 +11,10 @@ const pluginCobertura = {
   name: "cobertura",
 
   setup(build) {
-    // Instrumenta componentes, páginas, utilidades y datos.
+      // Instrumenta el panel, componentes, páginas, utilidades y datos.
     build.onLoad(
       {
-        filter: /src[\\/](components|pages|utils|data)[\\/].*\.jsx?$/,
+        filter: /src[\\/](admin|components|pages|utils|data)[\\/].*\.jsx?$/,
       },
       async (archivo) => {
         const codigo = await fs.promises.readFile(
