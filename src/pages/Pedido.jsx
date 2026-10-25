@@ -8,9 +8,33 @@ import "../styles/Pedido.css";
 const ESTADOS = {
   pendiente: { texto: "Pendiente", color: "secondary" },
   procesando: { texto: "En preparación", color: "warning" },
-  completado: { texto: "Completado", color: "success" },
+  enviado: { texto: "Enviado", color: "primary" },
+  completado: { texto: "Entregado", color: "success" },
   cancelado: { texto: "Cancelado", color: "danger" },
 };
+
+const ETAPAS = [
+  {
+    estado: "pendiente",
+    titulo: "Pedido recibido",
+    descripcion: "Tu compra quedó registrada y está pendiente de preparación.",
+  },
+  {
+    estado: "procesando",
+    titulo: "En preparación",
+    descripcion: "Estamos preparando los productos de tu pedido.",
+  },
+  {
+    estado: "enviado",
+    titulo: "Enviado",
+    descripcion: "Tu pedido salió de la pastelería y está en camino.",
+  },
+  {
+    estado: "completado",
+    titulo: "Entregado",
+    descripcion: "Tu pedido figura como entregado. ¡Gracias por tu compra!",
+  },
+];
 
 function normalizarCorreo(correo) {
   return String(correo || "").trim().toLowerCase();
@@ -18,6 +42,81 @@ function normalizarCorreo(correo) {
 
 function normalizarId(id) {
   return String(id || "").trim().toUpperCase();
+}
+
+function SeguimientoPedido({ estado = "pendiente" }) {
+  if (estado === "cancelado") {
+    return (
+      <Alert variant="warning" role="note">
+        Este pedido fue cancelado. Si tienes dudas,{" "}
+        <Link to="/contacto">contáctanos</Link>.
+      </Alert>
+    );
+  }
+
+  const pasoActual = ETAPAS.findIndex(
+    (etapa) => etapa.estado === estado
+  );
+
+  if (pasoActual === -1) {
+    return (
+      <p className="text-muted">
+        El seguimiento no está disponible para este estado.
+      </p>
+    );
+  }
+
+  return (
+    <section
+      className="pedido-seguimiento"
+      aria-label="Seguimiento del pedido"
+    >
+      <h3>Seguimiento de tu pedido</h3>
+
+      <ol className="pedido-seguimiento-etapas">
+        {ETAPAS.map((etapa, indice) => {
+          const anterior = indice < pasoActual;
+          const actual = indice === pasoActual;
+
+          return (
+            <li
+              key={etapa.estado}
+              className={[
+                "pedido-seguimiento-etapa",
+                anterior ? "completa" : "",
+                actual ? "actual" : "",
+              ]
+                .filter(Boolean)
+                .join(" ")}
+              aria-current={actual ? "step" : undefined}
+            >
+              <span
+                className="pedido-seguimiento-numero"
+                aria-hidden="true"
+              >
+                {anterior ? "✓" : indice + 1}
+              </span>
+
+              <span>
+                <strong>{etapa.titulo}</strong>
+                <small>
+                  {actual
+                    ? "Estado actual"
+                    : anterior
+                      ? "Etapa superada"
+                      : "Por realizar"}
+                </small>
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      <p className="pedido-seguimiento-descripcion">
+        {ETAPAS[pasoActual].descripcion}
+      </p>
+    </section>
+  );
 }
 
 function Pedido() {
@@ -113,7 +212,7 @@ function Pedido() {
       <h1>Mis pedidos</h1>
 
       <p className="pedido-subtitulo">
-        Revisa tus compras y el estado de cada pedido.
+        Revisa tus compras y sigue el avance de cada pedido.
       </p>
 
       {!usuario && (
@@ -121,8 +220,8 @@ function Pedido() {
           <h2>Consultar una compra como invitado</h2>
 
           <p>
-            Ingresa el identificador que apareció al confirmar la compra
-            y el correo utilizado en el despacho.
+            Ingresa el número de orden y el correo que utilizaste
+            al comprar.
           </p>
 
           <Form noValidate onSubmit={consultarPedido}>
@@ -131,7 +230,6 @@ function Pedido() {
                 <Form.Label>ID de la orden</Form.Label>
 
                 <Form.Control
-                  type="text"
                   name="id"
                   placeholder="ORD-..."
                   value={datosConsulta.id}
@@ -147,7 +245,6 @@ function Pedido() {
                 <Form.Control
                   type="email"
                   name="correo"
-                  placeholder="tucorreo@gmail.com"
                   autoComplete="email"
                   value={datosConsulta.correo}
                   onChange={actualizarConsulta}
@@ -183,8 +280,7 @@ function Pedido() {
 
           <p className="mt-3 mb-0">
             ¿Tienes una cuenta?{" "}
-            <Link to="/login">Inicia sesión</Link> para revisar
-            tus pedidos.
+            <Link to="/login">Inicia sesión</Link> para revisar tus pedidos.
           </p>
         </div>
       )}
@@ -205,17 +301,13 @@ function Pedido() {
       {!usuario && consultaRealizada && pedidos.length === 0 && (
         <Alert variant="warning" role="status">
           No encontramos una orden con ese ID y correo.
-          Comprueba que ambos correspondan a la misma compra.
         </Alert>
       )}
 
       {usuario && pedidos.length === 0 && (
         <div className="pedido-vacio">
           <h2>Aún no tienes pedidos</h2>
-
-          <p>
-            No hay compras asociadas al correo de tu cuenta.
-          </p>
+          <p>No hay compras asociadas al correo de tu cuenta.</p>
 
           <Button as={Link} to="/productos" variant="primary">
             Ir a la tienda
@@ -224,8 +316,10 @@ function Pedido() {
       )}
 
       {pedidos.map((orden) => {
-        const estado = ESTADOS[orden.estado] || {
-          texto: orden.estado || "Pendiente",
+        const estadoActual = orden.estado || "pendiente";
+
+        const estado = ESTADOS[estadoActual] || {
+          texto: estadoActual,
           color: "secondary",
         };
 
@@ -253,14 +347,15 @@ function Pedido() {
               </div>
             </div>
 
+            <SeguimientoPedido estado={estadoActual} />
+
             <div className="pedido-grid">
               <div className="pedido-tarjeta">
                 <h3>Productos del pedido</h3>
 
                 {productos.length === 0 ? (
                   <p>
-                    Esta orden antigua no tiene un detalle de productos
-                    guardado.
+                    Esta orden antigua no tiene detalle de productos.
                   </p>
                 ) : (
                   <ul className="pedido-productos">

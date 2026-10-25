@@ -6,7 +6,8 @@ import "../../styles/OrdersAdmin.css";
 const ESTADOS = {
   pendiente: "Pendiente",
   procesando: "En preparación",
-  completado: "Completado",
+  enviado: "Enviado",
+  completado: "Entregado",
   cancelado: "Cancelado",
 };
 

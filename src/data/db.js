@@ -1,8 +1,5 @@
 import productosIniciales from "./productos";
-import {
-  calcularPrecioProducto,
-  calcularTotales,
-} from "../utils/precios";
+import { calcularPrecioProducto, calcularTotales } from "../utils/precios";
 
 // --- USUARIOS Y ROLES ---
 
@@ -63,8 +60,7 @@ export const obtenerUsuarioActivo = () => {
 export const eliminarUsuario = (email) => {
   try {
     const usuarios = obtenerUsuarios().filter(
-      (usuario) =>
-        String(usuario.email || usuario.correo) !== String(email)
+      (usuario) => String(usuario.email || usuario.correo) !== String(email),
     );
 
     localStorage.setItem("usuarios", JSON.stringify(usuarios));
@@ -115,7 +111,7 @@ export const guardarProducto = (producto) => {
 
     if (producto.id) {
       productos = productos.map((actual) =>
-        actual.id === producto.id ? producto : actual
+        actual.id === producto.id ? producto : actual,
       );
     } else {
       producto.id = Date.now();
@@ -131,7 +127,7 @@ export const guardarProducto = (producto) => {
 export const eliminarProducto = (id) => {
   try {
     const productos = obtenerProductos().filter(
-      (producto) => producto.id !== id
+      (producto) => producto.id !== id,
     );
 
     localStorage.setItem("productos", JSON.stringify(productos));
@@ -168,9 +164,7 @@ export const obtenerCategorias = () => {
 
 export const obtenerOrdenes = () => {
   try {
-    const ordenes = JSON.parse(
-      localStorage.getItem("ordenes") || "[]"
-    );
+    const ordenes = JSON.parse(localStorage.getItem("ordenes") || "[]");
 
     return Array.isArray(ordenes) ? ordenes : [];
   } catch {
@@ -192,9 +186,7 @@ export const guardarOrden = (orden) => {
 
 export const obtenerOrdenPorId = (id) => {
   try {
-    return obtenerOrdenes().find(
-      (orden) => String(orden.id) === String(id)
-    );
+    return obtenerOrdenes().find((orden) => String(orden.id) === String(id));
   } catch {
     return null;
   }
@@ -205,6 +197,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
   const estadosPermitidos = [
     "pendiente",
     "procesando",
+    "enviado",
     "completado",
     "cancelado",
   ];
@@ -213,17 +206,13 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
     throw new Error("El estado seleccionado no es válido.");
   }
 
-  const ordenes = JSON.parse(
-    localStorage.getItem("ordenes") || "[]"
-  );
+  const ordenes = JSON.parse(localStorage.getItem("ordenes") || "[]");
 
   if (!Array.isArray(ordenes)) {
     throw new Error("Las órdenes guardadas no tienen un formato válido.");
   }
 
-  const indice = ordenes.findIndex(
-    (orden) => String(orden.id) === String(id)
-  );
+  const indice = ordenes.findIndex((orden) => String(orden.id) === String(id));
 
   if (indice === -1) {
     throw new Error("No encontramos la orden.");
@@ -239,7 +228,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
 
   if (estadoActual === "cancelado") {
     throw new Error(
-      "Una orden cancelada no se puede reactivar. Debe realizarse una compra nueva."
+      "Una orden cancelada no se puede reactivar. Debe realizarse una compra nueva.",
     );
   }
 
@@ -252,12 +241,9 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
   let productosActualizados = null;
 
   if (debeRestituirStock) {
-    if (
-      !Array.isArray(orden.productos) ||
-      orden.productos.length === 0
-    ) {
+    if (!Array.isArray(orden.productos) || orden.productos.length === 0) {
       throw new Error(
-        "La orden no tiene productos válidos para devolver al inventario."
+        "La orden no tiene productos válidos para devolver al inventario.",
       );
     }
 
@@ -275,25 +261,24 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
         item.cantidad < 1
       ) {
         throw new Error(
-          "La orden contiene cantidades inválidas. Revisa sus productos antes de cancelarla."
+          "La orden contiene cantidades inválidas. Revisa sus productos antes de cancelarla.",
         );
       }
 
       const idProducto = String(item.id);
 
       const producto = catalogo.find(
-        (actual) => String(actual.id) === idProducto
+        (actual) => String(actual.id) === idProducto,
       );
 
       if (!producto) {
         throw new Error(
-          `No se puede devolver "${item.nombre || idProducto}" porque ya no existe en el catálogo.`
+          `No se puede devolver "${item.nombre || idProducto}" porque ya no existe en el catálogo.`,
         );
       }
 
       const cantidad =
-        (cantidadesADevolver.get(idProducto) || 0) +
-        item.cantidad;
+        (cantidadesADevolver.get(idProducto) || 0) + item.cantidad;
 
       if (!Number.isSafeInteger(cantidad)) {
         throw new Error("La cantidad a devolver no es válida.");
@@ -303,9 +288,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
     }
 
     productosActualizados = catalogo.map((producto) => {
-      const cantidad = cantidadesADevolver.get(
-        String(producto.id)
-      );
+      const cantidad = cantidadesADevolver.get(String(producto.id));
 
       if (cantidad === undefined) return producto;
 
@@ -317,9 +300,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
         stockActual < 0 ||
         !Number.isSafeInteger(nuevoStock)
       ) {
-        throw new Error(
-          `El stock de "${producto.nombre}" no es válido.`
-        );
+        throw new Error(`El stock de "${producto.nombre}" no es válido.`);
       }
 
       return {
@@ -332,31 +313,23 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
   const ordenActualizada = {
     ...orden,
     estado: nuevoEstado,
-    ...(debeRestituirStock
-      ? { stockRestituido: true }
-      : {}),
+    ...(debeRestituirStock ? { stockRestituido: true } : {}),
   };
 
   const ordenesActualizadas = ordenes.map((actual, posicion) =>
-    posicion === indice ? ordenActualizada : actual
+    posicion === indice ? ordenActualizada : actual,
   );
 
   let stockGuardado = false;
 
   try {
     if (debeRestituirStock) {
-      localStorage.setItem(
-        "productos",
-        JSON.stringify(productosActualizados)
-      );
+      localStorage.setItem("productos", JSON.stringify(productosActualizados));
 
       stockGuardado = true;
     }
 
-    localStorage.setItem(
-      "ordenes",
-      JSON.stringify(ordenesActualizadas)
-    );
+    localStorage.setItem("ordenes", JSON.stringify(ordenesActualizadas));
   } catch {
     if (stockGuardado) {
       try {
@@ -367,7 +340,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
         }
       } catch {
         throw new Error(
-          "No se pudo actualizar la orden ni restaurar el inventario. Revisa el stock antes de intentar nuevamente."
+          "No se pudo actualizar la orden ni restaurar el inventario. Revisa el stock antes de intentar nuevamente.",
         );
       }
     }
@@ -380,11 +353,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
 
 // --- CONFIRMACIÓN DE COMPRA ---
 
-export function confirmarCompra(
-  datosOrden,
-  carrito,
-  descuentoUsuario = 0
-) {
+export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
   if (!Array.isArray(carrito) || carrito.length === 0) {
     throw new Error("El carrito está vacío.");
   }
@@ -396,19 +365,13 @@ export function confirmarCompra(
   const catalogo = obtenerProductos();
   const productosAnteriores = localStorage.getItem("productos");
 
-  const ordenes = JSON.parse(
-    localStorage.getItem("ordenes") || "[]"
-  );
+  const ordenes = JSON.parse(localStorage.getItem("ordenes") || "[]");
 
   if (!Array.isArray(ordenes)) {
     throw new Error("Las órdenes guardadas no tienen un formato válido.");
   }
 
-  if (
-    ordenes.some(
-      (orden) => String(orden.id) === String(datosOrden.id)
-    )
-  ) {
+  if (ordenes.some((orden) => String(orden.id) === String(datosOrden.id))) {
     throw new Error("Esta orden ya fue registrada.");
   }
 
@@ -427,53 +390,43 @@ export function confirmarCompra(
 
     idsRevisados.add(id);
 
-    if (
-      !Number.isSafeInteger(item.cantidad) ||
-      item.cantidad < 1
-    ) {
+    if (!Number.isSafeInteger(item.cantidad) || item.cantidad < 1) {
       throw new Error("Hay una cantidad inválida en el carrito.");
     }
 
     const productoActual = catalogo.find(
-      (producto) => String(producto.id) === id
+      (producto) => String(producto.id) === id,
     );
 
     if (!productoActual) {
       throw new Error(
-        `"${item.nombre || "El producto"}" ya no está disponible. Retíralo del carrito.`
+        `"${item.nombre || "El producto"}" ya no está disponible. Retíralo del carrito.`,
       );
     }
 
     const stock = Number(productoActual.stock);
 
     if (!Number.isSafeInteger(stock) || stock < 0) {
-      throw new Error(
-        `El stock de "${productoActual.nombre}" no es válido.`
-      );
+      throw new Error(`El stock de "${productoActual.nombre}" no es válido.`);
     }
 
     if (item.cantidad > stock) {
       throw new Error(
-        `Solo quedan ${stock} unidades de "${productoActual.nombre}". Revisa la cantidad en el carrito.`
+        `Solo quedan ${stock} unidades de "${productoActual.nombre}". Revisa la cantidad en el carrito.`,
       );
     }
 
     const precio = Number(productoActual.precio);
 
     if (!Number.isFinite(precio) || precio < 0) {
-      throw new Error(
-        `El precio de "${productoActual.nombre}" no es válido.`
-      );
+      throw new Error(`El precio de "${productoActual.nombre}" no es válido.`);
     }
 
-    const precioAnterior = calcularPrecioProducto(
-      item,
-      descuentoUsuario
-    );
+    const precioAnterior = calcularPrecioProducto(item, descuentoUsuario);
 
     const precioActual = calcularPrecioProducto(
       productoActual,
-      descuentoUsuario
+      descuentoUsuario,
     );
 
     if (
@@ -481,7 +434,7 @@ export function confirmarCompra(
       precioAnterior.precioFinal !== precioActual.precioFinal
     ) {
       throw new Error(
-        `Cambió el precio de "${productoActual.nombre}". Retíralo del carrito y vuelve a agregarlo para revisar el nuevo total.`
+        `Cambió el precio de "${productoActual.nombre}". Retíralo del carrito y vuelve a agregarlo para revisar el nuevo total.`,
       );
     }
 
@@ -493,7 +446,7 @@ export function confirmarCompra(
 
   const { subtotal, ahorro, total } = calcularTotales(
     productosCompra,
-    descuentoUsuario
+    descuentoUsuario,
   );
 
   const nuevaOrden = {
@@ -528,16 +481,11 @@ export function confirmarCompra(
   };
 
   const cantidadesCompradas = new Map(
-    productosCompra.map((producto) => [
-      String(producto.id),
-      producto.cantidad,
-    ])
+    productosCompra.map((producto) => [String(producto.id), producto.cantidad]),
   );
 
   const catalogoActualizado = catalogo.map((producto) => {
-    const cantidad = cantidadesCompradas.get(
-      String(producto.id)
-    );
+    const cantidad = cantidadesCompradas.get(String(producto.id));
 
     if (cantidad === undefined) return producto;
 
@@ -550,17 +498,11 @@ export function confirmarCompra(
   let stockGuardado = false;
 
   try {
-    localStorage.setItem(
-      "productos",
-      JSON.stringify(catalogoActualizado)
-    );
+    localStorage.setItem("productos", JSON.stringify(catalogoActualizado));
 
     stockGuardado = true;
 
-    localStorage.setItem(
-      "ordenes",
-      JSON.stringify([...ordenes, nuevaOrden])
-    );
+    localStorage.setItem("ordenes", JSON.stringify([...ordenes, nuevaOrden]));
   } catch {
     if (stockGuardado) {
       try {
@@ -571,14 +513,12 @@ export function confirmarCompra(
         }
       } catch {
         throw new Error(
-          "No se pudo guardar la orden ni restaurar el stock. Revisa el inventario antes de intentar nuevamente."
+          "No se pudo guardar la orden ni restaurar el stock. Revisa el inventario antes de intentar nuevamente.",
         );
       }
     }
 
-    throw new Error(
-      "No se pudo guardar la compra. El carrito se conserva."
-    );
+    throw new Error("No se pudo guardar la compra. El carrito se conserva.");
   }
 
   return nuevaOrden;

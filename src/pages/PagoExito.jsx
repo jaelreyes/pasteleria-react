@@ -7,7 +7,8 @@ import { formatearPrecio } from "../utils/precios";
 const ESTADOS = {
   pendiente: "Pendiente",
   procesando: "En preparación",
-  completado: "Completado",
+  enviado: "Enviado",
+  completado: "Entregado",
   cancelado: "Cancelado",
 };
 
