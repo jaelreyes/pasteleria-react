@@ -317,7 +317,7 @@ export const ProductsAdmin = ({
     }
 
     const rutaLocal = imagen.startsWith("/") && !imagen.startsWith("//");
-    let urlValida = false;
+    let urlValida;
 
     try {
       const url = new URL(imagen);

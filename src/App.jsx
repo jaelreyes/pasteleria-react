@@ -200,7 +200,10 @@ function App() {
   }, []);
 
   // Recupera los cambios al navegar entre páginas.
+  // localStorage es un sistema externo a React: el efecto lo vuelve a leer
+  // cuando cambia la ruta, por eso aquí sí se actualiza el estado.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     actualizarCatalogo();
   }, [ubicacion.pathname, actualizarCatalogo]);
 

@@ -21,9 +21,6 @@ export default function Login({ onIniciarSesion }) {
     const correoNormalizado = correo.trim().toLowerCase();
     const nuevosErrores = {};
 
-    const correoPermitido =
-      /^[^\s@]+@(duoc\.cl|profesor\.duoc\.cl|gmail\.com)$/i;
-
     if (!validarCorreo(correoNormalizado)) {
       nuevosErrores.correo =
         "Ingresa un correo @duoc.cl, @profesor.duoc.cl, @duocuc.cl o @gmail.com.";
