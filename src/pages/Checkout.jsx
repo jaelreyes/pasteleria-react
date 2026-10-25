@@ -1,7 +1,10 @@
 import { useState, useRef } from "react";
-import { Navigate, Link, useNavigate } from "react-router-dom";
+import { Navigate, Link } from "react-router-dom";
 import { Form, Button, Alert } from "react-bootstrap";
-import { obtenerUsuarioActivo, confirmarCompra } from "../data/db";
+import {
+  obtenerUsuarioActivo,
+  confirmarCompra,
+} from "../data/db";
 import {
   calcularTotales,
   calcularPrecioProducto,
@@ -14,11 +17,11 @@ export default function Checkout({
   descuento = 0,
   onCompraConfirmada,
 }) {
-  const navigate = useNavigate();
   const procesandoRef = useRef(false);
 
   const [error, setError] = useState("");
   const [procesando, setProcesando] = useState(false);
+  const [idOrdenConfirmada, setIdOrdenConfirmada] = useState(null);
 
   const [formData, setFormData] = useState(() => {
     const usuario = obtenerUsuarioActivo();
@@ -34,8 +37,22 @@ export default function Checkout({
     };
   });
 
-  const { subtotal, ahorro, total } = calcularTotales(carrito, descuento);
+  const { subtotal, ahorro, total } = calcularTotales(
+    carrito,
+    descuento
+  );
 
+  // La confirmación tiene prioridad aunque el carrito ya esté vacío.
+  if (idOrdenConfirmada) {
+    return (
+      <Navigate
+        to={`/pago/exito/${idOrdenConfirmada}`}
+        replace
+      />
+    );
+  }
+
+  // Solo vuelve al carrito si no hay una compra recién confirmada.
   if (carrito.length === 0) {
     return <Navigate to="/carrito" replace />;
   }
@@ -66,7 +83,10 @@ export default function Checkout({
       return;
     }
 
-    if (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (
+      email.length > 100 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
       setError("Ingresa un correo electrónico válido.");
       return;
     }
@@ -104,13 +124,13 @@ export default function Checkout({
           fecha: new Date().toISOString(),
         },
         carrito,
-        descuento,
+        descuento
       );
     } catch (errorCompra) {
       setError(
         errorCompra instanceof Error
           ? errorCompra.message
-          : "No se pudo completar la compra.",
+          : "No se pudo completar la compra."
       );
 
       procesandoRef.current = false;
@@ -118,30 +138,36 @@ export default function Checkout({
       return;
     }
 
-    // Solo vacía el carrito después de guardar la compra y el stock.
-    onCompraConfirmada();
+    // Guarda primero el destino de confirmación.
+    setIdOrdenConfirmada(ordenGuardada.id);
 
-    navigate(`/pago/exito/${ordenGuardada.id}`, {
-      replace: true,
-    });
+    // Después vacía el carrito.
+    onCompraConfirmada();
   }
 
   return (
-    <section className="container my-5" style={{ maxWidth: "700px" }}>
+    <section
+      className="container my-5"
+      style={{ maxWidth: "700px" }}
+    >
       <h1 className="mb-4" style={{ color: "#5c3d2e" }}>
         Finalizar compra
       </h1>
 
       <Alert variant="info" role="note">
-        Pago simulado para el proyecto académico. No se realiza ningún cobro
-        real.
+        Pago simulado para el proyecto académico. No se realiza
+        ningún cobro real.
       </Alert>
+
       <div className="p-4 bg-white shadow-sm rounded mb-4">
         <h2 className="h4">Resumen de compra</h2>
 
         <ul>
           {carrito.map((producto) => {
-            const { precioFinal } = calcularPrecioProducto(producto, descuento);
+            const { precioFinal } = calcularPrecioProducto(
+              producto,
+              descuento
+            );
 
             return (
               <li key={producto.id}>
@@ -153,7 +179,9 @@ export default function Checkout({
           })}
         </ul>
 
-        <p>Subtotal sin descuentos: {formatearPrecio(subtotal)}</p>
+        <p>
+          Subtotal sin descuentos: {formatearPrecio(subtotal)}
+        </p>
 
         {ahorro > 0 && (
           <p className="text-success">
@@ -169,6 +197,7 @@ export default function Checkout({
       {error && (
         <Alert variant="danger" role="alert">
           {error}
+
           <div className="mt-2">
             <Link to="/carrito">Volver a revisar el carrito</Link>
           </div>
@@ -255,7 +284,9 @@ export default function Checkout({
             className="w-100"
             style={{ background: "#8d5524", border: "none" }}
           >
-            {procesando ? "Procesando..." : "Confirmar compra simulada"}
+            {procesando
+              ? "Procesando..."
+              : "Confirmar compra simulada"}
           </Button>
         </fieldset>
       </Form>
