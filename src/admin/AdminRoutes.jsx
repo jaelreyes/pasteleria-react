@@ -18,6 +18,7 @@ import AdminProfile from "./pages/AdminProfile";
 import { ProductsAdmin } from "../pages/ProductsAdmin";
 import UserCreateAdmin from "./pages/UserCreateAdmin";
 import CategoriasAdmin from "./pages/CategoriasAdmin";
+import ReportesAdmin from "./pages/ReportesAdmin";
 import "../styles/Admin.css";
 
 export function AdminRoutes() {
@@ -162,7 +163,8 @@ export function AdminRoutes() {
                 Nuevo Producto
               </NavLink>
             )}
-                        {esAdministrador && (
+
+            {esAdministrador && (
               <NavLink
                 to="/admin/categorias"
                 className={claseEnlace}
@@ -181,6 +183,16 @@ export function AdminRoutes() {
             >
               Gestión de Órdenes
             </NavLink>
+
+            {esAdministrador && (
+              <NavLink
+                to="/admin/reportes"
+                className={claseEnlace}
+                onClick={cerrarMenu}
+              >
+                Reportes
+              </NavLink>
+            )}
 
             {esAdministrador && (
               <>
@@ -239,12 +251,22 @@ export function AdminRoutes() {
               element={<OrdersAdmin puedeModificar={true} />}
             />
 
-            
             <Route
               path="categorias"
               element={
                 esAdministrador ? (
                   <CategoriasAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
+            <Route
+              path="reportes"
+              element={
+                esAdministrador ? (
+                  <ReportesAdmin />
                 ) : (
                   <Navigate to="/admin" replace />
                 )
