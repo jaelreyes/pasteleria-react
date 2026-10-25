@@ -66,7 +66,10 @@ Abre la dirección indicada por Vite en la terminal.
 - Carrito con productos agrupados, control de cantidades y persistencia al recargar.
 - Eliminación de productos, vaciado y panel lateral con Offcanvas.
 - Resumen con subtotal, ahorro y total.
-- Checkout con datos de despacho y medios de pago simulados.
+- Checkout con datos de despacho, región y comuna, departamento, indicaciones
+  de entrega y medios de pago simulados. Si hay sesión, se completan los datos.
+- Opción para simular un pago rechazado: muestra la vista de error con el
+  resumen de la compra, no guarda la orden y conserva el carrito.
 - Comprobación del catálogo, cantidades, precios y stock antes de confirmar.
 - Descuento del inventario al registrar la compra y conservación del carrito
   cuando no se puede completar.
@@ -89,7 +92,10 @@ Abre la dirección indicada por Vite en la terminal.
 - Stock crítico cuando el stock es menor o igual al límite configurado.
 - Listado, creación, consulta, edición y eliminación de usuarios, con restricciones
   para las cuentas demo.
-- Gestión de estados de las órdenes.
+- Gestión de estados de las órdenes y boleta de cada orden (`/admin/ordenes/:id`).
+- Categorías: crear, renombrar y eliminar (solo si no tienen productos).
+- Reportes: total vendido, ticket promedio, productos más vendidos y stock por categoría.
+- Historial de compras de cada usuario.
 - Perfil con información de la cuenta y permisos según el rol.
 - Navegación administrativa adaptable a pantallas pequeñas.
 
@@ -99,8 +105,9 @@ Abre la dirección indicada por Vite en la terminal.
 | --- | --- | --- | --- |
 | Consultar productos | Sí | Sí | Sin acceso al panel |
 | Crear, editar y eliminar productos | Sí | No | No |
-| Consultar órdenes y cambiar estados | Sí | Sí | No |
-| Administrar usuarios | Sí | No | No |
+| Consultar órdenes, boletas y cambiar estados | Sí | Sí | No |
+| Administrar categorías y ver reportes | Sí | No | No |
+| Administrar usuarios e historial de compras | Sí | No | No |
 | Consultar el perfil del panel | Sí | Sí | No |
 
 Los clientes e invitados acceden a la tienda pública y consultan sus compras
@@ -132,17 +139,17 @@ npm run test:watch
 
 El reporte HTML de cobertura se genera en `coverage/html/index.html`.
 
-Última ejecución compartida, del 25 de octubre de 2026:
+Última ejecución compartida:
 
-- **128 pruebas aprobadas, sin fallos.**
-- Sentencias: **81,58%**.
-- Ramas: **73,29%**.
-- Funciones: **84,65%**.
-- Líneas: **82,87%**.
+- **156 pruebas aprobadas, sin fallos.**
+- Sentencias: **81,39%**.
+- Ramas: **72,59%**.
+- Funciones: **83,89%**.
+- Líneas: **82,51%**.
 
-La configuración actual instrumenta los archivos cargados desde `src/components`,
-`src/pages`, `src/utils` y `src/data`. El reporte no representa la cobertura
-completa de la aplicación: no instrumenta `src/admin` ni `src/App.jsx`.
+La configuración instrumenta los archivos cargados por las pruebas desde
+`src/admin`, `src/components`, `src/pages`, `src/utils` y `src/data`.
+`src/App.jsx` y `src/main.jsx` no se cargan en las pruebas unitarias.
 
 ## Compilación de producción
 
@@ -162,11 +169,11 @@ npm run lint
 
 ```text
 src/
-  admin/        Panel, páginas y componentes administrativos
+  admin/        Panel: páginas, componentes y rutas administrativas
   components/   Componentes compartidos de la tienda
-  pages/        Páginas públicas y gestión de productos
-  data/         Persistencia, catálogo, artículos y regiones/comunas
-  utils/        Validaciones, roles y cálculos de precios
+  pages/        Páginas públicas de la tienda
+  data/         Persistencia (db.js), catálogo, artículos y regiones/comunas
+  utils/        Validaciones, roles, precios, dirección y reportes
   styles/       Estilos de la aplicación
   tests/        Pruebas automatizadas
 public/
@@ -182,4 +189,3 @@ No existe conexión con un backend ni con una pasarela de pago real.
 Los datos permanecen en el almacenamiento del navegador utilizado; no se
 comparten entre dispositivos. Los controles de acceso del frontend y las cuentas
 demo forman parte de la demostración, no de un sistema de autenticación de producción.
-
