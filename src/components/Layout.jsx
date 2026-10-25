@@ -1,6 +1,6 @@
-import { Outlet, useLocation } from "react-router-dom";
-import Header from "./Header";
-import Footer from "./Footer";
+import { Outlet, useLocation } from 'react-router-dom'
+import Header from './Header'
+import Footer from './Footer'
 
 function Layout({
   cantidad,
@@ -8,14 +8,17 @@ function Layout({
   usuarioActivo,
   onCerrarSesion,
 }) {
-  const ubicacion = useLocation();
+  const { pathname } = useLocation()
 
-  const anchoCompleto =
-  ubicacion.pathname === "/" ||
-  ubicacion.pathname === "/n osotros" ||
-  ubicacion.pathname === "/contacto" ||
-  ubicacion.pathname === "/login" ||
-  ubicacion.pathname === "/registro";
+  const rutasAnchoCompleto = [
+    '/',
+    '/nosotros',
+    '/contacto',
+    '/login',
+    '/registro',
+  ]
+
+  const anchoCompleto = rutasAnchoCompleto.includes(pathname)
 
   return (
     <div className="site-layout">
@@ -27,14 +30,14 @@ function Layout({
       />
 
       <main
-        className={`site-main${anchoCompleto ? " site-main-home" : ""}`}
+        className={`site-main${anchoCompleto ? ' site-main-home' : ''}`}
       >
         <Outlet />
       </main>
 
       <Footer />
     </div>
-  );
+  )
 }
 
-export default Layout;
+export default Layout

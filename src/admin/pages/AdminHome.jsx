@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import {
-  obtenerProductos,
-  obtenerUsuarios,
-} from "../../data/db";
+import { obtenerProductos, obtenerUsuarios } from "../../data/db";
 
 function limiteCritico(producto) {
   const valor = producto.stockCritico;
@@ -21,7 +18,7 @@ export default function AdminHome({ esAdministrador = false }) {
   const [productos, setProductos] = useState(() => obtenerProductos());
 
   const [usuarios, setUsuarios] = useState(() =>
-    esAdministrador ? obtenerUsuarios() : []
+    esAdministrador ? obtenerUsuarios() : [],
   );
 
   function actualizarResumen() {
@@ -34,11 +31,11 @@ export default function AdminHome({ esAdministrador = false }) {
 
   const stockTotal = productos.reduce(
     (suma, producto) => suma + (Number(producto.stock) || 0),
-    0
+    0,
   );
 
   const cantidadCriticos = productos.filter(
-    (producto) => Number(producto.stock) < limiteCritico(producto)
+    (producto) => Number(producto.stock) <= limiteCritico(producto),
   ).length;
 
   const indicadores = [

@@ -41,7 +41,7 @@ function obtenerLimiteCritico(producto) {
 }
 
 function tieneStockCritico(producto) {
-  return Number(producto.stock) < obtenerLimiteCritico(producto);
+  return Number(producto.stock) <= obtenerLimiteCritico(producto);
 }
 
 function requiereAtencion(producto) {
@@ -546,8 +546,8 @@ export const ProductsAdmin = ({
 
                       {name === "stockCritico" && (
                         <Form.Text>
-                          Se marca como crítico cuando el stock está
-                          por debajo de este número.
+                          Se marca como crítico cuando el stock es
+                          menor o igual a este número.
                         </Form.Text>
                       )}
                     </Form.Group>
