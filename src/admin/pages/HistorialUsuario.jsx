@@ -20,7 +20,7 @@ export default function HistorialUsuario() {
   return (
     <section>
       <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-        <h1 className="h3 mb-0">Historial de compras</h1>
+        <h1 className="admin-productos-titulo mb-0">Historial de compras</h1>
         <Button variant="outline-secondary" as={Link} to="/admin/usuarios">
           Volver a usuarios
         </Button>

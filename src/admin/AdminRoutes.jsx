@@ -37,7 +37,8 @@ export function AdminRoutes() {
     rol === "admin" || rol === "administrador";
 
   if (!autorizado) {
-    return <Navigate to="/login" replace />;
+    // Sin sesión va al login; con sesión de Cliente vuelve a la tienda.
+    return <Navigate to={usuario ? "/" : "/login"} replace />;
   }
 
   function cerrarMenu() {

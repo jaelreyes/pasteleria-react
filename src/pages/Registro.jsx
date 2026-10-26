@@ -10,6 +10,7 @@ import {
   validarTelefono,
   calcularEdad,
 } from "../utils/validaciones";
+import { obtenerUsuarios } from "../data/db";
 import "../styles/Auth.css";
 
 const datosIniciales = {
@@ -201,9 +202,8 @@ function Registro() {
     }
 
     try {
-      const usuarios = JSON.parse(
-        localStorage.getItem("usuarios") || "[]"
-      );
+      // obtenerUsuarios() crea las cuentas demo si todavía no existen.
+      const usuarios = obtenerUsuarios();
 
       if (!Array.isArray(usuarios)) {
         throw new Error("Datos de usuarios inválidos");

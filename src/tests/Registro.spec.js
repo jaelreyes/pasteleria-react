@@ -136,8 +136,9 @@ describe('Registro', () => {
 
     const usuarios = JSON.parse(almacenamiento.usuarios)
 
-    expect(usuarios.length).toBe(1)
-    expect(usuarios[0]).toEqual(
+    // 3 cuentas demo + la cuenta nueva, que queda al final.
+    expect(usuarios.length).toBe(4)
+    expect(usuarios.at(-1)).toEqual(
       jasmine.objectContaining({
         run: '190110222',
         nombre: 'Ana',
@@ -148,7 +149,7 @@ describe('Registro', () => {
       })
     )
 
-    expect(usuarios[0].confirmPassword).toBeUndefined()
+    expect(usuarios.at(-1).confirmPassword).toBeUndefined()
 
     expect(
       screen.getByText('¡Cuenta creada correctamente!')
@@ -205,7 +206,7 @@ describe('Registro', () => {
 
     crearCuenta()
 
-    const usuario = JSON.parse(almacenamiento.usuarios)[0]
+    const usuario = JSON.parse(almacenamiento.usuarios).at(-1)
 
     expect(usuario.descuentoEdad).toBe(50)
     expect(usuario.beneficios).toContain(
@@ -220,7 +221,7 @@ describe('Registro', () => {
 
     crearCuenta()
 
-    const usuario = JSON.parse(almacenamiento.usuarios)[0]
+    const usuario = JSON.parse(almacenamiento.usuarios).at(-1)
 
     expect(usuario.codigoPromocional).toBe('FELICES50')
     expect(usuario.descuentoCodigo).toBe(10)
@@ -233,7 +234,7 @@ describe('Registro', () => {
 
     crearCuenta()
 
-    const usuario = JSON.parse(almacenamiento.usuarios)[0]
+    const usuario = JSON.parse(almacenamiento.usuarios).at(-1)
 
     expect(usuario.tortaGratisDuoc).toBe(true)
   })

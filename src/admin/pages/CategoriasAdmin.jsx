@@ -64,7 +64,7 @@ export default function CategoriasAdmin() {
 
   return (
     <section>
-      <h1 className="h3 mb-3">Categorías</h1>
+      <h1 className="admin-productos-titulo">Categorías</h1>
 
       {mensaje.texto && (
         <Alert
