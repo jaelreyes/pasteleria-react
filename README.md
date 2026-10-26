@@ -189,3 +189,19 @@ No existe conexión con un backend ni con una pasarela de pago real.
 Los datos permanecen en el almacenamiento del navegador utilizado; no se
 comparten entre dispositivos. Los controles de acceso del frontend y las cuentas
 demo forman parte de la demostración, no de un sistema de autenticación de producción.
+
+## Despliegue en la nube (AWS EC2)
+
+La aplicación web se encuentra desplegada y disponible de forma pública en una máquina virtual de Amazon Web Services:
+
+- **Plataforma:** AWS Academy Learner Lab.
+- **Servicio:** Amazon Elastic Compute Cloud (EC2).
+- **Tipo de instancia:** t3.micro.
+- **Sistema Operativo:** Ubuntu Server 24.04 LTS (HVM).
+- **Servidor Web y Reverse Proxy:** Nginx.
+- **Enrutamiento SPA:** Configuración de `try_files $uri $uri/ /index.html;` en Nginx para soportar la navegación y recarga de rutas de React Router.
+- **Seguridad (Security Group):**
+  - Puerto 22 (SSH): Gestión remota de la máquina.
+  - Puerto 80 (HTTP): Acceso público global (`0.0.0.0/0`).
+- **Dirección de acceso:** `http://<Dirección-IPv4-pública>` *(obtenida desde la consola de AWS EC2 en el campo **Dirección IPv4 pública** mientras la instancia esté en ejecución durante la sesión del laboratorio)*.
+- **Comprobación de conectividad:** Acceso probado exitosamente desde navegadores web de escritorio y dispositivos móviles mediante HTTP en el puerto 80.
