@@ -559,6 +559,17 @@ export function UsersAdmin() {
                       >
                         Editar datos
                       </Button>
+                      
+                      <Button
+                        as={Link}
+                        to={`/admin/usuarios/${encodeURIComponent(
+                          correoUsuario(usuario)
+                        )}/historial`}
+                        variant="outline-success"
+                        size="sm"
+                      >
+                        Historial
+                      </Button>
 
                       <Button
                         variant="outline-danger"

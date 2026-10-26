@@ -1,0 +1,269 @@
+/* ENCABEZADO DE LA TIENDA */
+
+.tienda-navigation {
+  padding: 0;
+  background: white;
+}
+
+.tienda-navigation .tienda-nav-contenedor {
+  max-width: 1200px;
+  padding: 1rem 1.5rem;
+}
+
+.tienda-navigation .tienda-nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0;
+  color: #8b4513;
+  font-family: "Pacifico", cursive;
+  font-size: 1.3rem;
+}
+
+.tienda-nav-logo img {
+  width: auto;
+  height: 44px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.tienda-navigation .tienda-nav-logo:hover {
+  color: #a0522d;
+}
+
+/* ENLACES PRINCIPALES */
+
+.tienda-nav-enlaces {
+  gap: 1.25rem;
+}
+
+.tienda-navigation .tienda-nav-enlaces .nav-link {
+  padding: 0.65rem 0;
+  border-bottom: 2px solid transparent;
+  color: #5d4037;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tienda-navigation .tienda-nav-enlaces .nav-link:hover,
+.tienda-navigation .tienda-nav-enlaces .nav-link.active {
+  border-bottom-color: #8b4513;
+  color: #8b4513;
+}
+
+/* CUENTA Y CARRITO */
+
+.tienda-nav-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.tienda-nav-login {
+  color: #5d4037;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tienda-nav-login:hover {
+  color: #8b4513;
+}
+
+.tienda-nav-registro {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: #ffc0cb;
+  color: #8b4513;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.tienda-nav-registro:hover {
+  background: #e8a0b0;
+  color: #8b4513;
+}
+
+.tienda-nav-carrito {
+  --bs-btn-color: #8b4513;
+  --bs-btn-border-color: #8b4513;
+  --bs-btn-hover-color: white;
+  --bs-btn-hover-bg: #8b4513;
+  --bs-btn-hover-border-color: #8b4513;
+  --bs-btn-active-color: white;
+  --bs-btn-active-bg: #8b4513;
+  --bs-btn-active-border-color: #8b4513;
+
+  min-height: 44px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tienda-nav-cuenta > .dropdown-toggle {
+  max-width: 230px;
+  overflow: hidden;
+  color: #8b4513;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tienda-nav-cuenta .dropdown-menu {
+  width: 280px;
+  max-width: calc(100vw - 3rem);
+  padding: 0.75rem 0;
+  border: 1px solid #f1dfcf;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgb(93 64 55 / 12%);
+}
+
+.tienda-nav-cuenta-info strong,
+.tienda-nav-cuenta-info small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+
+.tienda-nav-cuenta-info small {
+  margin-top: 0.25rem;
+  color: #8d6e63;
+}
+
+.tienda-nav-cuenta .tienda-nav-beneficio {
+  margin: 0.5rem 1rem;
+  padding: 0.65rem;
+  border-radius: 8px;
+  background: #fff5e1;
+  color: #8b4513;
+  font-size: 0.85rem;
+  white-space: normal;
+}
+
+.tienda-nav-cuenta .dropdown-item {
+  padding: 0.65rem 1rem;
+  color: #5d4037;
+}
+
+.tienda-nav-cuenta .dropdown-item:hover,
+.tienda-nav-cuenta .dropdown-item:focus {
+  background: #fff5e1;
+  color: #8b4513;
+}
+
+/* ESCRITORIO: DOS FILAS COMPACTAS */
+
+@media (min-width: 992px) {
+  .tienda-navigation .tienda-nav-contenedor {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.35rem 1.5rem;
+    padding: 0.5rem 1.5rem;
+  }
+
+  .tienda-navigation .tienda-nav-logo {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 1.15rem;
+  }
+
+  .tienda-nav-logo img {
+    height: 36px;
+  }
+
+  .tienda-navigation .navbar-collapse {
+    display: contents !important;
+  }
+
+  .tienda-nav-acciones {
+    grid-column: 2;
+    grid-row: 1;
+    gap: 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .tienda-nav-cuenta > .dropdown-toggle {
+    padding: 0.35rem 0;
+  }
+
+  .tienda-nav-carrito {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.9rem;
+  }
+
+  .tienda-nav-registro {
+    padding: 0.45rem 0.75rem;
+  }
+
+  .tienda-nav-enlaces {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    flex-direction: row;
+    justify-content: center;
+    gap: 1.25rem;
+    padding-top: 0.25rem;
+    border-top: 1px solid #f3e8df;
+  }
+
+  .tienda-navigation .tienda-nav-enlaces .nav-link {
+    padding: 0.35rem 0;
+    font-size: 0.9rem;
+  }
+}
+
+/* MÓVIL Y TABLET */
+
+@media (max-width: 991px) {
+  .tienda-navigation .tienda-nav-logo {
+    max-width: calc(100% - 65px);
+    font-size: 1.05rem;
+    white-space: normal;
+    line-height: 1.5;
+  }
+
+  .tienda-navigation .navbar-toggler {
+    min-width: 48px;
+    min-height: 44px;
+    padding: 0.35rem 0.5rem;
+  }
+
+  .tienda-navigation .navbar-collapse {
+    padding-top: 1rem;
+  }
+
+  .tienda-nav-enlaces {
+    gap: 0;
+  }
+
+  .tienda-navigation .tienda-nav-enlaces .nav-link {
+    padding: 0.75rem 0;
+    font-size: 1rem;
+  }
+
+  .tienda-nav-acciones {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3e8df;
+  }
+
+  .tienda-nav-login,
+  .tienda-nav-registro {
+    padding: 0.75rem;
+    text-align: center;
+  }
+
+  .tienda-nav-cuenta > .dropdown-toggle {
+    max-width: 100%;
+    padding: 0.75rem 0;
+  }
+
+  .tienda-nav-cuenta .dropdown-menu {
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+  }
+}

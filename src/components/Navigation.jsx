@@ -1,7 +1,18 @@
-import { useState } from 'react'
-import { Container, Nav, Navbar, Button } from 'react-bootstrap'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { puedeEntrarAlPanel } from '../utils/roles'
+import { useState } from "react";
+import {
+  Container,
+  Nav,
+  Navbar,
+  NavDropdown,
+  Button,
+} from "react-bootstrap";
+import {
+  Link,
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
+import { puedeEntrarAlPanel } from "../utils/roles";
+import "../styles/Navigation.css";
 
 function Navigation({
   cantidad,
@@ -9,151 +20,128 @@ function Navigation({
   usuarioActivo,
   onCerrarSesion,
 }) {
-  const [menuAbierto, setMenuAbierto] = useState(false)
-  const navegar = useNavigate()
+  const [menuAbierto, setMenuAbierto] = useState(false);
+  const navegar = useNavigate();
 
   function cerrarMenu() {
-    setMenuAbierto(false)
+    setMenuAbierto(false);
   }
 
   function salir() {
-    onCerrarSesion()
-    cerrarMenu()
-    navegar('/')
+    onCerrarSesion();
+    cerrarMenu();
+    navegar("/");
   }
 
   function abrirCarrito() {
-    cerrarMenu()
-    onVerCarrito()
+    cerrarMenu();
+    onVerCarrito();
   }
+
+  const enlaces = [
+    { ruta: "/", texto: "Inicio", end: true },
+    { ruta: "/productos", texto: "Productos" },
+    { ruta: "/categorias", texto: "Categorías" },
+    { ruta: "/ofertas", texto: "Ofertas" },
+    { ruta: "/nosotros", texto: "Nosotros" },
+    { ruta: "/blogs", texto: "Blogs" },
+    { ruta: "/contacto", texto: "Contacto" },
+    { ruta: "/pedido", texto: "Mis pedidos" },
+  ];
 
   return (
     <Navbar
       expand="lg"
-      className="navigation"
       expanded={menuAbierto}
       onToggle={setMenuAbierto}
+      className="tienda-navigation"
     >
-      <Container className="nav-container">
+      <Container className="tienda-nav-contenedor">
         <Navbar.Brand
           as={Link}
           to="/"
-          className="site-logo"
+          className="tienda-nav-logo"
           onClick={cerrarMenu}
         >
-          <img src="/images/logo.png" alt="" className="logo-img" />
+          <img
+            src="/images/logo.png"
+            alt=""
+            width={44}
+            height={44}
+          />
+
           <span>Pastelería 1000 Sabores</span>
         </Navbar.Brand>
 
         <Navbar.Toggle
           aria-controls="menu-principal"
-          aria-label="Abrir menú de navegación"
+          aria-label={
+            menuAbierto
+              ? "Cerrar menú de navegación"
+              : "Abrir menú de navegación"
+          }
         />
 
         <Navbar.Collapse id="menu-principal">
-          <Nav className="ms-auto site-nav-links">
-            <Nav.Link
-              as={NavLink}
-              to="/"
-              end
-              onClick={cerrarMenu}
-            >
-              Inicio
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/productos"
-              onClick={cerrarMenu}
-            >
-              Productos
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/categorias"
-              onClick={cerrarMenu}
-            >
-              Categorías
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/ofertas"
-              onClick={cerrarMenu}
-            >
-              Ofertas
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/nosotros"
-              onClick={cerrarMenu}
-            >
-              Nosotros
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/blogs"
-              onClick={cerrarMenu}
-            >
-              Blogs
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/contacto"
-              onClick={cerrarMenu}
-            >
-              Contacto
-            </Nav.Link>
-
-            <Nav.Link
-              as={NavLink}
-              to="/carrito"
-              onClick={cerrarMenu}
-            >
-              Carrito ({cantidad})
-            </Nav.Link>
+          <Nav className="tienda-nav-enlaces">
+            {enlaces.map((enlace) => (
+              <Nav.Link
+                key={enlace.ruta}
+                as={NavLink}
+                to={enlace.ruta}
+                end={enlace.end}
+                onClick={cerrarMenu}
+              >
+                {enlace.texto}
+              </Nav.Link>
+            ))}
           </Nav>
 
-          <div className="nav-sesion">
+          <div className="tienda-nav-acciones">
             {usuarioActivo ? (
-              <>
-                <span className="nav-usuario">
-                  Hola, {usuarioActivo.nombre}
-                </span>
+              <NavDropdown
+                id="menu-cuenta"
+                title={`Hola, ${usuarioActivo.nombre || "Mi cuenta"}`}
+                align="end"
+                className="tienda-nav-cuenta"
+              >
+                <NavDropdown.ItemText className="tienda-nav-cuenta-info">
+                  <strong>
+                    {usuarioActivo.nombre} {usuarioActivo.apellidos}
+                  </strong>
+
+                  <small>
+                    {usuarioActivo.correo || usuarioActivo.email}
+                  </small>
+                </NavDropdown.ItemText>
 
                 {usuarioActivo.tortaGratisDuoc && (
-                  <span className="nav-torta" title="Beneficio comunidad Duoc">
+                  <NavDropdown.ItemText className="tienda-nav-beneficio">
                     🎂 Torta gratis en tu cumpleaños
-                  </span>
+                  </NavDropdown.ItemText>
                 )}
+
+                <NavDropdown.Divider />
 
                 {puedeEntrarAlPanel(usuarioActivo) && (
-                  <Link
+                  <NavDropdown.Item
+                    as={Link}
                     to="/admin"
-                    className="nav-login"
                     onClick={cerrarMenu}
                   >
-                    Panel
-                  </Link>
+                    Panel de administración
+                  </NavDropdown.Item>
                 )}
 
-                <Button
-                  variant="outline-secondary"
-                  className="cart-panel-button"
-                  onClick={salir}
-                >
+                <NavDropdown.Item onClick={salir}>
                   Cerrar sesión
-                </Button>
-              </>
+                </NavDropdown.Item>
+              </NavDropdown>
             ) : (
               <>
                 <Link
                   to="/login"
-                  className="nav-login"
+                  className="tienda-nav-login"
                   onClick={cerrarMenu}
                 >
                   Iniciar sesión
@@ -161,7 +149,7 @@ function Navigation({
 
                 <Link
                   to="/registro"
-                  className="nav-registro"
+                  className="tienda-nav-registro"
                   onClick={cerrarMenu}
                 >
                   Registrarse
@@ -171,16 +159,16 @@ function Navigation({
 
             <Button
               variant="outline-secondary"
-              className="cart-panel-button"
+              className="tienda-nav-carrito"
               onClick={abrirCarrito}
             >
-              Ver carrito
+              Carrito ({cantidad})
             </Button>
           </div>
         </Navbar.Collapse>
       </Container>
     </Navbar>
-  )
+  );
 }
 
-export default Navigation
+export default Navigation;

@@ -4,7 +4,7 @@ import {
   guardarProducto,
   eliminarProducto,
   obtenerCategorias,
-} from "../data/db";
+} from "../../data/db";
 import {
   Table,
   Button,
@@ -14,7 +14,7 @@ import {
   Col,
   Alert,
 } from "react-bootstrap";
-import ProductDetailModal from "../admin/components/ProductDetailModal";
+import ProductDetailModal from "../components/ProductDetailModal";
 
 const formularioInicial = {
   id: "",
@@ -41,7 +41,7 @@ function obtenerLimiteCritico(producto) {
 }
 
 function tieneStockCritico(producto) {
-  return Number(producto.stock) < obtenerLimiteCritico(producto);
+  return Number(producto.stock) <= obtenerLimiteCritico(producto);
 }
 
 function requiereAtencion(producto) {
@@ -317,7 +317,7 @@ export const ProductsAdmin = ({
     }
 
     const rutaLocal = imagen.startsWith("/") && !imagen.startsWith("//");
-    let urlValida = false;
+    let urlValida;
 
     try {
       const url = new URL(imagen);
@@ -546,8 +546,8 @@ export const ProductsAdmin = ({
 
                       {name === "stockCritico" && (
                         <Form.Text>
-                          Se marca como crítico cuando el stock está
-                          por debajo de este número.
+                          Se marca como crítico cuando el stock es
+                          menor o igual a este número.
                         </Form.Text>
                       )}
                     </Form.Group>

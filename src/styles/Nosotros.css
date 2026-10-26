@@ -1,3 +1,5 @@
+/* BASE */
+
 .nosotros-page {
   background: #fff5e1;
   color: #5d4037;
@@ -37,15 +39,17 @@
   max-width: 100%;
 }
 
+/* PORTADA */
+
 .nosotros-hero {
-  background: linear-gradient(135deg, #ffc0cb 0%, #fff5e1 100%);
   padding: 4rem 1.5rem;
+  background: linear-gradient(135deg, #ffc0cb 0%, #fff5e1 100%);
   text-align: center;
 }
 
 .nosotros-hero h1 {
-  font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  font-size: 2.5rem;
 }
 
 .nosotros-hero p {
@@ -53,24 +57,35 @@
   opacity: 0.9;
 }
 
+/* CONTENEDORES DE SECCIONES */
+
+.nosotros-historia,
+.nosotros-mision-vision,
+.nosotros-video,
+.nosotros-valores,
+.nosotros-equipo {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+/* HISTORIA */
+
 .nosotros-historia {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  padding: 3rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
   align-items: center;
+  gap: 2rem;
 }
 
 .nosotros-historia-contenido h2 {
-  font-size: 2rem;
   margin-bottom: 1.5rem;
+  font-size: 2rem;
 }
 
 .nosotros-historia-contenido p {
-  font-size: 1.05rem;
   margin-bottom: 1rem;
+  font-size: 1.05rem;
   line-height: 1.8;
 }
 
@@ -79,52 +94,50 @@
   max-width: 400px;
   height: auto;
   border-radius: 16px;
-  box-shadow: 0 4px 16px rgb(93 64 55 / 15%);
   object-fit: cover;
+  box-shadow: 0 4px 16px rgb(93 64 55 / 15%);
 }
+
+/* MISIÓN Y VISIÓN */
 
 .nosotros-mision-vision {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 3rem 1.5rem;
 }
 
 .nosotros-mv-card {
-  background: white;
+  padding: 2rem;
   border-left: 5px solid #ffc0cb;
   border-radius: 16px;
+  background: white;
   box-shadow: 0 2px 8px rgb(93 64 55 / 10%);
-  padding: 2rem;
 }
 
 .nosotros-mv-card h2 {
-  font-size: 1.5rem;
   margin-bottom: 0.5rem;
+  font-size: 1.5rem;
 }
 
 .nosotros-mv-card p {
   line-height: 1.8;
 }
 
+/* VIDEO */
+
 .nosotros-video {
-  padding: 3rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
   background: white;
+  text-align: center;
 }
 
 .nosotros-video h2 {
-  font-size: 2rem;
   margin-bottom: 0.5rem;
+  font-size: 2rem;
 }
 
 .nosotros-video > p {
-  color: #8d6e63;
   margin-bottom: 1.5rem;
+  color: #8d6e63;
 }
 
 .nosotros-video figure {
@@ -138,10 +151,10 @@
   max-width: 800px;
   margin: 0 auto;
   aspect-ratio: 16 / 9;
-  border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 4px 16px rgb(93 64 55 / 15%);
+  border-radius: 16px;
   background: #2c1810;
+  box-shadow: 0 4px 16px rgb(93 64 55 / 15%);
 }
 
 .nosotros-video-contenedor iframe {
@@ -154,22 +167,21 @@
 
 .nosotros-video figcaption {
   margin-top: 0.5rem;
-  font-size: 0.85rem;
   color: #8d6e63;
+  font-size: 0.85rem;
   font-style: italic;
   text-align: center;
 }
 
+/* VALORES */
+
 .nosotros-valores {
-  padding: 3rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
   text-align: center;
 }
 
 .nosotros-valores h2 {
-  font-size: 2rem;
   margin-bottom: 0.5rem;
+  font-size: 2rem;
 }
 
 .nosotros-page .nosotros-intro {
@@ -185,9 +197,9 @@
 }
 
 .nosotros-valor-card {
-  background: white;
-  border-radius: 16px;
   overflow: hidden;
+  border-radius: 16px;
+  background: white;
   box-shadow: 0 2px 8px rgb(93 64 55 / 10%);
   transition: transform 0.3s ease;
 }
@@ -214,28 +226,27 @@
 }
 
 .nosotros-valor-card h3 {
-  font-size: 1.1rem;
   margin: 1rem 1rem 0.25rem;
+  font-size: 1.1rem;
 }
 
 .nosotros-valor-card p {
-  font-size: 0.85rem;
-  color: #8d6e63;
-  line-height: 1.6;
   padding: 0 1rem 1rem;
+  color: #8d6e63;
+  font-size: 0.85rem;
+  line-height: 1.6;
 }
 
+/* EQUIPO DE PASTELERÍA */
+
 .nosotros-equipo {
-  padding: 3rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  text-align: center;
   background: white;
+  text-align: center;
 }
 
 .nosotros-equipo h2 {
-  font-size: 2rem;
   margin-bottom: 2rem;
+  font-size: 2rem;
 }
 
 .nosotros-equipo-grid {
@@ -245,9 +256,9 @@
 }
 
 .nosotros-miembro-card {
-  background: #fff5e1;
   padding: 2rem;
   border-radius: 16px;
+  background: #fff5e1;
   box-shadow: 0 2px 8px rgb(93 64 55 / 10%);
 }
 
@@ -255,91 +266,84 @@
   width: 120px;
   height: 120px;
   margin: 0 auto 1rem;
-  border-radius: 50%;
   overflow: hidden;
   border: 4px solid #ffc0cb;
+  border-radius: 50%;
   object-fit: cover;
 }
 
 .nosotros-miembro-card h3 {
-  font-size: 1.2rem;
   margin-bottom: 0.25rem;
+  font-size: 1.2rem;
 }
 
 .nosotros-page .nosotros-miembro-cargo {
-  font-size: 0.9rem;
-  color: #e8a0b0;
-  font-weight: 700;
   margin-bottom: 0.5rem;
+  color: #e8a0b0;
+  font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .nosotros-miembro-bio {
-  font-size: 0.85rem;
   color: #8d6e63;
+  font-size: 0.85rem;
   line-height: 1.6;
 }
 
+/* INVITACIÓN FINAL */
+
 .nosotros-cta {
-  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
   padding: 3rem 1.5rem;
-  text-align: center;
+  background: linear-gradient(135deg, #8b4513 0%, #a0522d 100%);
   color: white;
+  text-align: center;
 }
 
 .nosotros-cta h2 {
-  font-size: 2rem;
-  color: white;
   margin-bottom: 0.5rem;
+  color: white;
+  font-size: 2rem;
 }
 
 .nosotros-cta p {
+  margin-bottom: 1.5rem;
   font-size: 1.1rem;
   opacity: 0.9;
-  margin-bottom: 1.5rem;
 }
 
 .nosotros-cta-botones {
   display: flex;
-  gap: 1rem;
   justify-content: center;
   flex-wrap: wrap;
+  gap: 1rem;
 }
 
-.nosotros-boton {
+/* Ambos enlaces comparten el mismo estilo. */
+.nosotros-cta .nosotros-boton {
   display: inline-block;
   padding: 0.75rem 1.5rem;
-  background: #8b4513;
-  color: white;
   border: none;
   border-radius: 8px;
-  font-weight: 700;
+  background: #8b4513;
+  color: white;
   font-size: 1rem;
+  font-weight: 700;
   text-decoration: none;
   transition: background 0.15s ease, transform 0.15s ease;
 }
 
-.nosotros-boton:hover {
+.nosotros-cta .nosotros-boton:hover {
   background: #a0522d;
   color: white;
   transform: translateY(-2px);
-}
-
-.nosotros-boton-secundario {
-  background: transparent;
-  color: #8b4513;
-  border: 2px solid #8b4513;
-}
-
-.nosotros-boton-secundario:hover {
-  background: #8b4513;
-  color: white;
-  transform: none;
 }
 
 .nosotros-boton:focus-visible {
   outline: 3px solid #ffc0cb;
   outline-offset: 4px;
 }
+
+/* MÓVILES */
 
 @media (max-width: 768px) {
   .nosotros-historia {
@@ -365,22 +369,12 @@
   }
 }
 
+/* MOVIMIENTO REDUCIDO */
+
 @media (prefers-reduced-motion: reduce) {
   .nosotros-page *,
   .nosotros-page *::before,
   .nosotros-page *::after {
     transition: none;
   }
-}
-
-.nosotros-cta .nosotros-boton {
-  background: #8b4513;
-  color: white;
-  border: none;
-}
-
-.nosotros-cta .nosotros-boton:hover {
-  background: #a0522d;
-  color: white;
-  transform: translateY(-2px);
 }

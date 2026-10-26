@@ -324,3 +324,8 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.estado-enviado {
+  background: #e9e0fa;
+  color: #59358b;
+}

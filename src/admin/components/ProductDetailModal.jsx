@@ -1,14 +1,13 @@
 import { Modal, Button, Row, Col, Badge } from "react-bootstrap";
-import {
-  calcularPrecioProducto,
-  formatearPrecio,
-} from "../../utils/precios";
+import { calcularPrecioProducto, formatearPrecio } from "../../utils/precios";
 
 function ProductDetailModal({ producto, onCerrar }) {
   if (!producto) return null;
 
-  const { precioBase, precioFinal, descuento } =
-    calcularPrecioProducto(producto, 0);
+  const { precioBase, precioFinal, descuento } = calcularPrecioProducto(
+    producto,
+    0,
+  );
 
   const limiteGuardado = producto.stockCritico;
 
@@ -20,13 +19,10 @@ function ProductDetailModal({ producto, onCerrar }) {
       : Number(limiteGuardado);
 
   const stockCritico =
-    Number.isInteger(limiteNumero) && limiteNumero >= 0
-      ? limiteNumero
-      : 5;
+    Number.isInteger(limiteNumero) && limiteNumero >= 0 ? limiteNumero : 5;
 
   const agotado = Number(producto.stock) === 0;
-  const esCritico = Number(producto.stock) < stockCritico;
-
+  const esCritico = Number(producto.stock) <= stockCritico;
   return (
     <Modal
       show
@@ -82,9 +78,7 @@ function ProductDetailModal({ producto, onCerrar }) {
 
             <dl className="row mb-0">
               <dt className="col-7">Precio base</dt>
-              <dd className="col-5 text-end">
-                {formatearPrecio(precioBase)}
-              </dd>
+              <dd className="col-5 text-end">{formatearPrecio(precioBase)}</dd>
 
               <dt className="col-7">Descuento del producto</dt>
               <dd className="col-5 text-end">{descuento}%</dd>
@@ -95,14 +89,10 @@ function ProductDetailModal({ producto, onCerrar }) {
               </dd>
 
               <dt className="col-7">Stock disponible</dt>
-              <dd className="col-5 text-end">
-                {producto.stock} unidades
-              </dd>
+              <dd className="col-5 text-end">{producto.stock} unidades</dd>
 
               <dt className="col-7">Límite de stock crítico</dt>
-              <dd className="col-5 text-end">
-                {stockCritico} unidades
-              </dd>
+              <dd className="col-5 text-end">{stockCritico} unidades</dd>
             </dl>
 
             <div className="mt-3">
@@ -118,8 +108,8 @@ function ProductDetailModal({ producto, onCerrar }) {
             </div>
 
             <p className="small text-muted mt-3 mb-0">
-              El precio mostrado incluye la oferta del producto.
-              Los beneficios personales se aplican en la tienda.
+              El precio mostrado incluye la oferta del producto. Los beneficios
+              personales se aplican en la tienda.
             </p>
           </Col>
         </Row>

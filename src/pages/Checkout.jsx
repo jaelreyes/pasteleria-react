@@ -1,164 +1,231 @@
-import { useState, useRef } from 'react'
-import { Navigate, Link, useNavigate } from 'react-router-dom'
-import { Form, Button, Alert } from 'react-bootstrap'
+import { useState, useRef } from "react";
+import { Navigate, Link } from "react-router-dom";
+import { Form, Button, Alert, Row, Col } from "react-bootstrap";
 import {
   obtenerUsuarioActivo,
-  guardarOrden,
-  obtenerOrdenPorId,
-} from '../data/db'
+  confirmarCompra,
+} from "../data/db";
 import {
   calcularTotales,
   calcularPrecioProducto,
   formatearPrecio,
-} from '../utils/precios'
-import { validarTelefono } from '../utils/validaciones'
+} from "../utils/precios";
+import { validarTelefono } from "../utils/validaciones";
+import { armarDireccion } from "../utils/direccion";
+import regionesComunas from "../data/regiones-comunas";
 
 export default function Checkout({
   carrito,
   descuento = 0,
   onCompraConfirmada,
 }) {
-  const navigate = useNavigate()
-  const procesandoRef = useRef(false)
+  const procesandoRef = useRef(false);
 
-  const [error, setError] = useState('')
-  const [procesando, setProcesando] = useState(false)
+  const [error, setError] = useState("");
+  const [procesando, setProcesando] = useState(false);
+  const [idOrdenConfirmada, setIdOrdenConfirmada] = useState(null);
+  const [pagoRechazado, setPagoRechazado] = useState(null);
 
   const [formData, setFormData] = useState(() => {
-    const usuario = obtenerUsuarioActivo()
+    const usuario = obtenerUsuarioActivo();
 
     return {
       nombre: usuario
-        ? `${usuario.nombre || ''} ${usuario.apellidos || ''}`.trim()
-        : '',
-      email: usuario?.correo || usuario?.email || '',
-      telefono: usuario?.telefono || '',
-      direccion: usuario?.direccion || '',
-      metodoPago: 'webpay',
-    }
-  })
+        ? `${usuario.nombre || ""} ${usuario.apellidos || ""}`.trim()
+        : "",
+      email: usuario?.correo || usuario?.email || "",
+      telefono: usuario?.telefono || "",
+      direccion: usuario?.direccion || "",
+      departamento: "",
+      region: usuario?.region || "",
+      comuna: usuario?.comuna || "",
+      indicaciones: "",
+      metodoPago: "webpay",
+      simularRechazo: false,
+    };
+  });
+
+  const regionSeleccionada = regionesComunas.find(
+    (item) => item.region === formData.region
+  );
+
+  const comunas = regionSeleccionada
+    ? [...new Set(regionSeleccionada.comunas)]
+    : [];
 
   const { subtotal, ahorro, total } = calcularTotales(
     carrito,
     descuento
-  )
+  );
 
-  // Impide entrar directamente si no hay productos.
+  // La confirmación tiene prioridad aunque el carrito ya esté vacío.
+  if (idOrdenConfirmada) {
+    return (
+      <Navigate
+        to={`/pago/exito/${idOrdenConfirmada}`}
+        replace
+      />
+    );
+  }
+
+  // Pago rechazado: muestra el resumen sin guardar la orden.
+  if (pagoRechazado) {
+    return (
+      <Navigate
+        to="/pago/error"
+        state={{ pago: pagoRechazado }}
+        replace
+      />
+    );
+  }
+
+  // Solo vuelve al carrito si no hay una compra recién confirmada.
   if (carrito.length === 0) {
-    return <Navigate to="/carrito" replace />
+    return <Navigate to="/carrito" replace />;
   }
 
   function handleChange(evento) {
-    const { name, value } = evento.target
+    const { name, value, type, checked } = evento.target;
 
-    setFormData(actual => ({
+    setFormData((actual) => ({
       ...actual,
-      [name]: value,
-    }))
+      [name]: type === "checkbox" ? checked : value,
+      // Al cambiar de región, la comuna anterior deja de ser válida.
+      ...(name === "region" ? { comuna: "" } : {}),
+    }));
 
-    setError('')
+    setError("");
   }
 
   function handleSubmit(evento) {
-    evento.preventDefault()
+    evento.preventDefault();
 
-    // Evita guardar dos órdenes por clics consecutivos.
-    if (procesandoRef.current) return
+    if (procesandoRef.current) return;
 
-    const nombre = formData.nombre.trim()
-    const email = formData.email.trim().toLowerCase()
-    const telefono = formData.telefono.trim()
-    const direccion = formData.direccion.trim()
+    const nombre = formData.nombre.trim();
+    const email = formData.email.trim().toLowerCase();
+    const telefono = formData.telefono.trim();
+    const direccion = formData.direccion.trim();
+    const departamento = formData.departamento.trim();
+    const indicaciones = formData.indicaciones.trim();
 
     if (!nombre || !email || !telefono || !direccion) {
-      setError('Completa todos los campos obligatorios de despacho.')
-      return
+      setError("Completa todos los campos obligatorios de despacho.");
+      return;
     }
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError('Ingresa un correo electrónico válido.')
-      return
+    if (
+      email.length > 100 ||
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    ) {
+      setError("Ingresa un correo electrónico válido.");
+      return;
     }
 
     if (!validarTelefono(telefono)) {
-      setError('Ingresa un teléfono válido de 8 a 15 dígitos.')
-      return
+      setError("Ingresa un teléfono válido de 8 a 15 dígitos.");
+      return;
     }
 
-    procesandoRef.current = true
-    setProcesando(true)
-    setError('')
+    if (nombre.length > 150 || direccion.length > 300) {
+      setError("El nombre o la dirección superan el largo permitido.");
+      return;
+    }
+
+    if (!regionSeleccionada) {
+      setError("Selecciona la región de despacho.");
+      return;
+    }
+
+    if (!comunas.includes(formData.comuna)) {
+      setError("Selecciona una comuna de la región elegida.");
+      return;
+    }
+
+    if (departamento.length > 50 || indicaciones.length > 300) {
+      setError("El departamento o las indicaciones superan el largo permitido.");
+      return;
+    }
+
+    const datosCompra = {
+      id: `ORD-${crypto.randomUUID()}`,
+      nombre,
+      email,
+      telefono,
+      direccion: armarDireccion({
+        direccion,
+        departamento,
+        comuna: formData.comuna,
+        region: formData.region,
+      }),
+      calle: direccion,
+      departamento,
+      region: formData.region,
+      comuna: formData.comuna,
+      indicaciones,
+      metodoPago: formData.metodoPago,
+      fecha: new Date().toISOString(),
+    };
+
+    // Simulación de rechazo: no descuenta stock ni guarda la orden.
+    if (formData.simularRechazo) {
+      setPagoRechazado({
+        ...datosCompra,
+        total,
+        productos: carrito.map((producto) => ({
+          id: producto.id,
+          nombre: producto.nombre,
+          imagen: producto.imagen,
+          cantidad: producto.cantidad,
+          precioFinal: calcularPrecioProducto(producto, descuento)
+            .precioFinal,
+        })),
+      });
+      return;
+    }
+
+    if (!["webpay", "transferencia"].includes(formData.metodoPago)) {
+      setError("Selecciona un medio de pago válido.");
+      return;
+    }
+
+    procesandoRef.current = true;
+    setProcesando(true);
+    setError("");
+
+    let ordenGuardada;
 
     try {
-      const nuevaOrden = {
-        id: `ORD-${crypto.randomUUID()}`,
-        nombre,
-        email,
-        telefono,
-        direccion,
-        metodoPago: formData.metodoPago,
-        fecha: new Date().toISOString(),
-        estado: 'pendiente',
-        pagoSimulado: true,
-        descuentoUsuario: descuento,
-        subtotal,
-        ahorro,
-        total,
-
-        // Conserva una copia de los productos y precios de esta compra.
-        productos: carrito.map(producto => {
-          const {
-            precioBase,
-            precioFinal,
-            descuento: descuentoAplicado,
-          } = calcularPrecioProducto(producto, descuento)
-
-          return {
-            id: producto.id,
-            codigo: producto.codigo,
-            nombre: producto.nombre,
-            imagen: producto.imagen,
-            cantidad: producto.cantidad,
-            precioBase,
-            precioFinal,
-            descuentoAplicado,
-          }
-        }),
-      }
-
-      guardarOrden(nuevaOrden)
-
-      // guardarOrden captura sus errores: verificamos que se haya guardado.
-      const ordenGuardada = obtenerOrdenPorId(nuevaOrden.id)
-
-      if (!ordenGuardada) {
-        throw new Error('No se pudo guardar la orden.')
-      }
-
-      onCompraConfirmada()
-
-      navigate(`/pago/exito/${nuevaOrden.id}`, {
-        replace: true,
-      })
-    } catch {
+      ordenGuardada = confirmarCompra(datosCompra, carrito, descuento);
+    } catch (errorCompra) {
       setError(
-        'No se pudo completar la compra. Revisa el carrito antes de volver a intentarlo.'
-      )
-      procesandoRef.current = false
-      setProcesando(false)
+        errorCompra instanceof Error
+          ? errorCompra.message
+          : "No se pudo completar la compra."
+      );
+
+      procesandoRef.current = false;
+      setProcesando(false);
+      return;
     }
+
+    // Guarda primero el destino de confirmación.
+    setIdOrdenConfirmada(ordenGuardada.id);
+
+    // Después vacía el carrito.
+    onCompraConfirmada();
   }
 
   return (
     <section
       className="container my-5"
-      style={{ maxWidth: '700px' }}
+      style={{ maxWidth: "700px" }}
     >
-      <h1 className="mb-4" style={{ color: '#5c3d2e' }}>
+      <h1 className="mb-4" style={{ color: "#5c3d2e" }}>
         Finalizar compra
       </h1>
 
-      <Alert variant="info">
+      <Alert variant="info" role="note">
         Pago simulado para el proyecto académico. No se realiza
         ningún cobro real.
       </Alert>
@@ -167,19 +234,19 @@ export default function Checkout({
         <h2 className="h4">Resumen de compra</h2>
 
         <ul>
-          {carrito.map(producto => {
+          {carrito.map((producto) => {
             const { precioFinal } = calcularPrecioProducto(
               producto,
               descuento
-            )
+            );
 
             return (
               <li key={producto.id}>
                 {producto.nombre} × {producto.cantidad}
-                {' — '}
+                {" — "}
                 {formatearPrecio(precioFinal * producto.cantidad)}
               </li>
-            )
+            );
           })}
         </ul>
 
@@ -201,6 +268,10 @@ export default function Checkout({
       {error && (
         <Alert variant="danger" role="alert">
           {error}
+
+          <div className="mt-2">
+            <Link to="/carrito">Volver a revisar el carrito</Link>
+          </div>
         </Alert>
       )}
 
@@ -214,6 +285,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-nombre">
             <Form.Label>Nombre y apellidos *</Form.Label>
+
             <Form.Control
               name="nombre"
               autoComplete="name"
@@ -226,6 +298,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-email">
             <Form.Label>Correo electrónico *</Form.Label>
+
             <Form.Control
               type="email"
               name="email"
@@ -239,6 +312,7 @@ export default function Checkout({
 
           <Form.Group className="mb-3" controlId="checkout-telefono">
             <Form.Label>Teléfono *</Form.Label>
+
             <Form.Control
               type="tel"
               name="telefono"
@@ -250,20 +324,100 @@ export default function Checkout({
             />
           </Form.Group>
 
-          <Form.Group className="mb-3" controlId="checkout-direccion">
-            <Form.Label>Dirección de despacho *</Form.Label>
+          <Row className="g-3 mb-3">
+            <Col md={8}>
+              <Form.Group controlId="checkout-direccion">
+                <Form.Label>Dirección de despacho *</Form.Label>
+
+                <Form.Control
+                  name="direccion"
+                  autoComplete="street-address"
+                  placeholder="Calle y número"
+                  maxLength={300}
+                  value={formData.direccion}
+                  onChange={handleChange}
+                  required
+                />
+              </Form.Group>
+            </Col>
+
+            <Col md={4}>
+              <Form.Group controlId="checkout-departamento">
+                <Form.Label>Departamento (opcional)</Form.Label>
+
+                <Form.Control
+                  name="departamento"
+                  placeholder="Ej: 603"
+                  maxLength={50}
+                  value={formData.departamento}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Row className="g-3 mb-3">
+            <Col md={6}>
+              <Form.Group controlId="checkout-region">
+                <Form.Label>Región *</Form.Label>
+
+                <Form.Select
+                  name="region"
+                  value={formData.region}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Selecciona una región</option>
+
+                  {regionesComunas.map((item) => (
+                    <option key={item.region} value={item.region}>
+                      {item.region}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Col>
+
+            <Col md={6}>
+              <Form.Group controlId="checkout-comuna">
+                <Form.Label>Comuna *</Form.Label>
+
+                <Form.Select
+                  name="comuna"
+                  value={formData.comuna}
+                  onChange={handleChange}
+                  disabled={!regionSeleccionada}
+                  required
+                >
+                  <option value="">Selecciona una comuna</option>
+
+                  {comunas.map((comuna) => (
+                    <option key={comuna} value={comuna}>
+                      {comuna}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            </Col>
+          </Row>
+
+          <Form.Group className="mb-3" controlId="checkout-indicaciones">
+            <Form.Label>Indicaciones para la entrega (opcional)</Form.Label>
+
             <Form.Control
-              name="direccion"
-              autoComplete="street-address"
+              as="textarea"
+              rows={2}
+              name="indicaciones"
+              placeholder="Ej: entre calles, color del edificio, no tiene timbre."
               maxLength={300}
-              value={formData.direccion}
+              value={formData.indicaciones}
               onChange={handleChange}
-              required
             />
           </Form.Group>
 
-          <Form.Group className="mb-4" controlId="checkout-pago">
+          <Form.Group className="mb-3" controlId="checkout-pago">
             <Form.Label>Medio de pago simulado</Form.Label>
+
             <Form.Select
               name="metodoPago"
               value={formData.metodoPago}
@@ -274,12 +428,24 @@ export default function Checkout({
             </Form.Select>
           </Form.Group>
 
+          <Form.Check
+            type="checkbox"
+            id="checkout-simular-rechazo"
+            name="simularRechazo"
+            className="mb-4"
+            label="Simular pago rechazado (para probar la vista de error)"
+            checked={formData.simularRechazo}
+            onChange={handleChange}
+          />
+
           <Button
             type="submit"
             className="w-100"
-            style={{ background: '#8d5524', border: 'none' }}
+            style={{ background: "#8d5524", border: "none" }}
           >
-            {procesando ? 'Procesando...' : 'Confirmar compra simulada'}
+            {procesando
+              ? "Procesando..."
+              : "Confirmar compra simulada"}
           </Button>
         </fieldset>
       </Form>
@@ -288,5 +454,5 @@ export default function Checkout({
         <Link to="/carrito">Volver al carrito</Link>
       </p>
     </section>
-  )
+  );
 }

@@ -5,7 +5,7 @@ import {
   cleanup,
   within,
 } from "@testing-library/react";
-import ProductsAdmin from "../pages/ProductsAdmin";
+import ProductsAdmin from "../admin/pages/ProductsAdmin";
 
 const productoInicial = {
   id: 1,

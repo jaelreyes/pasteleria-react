@@ -15,8 +15,12 @@ import AdminHome from "./pages/AdminHome";
 import OrdersAdmin from "./pages/OrdersAdmin";
 import UsersAdmin from "./pages/UsersAdmin";
 import AdminProfile from "./pages/AdminProfile";
-import { ProductsAdmin } from "../pages/ProductsAdmin";
+import { ProductsAdmin } from "./pages/ProductsAdmin";
 import UserCreateAdmin from "./pages/UserCreateAdmin";
+import CategoriasAdmin from "./pages/CategoriasAdmin";
+import ReportesAdmin from "./pages/ReportesAdmin";
+import BoletaAdmin from "./pages/BoletaAdmin";
+import HistorialUsuario from "./pages/HistorialUsuario";
 import "../styles/Admin.css";
 
 export function AdminRoutes() {
@@ -162,6 +166,16 @@ export function AdminRoutes() {
               </NavLink>
             )}
 
+            {esAdministrador && (
+              <NavLink
+                to="/admin/categorias"
+                className={claseEnlace}
+                onClick={cerrarMenu}
+              >
+                Categorías
+              </NavLink>
+            )}
+
             <p className="admin-menu-grupo">Pedidos</p>
 
             <NavLink
@@ -171,6 +185,16 @@ export function AdminRoutes() {
             >
               Gestión de Órdenes
             </NavLink>
+
+            {esAdministrador && (
+              <NavLink
+                to="/admin/reportes"
+                className={claseEnlace}
+                onClick={cerrarMenu}
+              >
+                Reportes
+              </NavLink>
+            )}
 
             {esAdministrador && (
               <>
@@ -229,6 +253,30 @@ export function AdminRoutes() {
               element={<OrdersAdmin puedeModificar={true} />}
             />
 
+            <Route path="ordenes/:id" element={<BoletaAdmin />} />
+
+            <Route
+              path="categorias"
+              element={
+                esAdministrador ? (
+                  <CategoriasAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
+            <Route
+              path="reportes"
+              element={
+                esAdministrador ? (
+                  <ReportesAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
             <Route
               path="productos"
               element={
@@ -260,6 +308,17 @@ export function AdminRoutes() {
               element={
                 esAdministrador ? (
                   <UsersAdmin />
+                ) : (
+                  <Navigate to="/admin" replace />
+                )
+              }
+            />
+
+            <Route
+              path="usuarios/:correo/historial"
+              element={
+                esAdministrador ? (
+                  <HistorialUsuario />
                 ) : (
                   <Navigate to="/admin" replace />
                 )
