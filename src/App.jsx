@@ -124,10 +124,25 @@ function sincronizarCarrito(items, catalogo) {
   };
 }
 
-function leerCarrito(catalogo) {
+// Obtiene la clave según la sesión activa (correo o email)
+function obtenerClaveCarrito(usuario) {
   try {
+    const u =
+      usuario ||
+      JSON.parse(localStorage.getItem("usuarioActivo") || "null");
+    const correo = u?.correo || u?.email;
+    return correo ? `carrito_${correo}` : "carrito_invitado";
+  } catch {
+    return "carrito_invitado";
+  }
+}
+
+// Lee el carrito correspondiente a la sesión
+function leerCarrito(catalogo, usuario) {
+  try {
+    const clave = obtenerClaveCarrito(usuario);
     const guardado = JSON.parse(
-      localStorage.getItem("carrito") || "[]"
+      localStorage.getItem(clave) || "[]"
     );
 
     if (!Array.isArray(guardado)) {
@@ -149,14 +164,6 @@ function App() {
 
   const [productos, setProductos] = useState(() => obtenerProductos());
 
-  const [estadoCarrito, setEstadoCarrito] = useState(() =>
-    leerCarrito(productos)
-  );
-
-  const carrito = estadoCarrito.items;
-
-  const [mostrarCarrito, setMostrarCarrito] = useState(false);
-
   const [usuarioActivo, setUsuarioActivo] = useState(() => {
     try {
       return JSON.parse(
@@ -167,9 +174,19 @@ function App() {
     }
   });
 
+  const [estadoCarrito, setEstadoCarrito] = useState(() =>
+    leerCarrito(productos, usuarioActivo)
+  );
+
+  const carrito = estadoCarrito.items;
+
+  const [mostrarCarrito, setMostrarCarrito] = useState(false);
+
+  // Guarda en localStorage usando la clave dinámica del usuario conectado
   useEffect(() => {
-    localStorage.setItem("carrito", JSON.stringify(carrito));
-  }, [carrito]);
+    const clave = obtenerClaveCarrito(usuarioActivo);
+    localStorage.setItem(clave, JSON.stringify(carrito));
+  }, [carrito, usuarioActivo]);
 
   const actualizarCatalogo = useCallback(() => {
     const catalogoActual = obtenerProductos();
@@ -200,8 +217,6 @@ function App() {
   }, []);
 
   // Recupera los cambios al navegar entre páginas.
-  // localStorage es un sistema externo a React: el efecto lo vuelve a leer
-  // cuando cambia la ruta, por eso aquí sí se actualiza el estado.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     actualizarCatalogo();
@@ -254,7 +269,6 @@ function App() {
     if (!Number.isInteger(cantidad) || cantidad < 1) return;
 
     const catalogoActual = obtenerProductos();
-
     setProductos(catalogoActual);
 
     setEstadoCarrito((actual) => {
@@ -315,7 +329,7 @@ function App() {
         aviso:
           cantidadAgregar < cantidad
             ? "Agregamos únicamente las unidades disponibles."
-            : sincronizado.aviso || actual.aviso,
+            : `¡Agregaste "${productoActual.nombre}" al carrito!`,
       };
     });
   }
@@ -397,11 +411,13 @@ function App() {
 
     localStorage.setItem("usuarioActivo", JSON.stringify(sesion));
     setUsuarioActivo(sesion);
+    setEstadoCarrito(leerCarrito(productos, sesion));
   }
 
   function cerrarSesion() {
     localStorage.removeItem("usuarioActivo");
     setUsuarioActivo(null);
+    setEstadoCarrito(leerCarrito(productos, null));
   }
 
   const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
@@ -561,12 +577,14 @@ function App() {
         <Toast
           show={Boolean(estadoCarrito.aviso) && !esAdministracion}
           onClose={cerrarAvisoCarrito}
+          autohide
+          delay={3500}
           role="status"
           aria-live="polite"
           style={{ width: "100%" }}
         >
           <Toast.Header>
-            <strong className="me-auto">Carrito actualizado</strong>
+            <strong className="me-auto">Pastelería 1000 Sabores</strong>
           </Toast.Header>
 
           <Toast.Body>
