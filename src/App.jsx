@@ -549,11 +549,10 @@ function App() {
             path="login"
             element={<Login onIniciarSesion={iniciarSesion} />}
           />
-
-          <Route path="*" element={<NotFound />} />
         </Route>
 
         <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <CartPanel
