@@ -75,7 +75,7 @@ function Navigation({
 
         <Navbar.Toggle
           aria-controls="menu-principal"
-          aria-label={
+          label={
             menuAbierto
               ? "Cerrar menú de navegación"
               : "Abrir menú de navegación"

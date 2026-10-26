@@ -22,7 +22,7 @@ export default function ReportesAdmin() {
 
   return (
     <section>
-      <h1 className="h3 mb-4">Reportes</h1>
+      <h1 className="admin-productos-titulo mb-4">Reportes</h1>
 
       <Row xs={1} sm={2} lg={4} className="g-3 mb-4">
         <Col>
