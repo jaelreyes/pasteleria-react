@@ -1,3 +1,4 @@
+// PESTAÑA 8 · Pruebas de categorías: funciones de db.js y la vista CategoriasAdmin.
 // Pruebas del CRUD de categorías (db.js) y de su vista en el panel.
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import CategoriasAdmin from "../admin/pages/CategoriasAdmin";
@@ -23,22 +24,27 @@ describe("Categorías del panel", () => {
       categorias: JSON.stringify(["Tortas Cuadradas", "Productos Sin Gluten", "Galletas"]),
     };
 
+    // spyOn reemplaza getItem: lee del objeto almacenamiento en vez del navegador.
     spyOn(Storage.prototype, "getItem").and.callFake((clave) =>
       clave in almacenamiento ? almacenamiento[clave] : null
     );
+    // spyOn reemplaza setItem: guarda en el objeto almacenamiento.
     spyOn(Storage.prototype, "setItem").and.callFake((clave, valor) => {
       almacenamiento[clave] = String(valor);
     });
   });
 
+  // Después de cada prueba borra lo dibujado (Jasmine quita los spyOn solo).
   afterEach(cleanup);
 
+  // --- Pruebas de las funciones de db.js ---
   it("crea una categoría nueva", () => {
     guardarCategoria("Bombones");
     expect(obtenerCategorias()).toContain("Bombones");
   });
 
   it("no permite nombres repetidos aunque cambien mayúsculas", () => {
+    // toThrowError comprueba que la función lanza el error esperado.
     expect(() => guardarCategoria("galletas")).toThrowError(/Ya existe/);
   });
 
@@ -59,6 +65,7 @@ describe("Categorías del panel", () => {
     expect(obtenerCategorias()).not.toContain("Galletas");
   });
 
+  // --- Pruebas de la vista (Testing Library) ---
   it("la vista lista las categorías con su cantidad de productos", () => {
     render(<CategoriasAdmin />);
 
@@ -75,13 +82,16 @@ describe("Categorías del panel", () => {
   });
 
   it("agrega una categoría desde el formulario y muestra el aviso", () => {
+    // Preparar: dibuja la vista con los datos del mock.
     render(<CategoriasAdmin />);
 
+    // Actuar: simula que el usuario escribe y hace clic en Agregar.
     fireEvent.change(screen.getByLabelText("Nueva categoría"), {
       target: { value: "Bombones" },
     });
     fireEvent.click(screen.getByRole("button", { name: "Agregar" }));
 
+    // Verificar: aparece la categoría y el aviso de éxito.
     expect(screen.getByText("Bombones")).toBeTruthy();
     expect(screen.getByRole("status").textContent).toContain("creada");
   });

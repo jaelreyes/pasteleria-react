@@ -1,8 +1,11 @@
+// PESTAÑA 3 · Precios y descuentos. Regla clave: los descuentos NO se suman, se aplica el mayor.
 // Cálculo de precios, descuentos y totales del carrito.
 // Beneficio del usuario: se elige el mayor, no se suman.
 export function obtenerDescuentoUsuario(usuario) {
+  // Sin sesión no hay descuento.
   if (!usuario) return 0
 
+  // Math.max elige el mayor (edad 50 % o código FELICES50 10 %); Math.min evita pasar de 100 %.
   return Math.min(
     100,
     Math.max(
@@ -21,6 +24,7 @@ export function aplicarDescuento(precio, descuento = 0) {
     Math.max(0, Number(descuento) || 0)
   )
 
+  // Ej: 50000 con 15 % → 50000 × 0,85 = 42500.
   return Math.round(precioBase * (1 - porcentaje / 100))
 }
 
@@ -28,6 +32,7 @@ export function aplicarDescuento(precio, descuento = 0) {
 export function calcularPrecioProducto(producto, descuentoUsuario = 0) {
   const precioBase = Number(producto.precio) || 0
 
+  // Se queda con el mayor: oferta del producto o beneficio del usuario.
   const descuento = Math.min(
     100,
     Math.max(
@@ -40,6 +45,7 @@ export function calcularPrecioProducto(producto, descuentoUsuario = 0) {
   return {
     precioBase,
     descuento,
+    // Devuelve los tres datos que usa ProductCard: precio original, % y precio final.
     precioFinal: aplicarDescuento(precioBase, descuento),
   }
 }
@@ -80,6 +86,7 @@ export function precioConOferta(producto) {
 // Productos con descuento (vista Ofertas).
 export function obtenerOfertas(productos) {
   return productos.filter(
+    // filter deja solo los productos con oferta mayor a 0 %.
     producto => Number(producto.descuento) > 0
   )
 }

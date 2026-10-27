@@ -1,3 +1,4 @@
+// PESTAÑA 4 · Protección del panel por rol (filtro 1: entrar al panel; filtro 2: páginas solo de admin).
 import { useState } from "react";
 import {
   Navigate,
@@ -27,9 +28,12 @@ import "../styles/Admin.css";
 export function AdminRoutes() {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
+  // Usuario con sesión iniciada (null si nadie inició sesión).
   const usuario = obtenerUsuarioActivo();
+  // true solo si el rol es admin o vendedor (función de db.js).
   const autorizado = puedeEntrarAlPanel();
 
+  // Rol en minúsculas para compararlo sin errores de mayúsculas.
   const rol = String(usuario?.rol || usuario?.tipo || "")
     .trim()
     .toLowerCase();
@@ -38,6 +42,7 @@ export function AdminRoutes() {
   const esAdministrador =
     rol === "admin" || rol === "administrador";
 
+  // FILTRO 1: si no puede entrar, Navigate lo saca antes de dibujar el panel.
   if (!autorizado) {
     // Sin sesión va al login; con sesión de Cliente vuelve a la tienda.
     return <Navigate to={usuario ? "/" : "/login"} replace />;
@@ -266,6 +271,7 @@ export function AdminRoutes() {
             {/* Boleta de una orden */}
             <Route path="ordenes/:id" element={<BoletaAdmin />} />
 
+            {/* FILTRO 2: CategoriasAdmin solo para el administrador; el vendedor vuelve a /admin */}
             <Route
               path="categorias"
               element={
@@ -277,6 +283,7 @@ export function AdminRoutes() {
               }
             />
 
+            {/* FILTRO 2: ReportesAdmin solo para el administrador; el vendedor vuelve a /admin */}
             <Route
               path="reportes"
               element={

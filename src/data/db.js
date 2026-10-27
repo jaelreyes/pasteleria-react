@@ -145,6 +145,7 @@ export const eliminarProducto = (id) => {
   }
 };
 
+// PESTAÑA 5 · CRUD de categorías guardado en localStorage (clave "categorias").
 // --- CATEGORÍAS ---
 
 // Categorías base de la pastelería.
@@ -185,6 +186,7 @@ function mismoNombre(a, b) {
 // Leer: categorías guardadas más las que usan los productos.
 export const obtenerCategorias = () => {
   return [
+    // new Set quita las categorías repetidas.
     ...new Set([
       ...leerCategoriasGuardadas(),
       ...obtenerProductos()
@@ -202,14 +204,17 @@ export const contarProductosPorCategoria = (nombre) =>
 // Crear (sin nombreAnterior) o editar (con nombreAnterior).
 // Al renombrar, también actualiza la categoría de sus productos.
 export const guardarCategoria = (nombre, nombreAnterior = null) => {
+  // Nombre sin espacios al inicio ni al final.
   const limpio = String(nombre || "").trim();
 
+  // Regla 1: entre 3 y 50 caracteres. throw corta la función y la vista muestra el mensaje.
   if (limpio.length < 3 || limpio.length > 50) {
     throw new Error("El nombre debe tener entre 3 y 50 caracteres.");
   }
 
   const categorias = obtenerCategorias();
 
+  // Regla 2: no repetir nombres ("galletas" = "Galletas"). Al editar se ignora su propio nombre.
   const repetida = categorias.some(
     (actual) => mismoNombre(actual, limpio) && actual !== nombreAnterior,
   );
@@ -218,11 +223,13 @@ export const guardarCategoria = (nombre, nombreAnterior = null) => {
     throw new Error(`Ya existe la categoría "${limpio}".`);
   }
 
+  // CREAR: agrega la nueva al final y guarda.
   if (nombreAnterior === null) {
     localStorage.setItem("categorias", JSON.stringify([...categorias, limpio]));
     return limpio;
   }
 
+  // EDITAR: la categoría a renombrar tiene que existir.
   if (!categorias.includes(nombreAnterior)) {
     throw new Error("No encontramos la categoría a editar.");
   }
@@ -230,10 +237,12 @@ export const guardarCategoria = (nombre, nombreAnterior = null) => {
   localStorage.setItem(
     "categorias",
     JSON.stringify(
+      // Reemplaza el nombre viejo por el nuevo.
       categorias.map((actual) => (actual === nombreAnterior ? limpio : actual)),
     ),
   );
 
+  // Los productos de esa categoría pasan al nombre nuevo (no quedan huérfanos).
   const productos = obtenerProductos().map((producto) =>
     producto.categoria === nombreAnterior
       ? { ...producto, categoria: limpio }
@@ -246,6 +255,7 @@ export const guardarCategoria = (nombre, nombreAnterior = null) => {
 
 // Eliminar: solo si ningún producto la usa.
 export const eliminarCategoria = (nombre) => {
+  // ELIMINAR: primero cuenta cuántos productos la usan.
   const cantidad = contarProductosPorCategoria(nombre);
 
   if (cantidad > 0) {
@@ -256,6 +266,7 @@ export const eliminarCategoria = (nombre) => {
 
   localStorage.setItem(
     "categorias",
+    // filter deja todas menos la eliminada.
     JSON.stringify(obtenerCategorias().filter((actual) => actual !== nombre)),
   );
 };

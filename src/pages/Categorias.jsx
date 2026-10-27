@@ -1,3 +1,4 @@
+// PESTAÑA 2 · Categorías de la tienda (/categorias y /categorias/:slug).
 import { Link, useParams } from "react-router-dom";
 import { Alert, Col, Row } from "react-bootstrap";
 import CategoriaCard from "../components/CategoriaCard";
@@ -10,8 +11,10 @@ import { calcularPrecioProducto } from "../utils/precios";
 // /categorias muestra las tarjetas.
 // /categorias/:slug muestra además los productos de esa categoría.
 function Categorias({ productos, onAgregar, descuentoUsuario = 0 }) {
+  // slug = categoría de la URL, ej: "tortas-cuadradas". En /categorias no viene (undefined).
   const { slug } = useParams();
 
+  // Arma la lista de categorías a partir de los productos (utils/categorias.js).
   const categorias = obtenerCategorias(productos);
   // Categoría elegida según el slug de la URL.
   const categoriaActiva = categorias.find(
@@ -33,6 +36,7 @@ function Categorias({ productos, onAgregar, descuentoUsuario = 0 }) {
       </p>
 
       <Row xs={2} md={4} className="g-3 mb-5">
+        {/* Una tarjeta por categoría; la del slug actual se marca como activa */}
         {categorias.map((categoria) => (
           <Col key={categoria.slug}>
             <CategoriaCard
@@ -54,12 +58,14 @@ function Categorias({ productos, onAgregar, descuentoUsuario = 0 }) {
         </Alert>
       )}
 
+      {/* Si hay una categoría elegida, se muestran sus productos */}
       {categoriaActiva && (
         <>
           <h2 className="categorias-titulo">{categoriaActiva.nombre}</h2>
 
           <Row xs={1} sm={2} lg={3} className="g-4">
             {productosCategoria.map((producto) => {
+              // Precio con el mayor descuento: oferta del producto o beneficio del usuario.
               const { precioBase, precioFinal, descuento } =
                 calcularPrecioProducto(producto, descuentoUsuario);
 

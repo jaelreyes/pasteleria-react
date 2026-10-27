@@ -2,10 +2,15 @@
 // Convierte "Tortas Cuadradas" en "tortas-cuadradas" para usarlo en la URL.
 export function crearSlug(texto) {
   return texto
+    // 1) todo en minúsculas
     .toLowerCase()
+    // 2) separa las tildes de las letras (á → a + ´)
     .normalize('NFD')
+    // 3) borra las tildes
     .replace(/[\u0300-\u036f]/g, '')
+    // 4) espacios y símbolos pasan a ser guiones
     .replace(/[^a-z0-9]+/g, '-')
+    // 5) quita guiones al inicio o al final
     .replace(/(^-|-$)/g, '')
 }
 

@@ -1,3 +1,4 @@
+// PESTAÑA 1 · Detalle de un blog: lee el id de la URL y muestra ese artículo.
 import { Link, useParams } from 'react-router-dom'
 import { Alert } from 'react-bootstrap'
 import blogs from '../data/blogs'
@@ -5,6 +6,7 @@ import '../styles/Blogs.css'
 
 // Detalle de un artículo del blog (/blogs/:id).
 function BlogDetalle() {
+  // useParams lee los parámetros de la ruta /blogs/:id. En /blogs/3, id vale "3" (texto).
   const { id } = useParams()
 
   // El id de la URL es texto, por eso se convierte a número.
@@ -20,6 +22,7 @@ function BlogDetalle() {
     )
   }
 
+  // Si lo encontró, se dibuja el artículo completo.
   return (
     <article className="blog-detalle">
       <Link to="/blogs" className="blog-volver">
@@ -50,6 +53,7 @@ function BlogDetalle() {
         </section>
       ))}
 
+      {/* Partes opcionales: solo aparecen si el artículo las tiene */}
       {blog.lista && (
         <section>
           <h2>{blog.lista.titulo}</h2>

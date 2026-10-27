@@ -1,3 +1,4 @@
+// PESTAÑA 7 · Checkout: despacho con región/comuna en cascada y pago exitoso o rechazado.
 import { useState, useRef } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { Form, Button, Alert, Row, Col } from "react-bootstrap";
@@ -26,6 +27,7 @@ export default function Checkout({
   const [error, setError] = useState("");
   const [procesando, setProcesando] = useState(false);
   const [idOrdenConfirmada, setIdOrdenConfirmada] = useState(null);
+  // Si tiene datos, el componente redirige a /pago/error.
   const [pagoRechazado, setPagoRechazado] = useState(null);
 
   // Formulario precargado con los datos del usuario con sesión.
@@ -53,6 +55,7 @@ export default function Checkout({
     (item) => item.region === formData.region
   );
 
+  // Las comunas no se guardan aparte: se calculan desde la región (new Set quita repetidas).
   const comunas = regionSeleccionada
     ? [...new Set(regionSeleccionada.comunas)]
     : [];
@@ -90,6 +93,7 @@ export default function Checkout({
 
   // Actualiza el campo que cambió (los checkbox usan checked).
   function handleChange(evento) {
+    // name dice qué campo cambió; así una sola función sirve para todo el formulario.
     const { name, value, type, checked } = evento.target;
 
     setFormData((actual) => ({
@@ -177,6 +181,7 @@ export default function Checkout({
 
     // Simulación de rechazo: no descuenta stock ni guarda la orden.
     if (formData.simularRechazo) {
+      // Guarda los datos para mostrarlos en PagoFallo; el return evita llamar a confirmarCompra.
       setPagoRechazado({
         ...datosCompra,
         total,

@@ -1,3 +1,4 @@
+// PESTAÑA 6 · Cálculos de Reportes (funciones puras: mismos datos → mismo resultado).
 // Cálculos del panel de Reportes. Son funciones puras: reciben datos
 // y devuelven resultados, por eso se prueban sin dibujar nada.
 
@@ -13,13 +14,16 @@ export function limiteCritico(producto) {
 
 // Resumen de ventas. Las órdenes canceladas no cuentan como venta.
 export function resumenVentas(ordenes) {
+  // 1) filter: deja fuera las órdenes canceladas.
   const validas = ordenes.filter((orden) => orden.estado !== "cancelado");
 
+  // 2) reduce: suma el total de cada orden partiendo de 0.
   const totalVendido = validas.reduce(
     (suma, orden) => suma + (Number(orden.total) || 0),
     0
   );
 
+  // 3) Cuenta unidades vendidas por producto: { "Brownie": 5, ... }.
   const unidades = {};
 
   validas.forEach((orden) => {
@@ -29,6 +33,7 @@ export function resumenVentas(ordenes) {
     });
   });
 
+  // 4) Pasa el objeto a lista, ordena de mayor a menor y deja los 5 primeros.
   const masVendidos = Object.entries(unidades)
     .map(([nombre, cantidad]) => ({ nombre, cantidad }))
     .sort((a, b) => b.cantidad - a.cantidad)
@@ -38,6 +43,7 @@ export function resumenVentas(ordenes) {
     cantidadOrdenes: validas.length,
     canceladas: ordenes.length - validas.length,
     totalVendido,
+    // Ticket promedio = total / cantidad de órdenes (0 si no hay, para no dividir por 0).
     ticketPromedio: validas.length
       ? Math.round(totalVendido / validas.length)
       : 0,
@@ -52,6 +58,7 @@ export function resumenStock(productos) {
   productos.forEach((producto) => {
     const nombre = producto.categoria || "Sin categoría";
 
+    // Si la categoría aún no tiene fila, se crea en 0.
     const fila = filas[nombre] || {
       categoria: nombre,
       productos: 0,
@@ -67,6 +74,7 @@ export function resumenStock(productos) {
     fila.unidades += stock;
     fila.valorInventario += stock * (Number(producto.precio) || 0);
 
+    // Stock 0 = agotado; stock igual o menor al límite = crítico.
     if (stock === 0) fila.agotados += 1;
     else if (stock <= limiteCritico(producto)) fila.criticos += 1;
 
