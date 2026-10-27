@@ -1,7 +1,9 @@
 import { Modal, Button, Row, Col, Badge } from "react-bootstrap";
 import { calcularPrecioProducto, formatearPrecio } from "../../utils/precios";
 
+// Modal de Bootstrap con el detalle de un producto en el panel.
 function ProductDetailModal({ producto, onCerrar }) {
+  // Sin producto seleccionado no se muestra nada.
   if (!producto) return null;
 
   const { precioBase, precioFinal, descuento } = calcularPrecioProducto(
@@ -9,6 +11,7 @@ function ProductDetailModal({ producto, onCerrar }) {
     0,
   );
 
+  // Límite crítico del producto; 5 si no tiene uno válido.
   const limiteGuardado = producto.stockCritico;
 
   const limiteNumero =
@@ -21,6 +24,7 @@ function ProductDetailModal({ producto, onCerrar }) {
   const stockCritico =
     Number.isInteger(limiteNumero) && limiteNumero >= 0 ? limiteNumero : 5;
 
+  // Estado del stock para mostrar la etiqueta correcta.
   const agotado = Number(producto.stock) === 0;
   const esCritico = Number(producto.stock) <= stockCritico;
   return (

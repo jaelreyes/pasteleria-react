@@ -4,6 +4,7 @@ import { Alert, Button, Badge } from "react-bootstrap";
 import { obtenerOrdenPorId } from "../data/db";
 import { formatearPrecio } from "../utils/precios";
 
+// Texto que ve el cliente para cada estado de la orden.
 const ESTADOS = {
   pendiente: "Pendiente",
   procesando: "En preparación",
@@ -12,6 +13,7 @@ const ESTADOS = {
   cancelado: "Cancelado",
 };
 
+// Compra exitosa (/pago/exito/:idOrden): muestra la orden recién guardada.
 export default function PagoExito() {
   const { idOrden } = useParams();
 
@@ -21,6 +23,7 @@ export default function PagoExito() {
     tipo: "success",
   });
 
+  // Busca la orden en db.js usando el id de la URL.
   const orden = idOrden ? obtenerOrdenPorId(idOrden) : null;
 
   function mostrarAviso(texto, tipo = "success") {
@@ -31,6 +34,7 @@ export default function PagoExito() {
     });
   }
 
+  // Copia el número de orden al portapapeles.
   async function copiarNumeroOrden() {
     if (!orden) return;
 
@@ -50,6 +54,7 @@ export default function PagoExito() {
     }
   }
 
+  // Genera un comprobante .txt con los datos de la orden y lo descarga.
   function descargarComprobante() {
     if (!orden) return;
 
@@ -143,6 +148,7 @@ export default function PagoExito() {
     }
   }
 
+  // Si la orden no existe, se muestra un aviso.
   if (!orden) {
     return (
       <section
@@ -173,6 +179,7 @@ export default function PagoExito() {
     );
   }
 
+  // Datos para mostrar la orden encontrada.
   const cancelada = orden.estado === "cancelado";
   const estado = ESTADOS[orden.estado] || orden.estado || "Pendiente";
 
@@ -186,6 +193,7 @@ export default function PagoExito() {
       style={{ maxWidth: "700px" }}
     >
       <div className="p-3 p-sm-4 bg-white shadow-sm rounded">
+        {/* Título: compra exitosa o cancelada */}
         <div className="text-center mb-4">
           <h1
             className={`h2 mb-3 ${
@@ -251,6 +259,7 @@ export default function PagoExito() {
             y el correo de compra.
           </p>
 
+          {/* Botones: ver pedido, copiar número y descargar comprobante */}
           <div className="d-flex flex-wrap justify-content-center gap-2">
             <Button
               type="button"
@@ -305,6 +314,7 @@ export default function PagoExito() {
           </p>
         </div>
 
+        {/* Productos comprados */}
         {productos.length > 0 && (
           <div className="mb-4">
             <h2 className="h5 mb-3" style={{ color: "#8b4513" }}>
@@ -332,6 +342,7 @@ export default function PagoExito() {
           </div>
         )}
 
+        {/* Totales */}
         <div className="mb-4">
           {orden.ahorro > 0 && (
             <p className="text-success">

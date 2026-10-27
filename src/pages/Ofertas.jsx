@@ -4,6 +4,7 @@ import ProductCard from "../components/ProductCard";
 import { obtenerOfertas, calcularPrecioProducto } from "../utils/precios";
 import "../styles/Productos.css";
 
+// Vista Ofertas: solo productos con descuento (/ofertas).
 function Ofertas({ productos, onAgregar, descuentoUsuario = 0 }) {
   const ofertas = obtenerOfertas(productos);
 

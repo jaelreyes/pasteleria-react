@@ -1,3 +1,4 @@
+// Pruebas de cancelar órdenes y devolver el stock al inventario.
 import {
   confirmarCompra,
   actualizarEstadoOrden,
@@ -31,6 +32,7 @@ function crearCompra() {
 describe("Cancelación de órdenes e inventario", () => {
   let almacenamiento;
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {
       productos: JSON.stringify([productoInicial]),

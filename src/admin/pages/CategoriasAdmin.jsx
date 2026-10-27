@@ -15,6 +15,7 @@ export default function CategoriasAdmin() {
   const [nombreEditado, setNombreEditado] = useState("");
   const [mensaje, setMensaje] = useState({ tipo: "", texto: "" });
 
+  // Relee las categorías y muestra un mensaje de éxito.
   function recargar(texto) {
     setCategorias(obtenerCategorias());
     setMensaje({ tipo: "success", texto });
@@ -29,6 +30,7 @@ export default function CategoriasAdmin() {
     }
   }
 
+  // Agrega una categoría con el nombre escrito.
   function crear(evento) {
     evento.preventDefault();
     intentar(() => {
@@ -38,12 +40,14 @@ export default function CategoriasAdmin() {
     });
   }
 
+  // Pasa la fila a modo edición.
   function empezarEdicion(nombre) {
     setEditando(nombre);
     setNombreEditado(nombre);
     setMensaje({ tipo: "", texto: "" });
   }
 
+  // Guarda el nuevo nombre (también actualiza sus productos).
   function guardarEdicion(evento) {
     evento.preventDefault();
     intentar(() => {
@@ -53,6 +57,7 @@ export default function CategoriasAdmin() {
     });
   }
 
+  // Pide confirmación y elimina la categoría si no tiene productos.
   function eliminar(nombre) {
     if (!window.confirm(`¿Eliminar la categoría "${nombre}"?`)) return;
 
@@ -66,6 +71,7 @@ export default function CategoriasAdmin() {
     <section>
       <h1 className="admin-productos-titulo">Categorías</h1>
 
+      {/* Mensaje de éxito o error */}
       {mensaje.texto && (
         <Alert
           variant={mensaje.tipo}
@@ -77,6 +83,7 @@ export default function CategoriasAdmin() {
         </Alert>
       )}
 
+      {/* Formulario para crear una categoría */}
       <Card className="mb-4 shadow-sm">
         <Card.Body>
           <Form onSubmit={crear}>
@@ -97,6 +104,7 @@ export default function CategoriasAdmin() {
         </Card.Body>
       </Card>
 
+      {/* Listado con cantidad de productos y acciones */}
       <Table responsive hover className="bg-white align-middle shadow-sm">
         <thead>
           <tr>

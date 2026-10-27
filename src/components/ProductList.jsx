@@ -4,12 +4,14 @@ import { Form, Row, Col } from "react-bootstrap";
 import "../styles/Productos.css";
 import { calcularPrecioProducto } from "../utils/precios";
 
+// Catálogo con búsqueda y filtro por categoría. Los filtros viven en la URL (?q=&categoria=).
 function ProductList({ productos, onAgregar, descuentoUsuario = 0 }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const busqueda = searchParams.get("q") || "";
   const categoria = searchParams.get("categoria") || "";
 
+  // Categorías sin repetir para el select.
   const categorias = [
     ...new Set(productos.map((producto) => producto.categoria)),
   ];
@@ -27,6 +29,7 @@ function ProductList({ productos, onAgregar, descuentoUsuario = 0 }) {
     setSearchParams(nuevosParams);
   }
 
+  // Filtra por nombre o código y por categoría.
   const productosFiltrados = productos.filter((producto) => {
     const texto = busqueda.trim().toLowerCase();
 

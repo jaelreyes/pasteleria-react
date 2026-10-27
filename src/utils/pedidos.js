@@ -1,3 +1,4 @@
+// Pedido actual del cliente: se crea al comprar y se guarda en localStorage.
 import { aplicarDescuento, calcularTotales } from './precios'
 
 // Misma clave que usaba js/carrito.js en el proyecto original.
@@ -46,10 +47,12 @@ export function crearPedido(carrito, descuento) {
   }
 }
 
+// Guarda el pedido para mostrar su seguimiento en /pedido.
 export function guardarPedido(pedido) {
   localStorage.setItem(CLAVE_PEDIDO, JSON.stringify(pedido))
 }
 
+// Lee el pedido guardado; si no hay o está dañado devuelve null.
 export function cargarPedido() {
   try {
     return JSON.parse(localStorage.getItem(CLAVE_PEDIDO) || 'null')

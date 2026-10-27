@@ -1,3 +1,5 @@
+/* Tarjeta de categoría (la activa se resalta) */
+/* Estilos de la vista Categorías de la tienda. */
 .categoria-card {
   text-decoration: none;
   border: 2px solid rgba(255, 192, 203, 0.6);
@@ -33,6 +35,7 @@
   margin-bottom: 1.5rem;
 }
 
+/* Móviles */
 @media (max-width: 575px) {
   .categoria-card .card-img-top {
     height: 90px;

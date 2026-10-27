@@ -1,8 +1,11 @@
+/* Portada del blog */
+/* Estilos de las vistas Blogs y BlogDetalle. */
 .blogs-hero {
   text-align: center;
   margin-bottom: 2rem;
 }
 
+/* Tarjetas del listado */
 .blog-card img {
   height: 220px;
   object-fit: cover;
@@ -29,6 +32,7 @@
   font-size: 0.9rem;
 }
 
+/* Detalle de un artículo */
 .blog-detalle {
   max-width: 800px;
   margin: 0 auto;

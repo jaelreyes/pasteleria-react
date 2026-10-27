@@ -1,3 +1,5 @@
+// Componente principal de la tienda: guarda el catálogo, el carrito y la sesión,
+// y define las rutas. Pasa datos y funciones a las páginas por props.
 import { useState, useEffect, useCallback } from "react";
 import {
   Routes,
@@ -38,6 +40,7 @@ function sincronizarCarrito(items, catalogo) {
     catalogo.map((producto) => [String(producto.id), producto])
   );
 
+  // Junta cantidades del mismo producto y descarta ítems inválidos.
   const cantidadesPorId = new Map();
 
   let retirados = false;
@@ -65,6 +68,7 @@ function sincronizarCarrito(items, catalogo) {
     );
   }
 
+  // Usa el producto actual del catálogo y limita la cantidad al stock.
   const actualizados = [];
 
   for (const [id, cantidadSolicitada] of cantidadesPorId) {
@@ -104,6 +108,7 @@ function sincronizarCarrito(items, catalogo) {
     });
   }
 
+  // Mensajes para avisar al cliente qué cambió en su carrito.
   const mensajes = [];
 
   if (preciosActualizados) {
@@ -159,11 +164,14 @@ function leerCarrito(catalogo, usuario) {
   }
 }
 
+// --- Estado global de la tienda ---
 function App() {
   const ubicacion = useLocation();
 
+  // Catálogo leído desde db.js (localStorage).
   const [productos, setProductos] = useState(() => obtenerProductos());
 
+  // Sesión actual; null si nadie inició sesión.
   const [usuarioActivo, setUsuarioActivo] = useState(() => {
     try {
       return JSON.parse(
@@ -174,6 +182,7 @@ function App() {
     }
   });
 
+  // Carrito de la sesión + mensaje de aviso (toast).
   const [estadoCarrito, setEstadoCarrito] = useState(() =>
     leerCarrito(productos, usuarioActivo)
   );
@@ -188,6 +197,7 @@ function App() {
     localStorage.setItem(clave, JSON.stringify(carrito));
   }, [carrito, usuarioActivo]);
 
+  // Relee los productos y ajusta el carrito si cambiaron precios o stock.
   const actualizarCatalogo = useCallback(() => {
     const catalogoActual = obtenerProductos();
 
@@ -253,6 +263,7 @@ function App() {
     };
   }, [actualizarCatalogo]);
 
+  // --- Acciones del carrito (se pasan a las páginas por props) ---
   function abrirCarrito() {
     actualizarCatalogo();
     setMostrarCarrito(true);
@@ -265,6 +276,7 @@ function App() {
     }));
   }
 
+  // Agrega unidades sin superar el stock disponible.
   function agregarProducto(producto, cantidad = 1) {
     if (!Number.isInteger(cantidad) || cantidad < 1) return;
 
@@ -334,6 +346,7 @@ function App() {
     });
   }
 
+  // Deja el carrito vacío (también se usa al confirmar la compra).
   function vaciarCarrito() {
     setEstadoCarrito({
       items: [],
@@ -341,6 +354,7 @@ function App() {
     });
   }
 
+  // Quita un producto del carrito.
   function eliminarProducto(idAEliminar) {
     setEstadoCarrito((actual) => ({
       items: actual.items.filter(
@@ -350,6 +364,7 @@ function App() {
     }));
   }
 
+  // Cambia la cantidad si está entre 1 y el stock.
   function cambiarCantidad(id, nuevaCantidad) {
     const catalogoActual = obtenerProductos();
 
@@ -390,6 +405,7 @@ function App() {
     });
   }
 
+  // Guarda la sesión en localStorage y carga el carrito de ese usuario.
   function iniciarSesion(usuario) {
     const sesion = {
       run: usuario.run,
@@ -414,12 +430,14 @@ function App() {
     setEstadoCarrito(leerCarrito(productos, sesion));
   }
 
+  // Borra la sesión y vuelve al carrito de invitado.
   function cerrarSesion() {
     localStorage.removeItem("usuarioActivo");
     setUsuarioActivo(null);
     setEstadoCarrito(leerCarrito(productos, null));
   }
 
+  // Descuento del usuario (por edad o código), 0 si no tiene.
   const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
 
   const cantidadTotal = carrito.reduce(
@@ -431,12 +449,14 @@ function App() {
     document.title = `(${cantidadTotal}) Pastelería 1000 Sabores`;
   }, [cantidadTotal]);
 
+  // En el panel admin no se muestran los avisos del carrito.
   const esAdministracion =
     ubicacion.pathname === "/admin" ||
     ubicacion.pathname.startsWith("/admin/");
 
   return (
     <>
+      {/* Rutas: la tienda usa Layout (menú y pie); /admin tiene su propio diseño */}
       <Routes>
         <Route
           path="/"
@@ -549,12 +569,16 @@ function App() {
             path="login"
             element={<Login onIniciarSesion={iniciarSesion} />}
           />
+
+          {/* Cualquier ruta que no existe muestra la página 404 */}
+          <Route path="*" element={<NotFound />} />
         </Route>
 
+        {/* Panel de administración (tiene su propio diseño y rutas) */}
         <Route path="/admin/*" element={<AdminRoutes />} />
-        <Route path="*" element={<NotFound />} />
       </Routes>
 
+      {/* Carrito lateral que se abre desde el menú */}
       <CartPanel
         mostrar={mostrarCarrito}
         onCerrar={() => setMostrarCarrito(false)}
@@ -565,6 +589,7 @@ function App() {
         onCambiarCantidad={cambiarCantidad}
       />
 
+      {/* Aviso flotante al agregar productos o cambiar el carrito */}
       <ToastContainer
         position="bottom-center"
         className="p-3"

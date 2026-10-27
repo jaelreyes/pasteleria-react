@@ -3,6 +3,7 @@ import { Alert, Badge, Button, Card, Col, Row, Table } from "react-bootstrap";
 import { obtenerOrdenPorId } from "../../data/db";
 import { formatearPrecio } from "../../utils/precios";
 
+// Texto y color de cada estado de la orden.
 const ESTADOS = {
   pendiente: "Pendiente",
   procesando: "En preparación",
@@ -14,6 +15,7 @@ const ESTADOS = {
 // Detalle (boleta) de una orden: /admin/ordenes/:id
 export default function BoletaAdmin() {
   const { id } = useParams();
+  // Busca la orden con el id de la URL.
   const orden = obtenerOrdenPorId(id);
 
   if (!orden) {
@@ -35,6 +37,7 @@ export default function BoletaAdmin() {
           <Button variant="outline-secondary" as={Link} to="/admin/ordenes">
             Volver
           </Button>
+          {/* Imprime la boleta (los botones se ocultan al imprimir) */}
           <Button variant="primary" onClick={() => window.print()}>
             Imprimir
           </Button>
@@ -58,6 +61,7 @@ export default function BoletaAdmin() {
             </Col>
           </Row>
 
+          {/* Datos del cliente y dirección de despacho */}
           <h2 className="h5">Cliente</h2>
           <p className="mb-1">{orden.nombre}</p>
           <p className="mb-1">{orden.email || orden.correo}</p>
@@ -67,6 +71,7 @@ export default function BoletaAdmin() {
             <p className="text-muted">Indicaciones: {orden.indicaciones}</p>
           )}
 
+          {/* Detalle de productos */}
           <Table responsive size="sm" className="mt-3 align-middle">
             <thead>
               <tr>
@@ -90,6 +95,7 @@ export default function BoletaAdmin() {
             </tbody>
           </Table>
 
+          {/* Totales */}
           <div className="text-end">
             {orden.ahorro > 0 && (
               <p className="mb-1 text-success">Ahorro: {formatearPrecio(orden.ahorro)}</p>

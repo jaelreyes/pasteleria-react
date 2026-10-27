@@ -1,3 +1,4 @@
+// Pruebas del despacho en el checkout: región/comuna, dirección y pago rechazado.
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import Checkout from "../pages/Checkout";
@@ -55,6 +56,7 @@ function pagar() {
 describe("Checkout: dirección y pago rechazado", () => {
   let almacenamiento;
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     // Mock de localStorage: un catálogo de prueba y sin órdenes.
     almacenamiento = {

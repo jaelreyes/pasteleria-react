@@ -5,6 +5,7 @@ import { obtenerUsuarios } from "../data/db";
 import "../styles/Auth.css";
 import { validarCorreo } from "../utils/validaciones";
 
+// Inicio de sesión: valida el formulario, busca al usuario y redirige según su rol.
 export default function Login({ onIniciarSesion }) {
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
@@ -14,11 +15,13 @@ export default function Login({ onIniciarSesion }) {
   const formularioRef = useRef(null);
   const navigate = useNavigate();
 
+  // Se ejecuta al enviar el formulario.
   function handleSubmit(evento) {
     evento.preventDefault();
     setError("");
 
     const correoNormalizado = correo.trim().toLowerCase();
+    // 1) Valida formato de correo y largo de contraseña.
     const nuevosErrores = {};
 
     if (!validarCorreo(correoNormalizado)) {
@@ -33,6 +36,7 @@ export default function Login({ onIniciarSesion }) {
 
     setErrores(nuevosErrores);
 
+    // Si hay errores, pone el foco en el primer campo inválido.
     const primerError = Object.keys(nuevosErrores)[0];
 
     if (primerError) {
@@ -41,6 +45,7 @@ export default function Login({ onIniciarSesion }) {
     }
 
     try {
+      // 2) Busca un usuario con ese correo y contraseña en db.js.
       const usuarios = obtenerUsuarios();
 
       const usuarioEncontrado = usuarios.find((usuario) => {
@@ -58,6 +63,7 @@ export default function Login({ onIniciarSesion }) {
         return;
       }
 
+      // 3) Guarda la sesión (función de App) y redirige: panel o tienda.
       onIniciarSesion(usuarioEncontrado);
 
       const rol = String(usuarioEncontrado.rol || usuarioEncontrado.tipo || "")
@@ -179,6 +185,7 @@ export default function Login({ onIniciarSesion }) {
             </p>
           </div>
 
+          {/* Cuentas de prueba para la demo */}
           <aside className="login-demo">
             <h2>Cuentas de prueba</h2>
 

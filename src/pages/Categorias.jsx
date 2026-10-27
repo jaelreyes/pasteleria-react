@@ -13,10 +13,12 @@ function Categorias({ productos, onAgregar, descuentoUsuario = 0 }) {
   const { slug } = useParams();
 
   const categorias = obtenerCategorias(productos);
+  // Categoría elegida según el slug de la URL.
   const categoriaActiva = categorias.find(
     (categoria) => categoria.slug === slug,
   );
 
+  // Productos que pertenecen a la categoría elegida.
   const productosCategoria = categoriaActiva
     ? productos.filter(
         (producto) => producto.categoria === categoriaActiva.nombre,
@@ -44,6 +46,7 @@ function Categorias({ productos, onAgregar, descuentoUsuario = 0 }) {
         ))}
       </Row>
 
+      {/* El slug no corresponde a ninguna categoría */}
       {slug && !categoriaActiva && (
         <Alert variant="warning">
           La categoría no existe.{" "}

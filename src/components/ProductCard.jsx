@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { formatearPrecio } from '../utils/precios'
 import '../styles/Productos.css'
 
+// Tarjeta de un producto en el catálogo (Card de Bootstrap).
 function ProductCard({
   id,
   nombre,
@@ -15,6 +16,7 @@ function ProductCard({
   precioAnterior,
   descuento = 0,
 }) {
+  // Sin stock se deshabilita el botón de agregar.
   const agotado = Number(stock) <= 0
   const tieneDescuento =
     descuento > 0 && Number(precioAnterior) > Number(precio)

@@ -14,6 +14,7 @@ import {
 import { puedeEntrarAlPanel } from "../utils/roles";
 import "../styles/Navigation.css";
 
+// Barra de navegación (Navbar de Bootstrap) con menú, sesión y carrito.
 function Navigation({
   cantidad,
   onVerCarrito,
@@ -27,6 +28,7 @@ function Navigation({
     setMenuAbierto(false);
   }
 
+  // Cierra la sesión y vuelve al inicio.
   function salir() {
     onCerrarSesion();
     cerrarMenu();
@@ -38,6 +40,7 @@ function Navigation({
     onVerCarrito();
   }
 
+  // Enlaces del menú; NavLink marca el de la página actual.
   const enlaces = [
     { ruta: "/", texto: "Inicio", end: true },
     { ruta: "/productos", texto: "Productos" },
@@ -98,6 +101,7 @@ function Navigation({
           </Nav>
 
           <div className="tienda-nav-acciones">
+            {/* Con sesión: menú de la cuenta. Sin sesión: login y registro */}
             {usuarioActivo ? (
               <NavDropdown
                 id="menu-cuenta"
@@ -123,6 +127,7 @@ function Navigation({
 
                 <NavDropdown.Divider />
 
+                {/* Solo admin y vendedor ven el acceso al panel */}
                 {puedeEntrarAlPanel(usuarioActivo) && (
                   <NavDropdown.Item
                     as={Link}

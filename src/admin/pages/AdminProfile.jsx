@@ -8,9 +8,11 @@ import {
 } from "react-bootstrap";
 import { obtenerUsuarioActivo } from "../../data/db";
 
+// Perfil del usuario del panel: datos de la cuenta y permisos según su rol.
 export function AdminProfile() {
   const usuario = obtenerUsuarioActivo();
 
+  // Sin sesión, o con un rol sin acceso, vuelve al login o a la tienda.
   if (!usuario) {
     return <Navigate to="/login" replace />;
   }
@@ -39,6 +41,7 @@ export function AdminProfile() {
     .filter(Boolean)
     .join(" ");
 
+  // Lista de permisos que se muestra según el rol.
   const permisos = [
     {
       modulo: "Productos",
@@ -84,6 +87,7 @@ export function AdminProfile() {
         Información de tu cuenta y permisos actuales en el sistema.
       </p>
 
+      {/* Datos de la cuenta y tabla de permisos */}
       <Card className="border-0 shadow-sm">
         <Card.Body className="p-3 p-sm-4">
           <div className="d-flex align-items-center flex-wrap gap-3">

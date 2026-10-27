@@ -1,8 +1,10 @@
+/* Estilos de la página Órdenes del panel. */
 .ordenes-admin {
   min-width: 0;
   color: #5d4037;
 }
 
+/* Título y botones de exportar */
 .ordenes-cabecera {
   display: flex;
   justify-content: space-between;
@@ -39,6 +41,7 @@
   --bs-btn-active-border-color: #a0522d;
 }
 
+/* Contadores */
 .ordenes-indicadores {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -67,6 +70,7 @@
   margin: 0;
 }
 
+/* Filtros */
 .ordenes-filtros {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
@@ -106,6 +110,7 @@
   font-size: 0.9rem;
 }
 
+/* Tabla de órdenes */
 .ordenes-tabla-scroll {
   max-width: 100%;
   overflow-x: auto;
@@ -176,6 +181,7 @@
   white-space: nowrap;
 }
 
+/* Etiqueta de estado (un color por estado) */
 .orden-estado {
   display: inline-block;
   padding: 0.4rem 0.75rem;
@@ -219,6 +225,7 @@
   color: #8d6e63;
 }
 
+/* Pantallas medianas y móviles */
 @media (max-width: 1100px) {
   .ordenes-indicadores {
     grid-template-columns: repeat(2, minmax(0, 1fr));

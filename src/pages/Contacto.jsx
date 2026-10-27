@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { Form } from "react-bootstrap";
 import "../styles/Contacto.css";
 
+// Valores vacíos del formulario de contacto.
 const datosIniciales = {
   nombre: "",
   correo: "",
@@ -9,6 +10,7 @@ const datosIniciales = {
   comentario: "",
 };
 
+// Ícono SVG según el tipo de dato de contacto.
 function IconoContacto({ tipo }) {
   return (
     <svg
@@ -50,6 +52,7 @@ function IconoContacto({ tipo }) {
   );
 }
 
+// Devuelve el mensaje de error de un campo, o "" si está bien.
 function validarCampo(nombre, valor) {
   const texto = valor.trim();
 
@@ -76,6 +79,7 @@ function validarCampo(nombre, valor) {
   return "";
 }
 
+// Página de contacto con formulario validado y datos de la tienda.
 function Contacto() {
   const [datos, setDatos] = useState({ ...datosIniciales });
   const [errores, setErrores] = useState({});
@@ -83,6 +87,7 @@ function Contacto() {
 
   const formularioRef = useRef(null);
 
+  // Guarda lo que se escribe en el estado (formulario controlado).
   function actualizarCampo(evento) {
     const { name, value } = evento.target;
 
@@ -100,6 +105,7 @@ function Contacto() {
     }
   }
 
+  // Valida el campo cuando el usuario sale de él.
   function validarAlSalir(evento) {
     const { name, value } = evento.target;
 
@@ -109,6 +115,7 @@ function Contacto() {
     }));
   }
 
+  // Valida todo el formulario antes de "enviar".
   function enviarMensaje(evento) {
     evento.preventDefault();
 
@@ -168,6 +175,7 @@ function Contacto() {
           <div className="contacto-formulario">
             <h2>Envíanos un Mensaje</h2>
 
+            {/* Mensaje de éxito o formulario */}
             {enviado ? (
               <div className="contacto-exito" role="status">
                 <span className="contacto-exito-icono" aria-hidden="true">
@@ -350,6 +358,7 @@ function Contacto() {
             )}
           </div>
 
+          {/* Información de contacto de la tienda */}
           <aside className="contacto-info">
             <h2>Información de Contacto</h2>
 

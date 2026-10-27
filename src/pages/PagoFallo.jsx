@@ -31,6 +31,7 @@ export default function PagoFallo() {
             </Button>
           </div>
 
+          {/* Detalle de la compra rechazada, si llegaron datos */}
           {pago ? (
             <>
               <h2 className="h5">Datos del cliente</h2>

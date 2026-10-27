@@ -1,3 +1,4 @@
+// Pruebas de las validaciones: RUN, correo, contraseña y edad.
 import {
   validarRun,
   validarCorreo,

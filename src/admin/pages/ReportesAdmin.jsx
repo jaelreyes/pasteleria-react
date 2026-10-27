@@ -16,7 +16,9 @@ function Indicador({ titulo, valor, detalle, color }) {
   );
 }
 
+// Reportes (solo Administrador): ventas, más vendidos y stock por categoría.
 export default function ReportesAdmin() {
+  // Los cálculos vienen de utils/reportes.js (funciones puras).
   const ventas = resumenVentas(obtenerOrdenes());
   const stock = resumenStock(obtenerProductos());
 
@@ -24,6 +26,7 @@ export default function ReportesAdmin() {
     <section>
       <h1 className="admin-productos-titulo mb-4">Reportes</h1>
 
+      {/* Indicadores principales */}
       <Row xs={1} sm={2} lg={4} className="g-3 mb-4">
         <Col>
           <Indicador
@@ -58,6 +61,7 @@ export default function ReportesAdmin() {
         </Col>
       </Row>
 
+      {/* Más vendidos y stock por categoría */}
       <Row className="g-4">
         <Col lg={5}>
           <h2 className="h5">Productos más vendidos</h2>

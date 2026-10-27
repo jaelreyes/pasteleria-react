@@ -1,3 +1,4 @@
+// Catálogo inicial. db.js lo copia a localStorage la primera vez.
 const PRODUCTOS_INICIALES = [
   { codigo: "TC001", categoria: "Tortas Cuadradas", nombre: "Torta Cuadrada de Chocolate", descripcion: "Deliciosa torta de chocolate con capas de ganache y un toque de avellanas. Personalizable con mensajes especiales.", precio: 45000, stock: 25, stockCritico: 6, imagen: "img/productos/TC001.jpg" },
   { codigo: "TC002", categoria: "Tortas Cuadradas", nombre: "Torta Cuadrada de Frutas", descripcion: "Una mezcla de frutas frescas y crema chantilly sobre un suave bizcocho de vainilla, ideal para celebraciones.", precio: 50000, stock: 4, stockCritico: 6, imagen: "img/productos/TC002.jpg", descuento: 15 },
@@ -17,6 +18,7 @@ const PRODUCTOS_INICIALES = [
   { codigo: "TE002", categoria: "Tortas Especiales", nombre: "Torta Especial de Boda", descripcion: "Elegante y deliciosa, esta torta está diseñada para ser el centro de atención en cualquier boda.", precio: 60000, stock: 9, stockCritico: 5, imagen: "img/productos/TE002.jpg", descuento: 10 }
 ];
 
+// Agrega id y ruta de imagen a cada producto según su código.
 const productos = PRODUCTOS_INICIALES.map((producto, indice) => ({
   ...producto,
   id: indice + 1,

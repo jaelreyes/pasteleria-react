@@ -7,6 +7,7 @@ import {
 } from "../utils/precios";
 import "../styles/Cart.css";
 
+// Carrito: lista de productos, cantidades y resumen. Recibe los datos y acciones por props desde App.
 function Cart({
   carrito,
   descuento = 0,
@@ -20,6 +21,7 @@ function Cart({
     descuento
   );
 
+  // Total de unidades en el carrito.
   const cantidadTotal = carrito.reduce(
     (suma, producto) => suma + producto.cantidad,
     0
@@ -29,6 +31,7 @@ function Cart({
     <section className="carrito">
       <h2>Tu carrito</h2>
 
+      {/* Aviso del beneficio del usuario (edad o código) */}
       {descuento > 0 && carrito.length > 0 && (
         <Alert
           variant="success"
@@ -41,6 +44,7 @@ function Cart({
         </Alert>
       )}
 
+      {/* Carrito vacío o listado de productos */}
       {carrito.length === 0 ? (
         <div className="carrito-vacio">
           <h3>Tu carrito está vacío</h3>
@@ -174,6 +178,7 @@ function Cart({
             </div>
           </div>
 
+          {/* Resumen con subtotal, ahorro y total */}
           <aside
             className="carrito-resumen"
             aria-label="Resumen de compra"

@@ -1,3 +1,4 @@
+// Pruebas de la vista Categorías de la tienda.
 import { render, screen, fireEvent, cleanup } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Categorias from '../pages/Categorias'

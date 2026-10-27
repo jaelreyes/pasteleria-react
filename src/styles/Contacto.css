@@ -1,3 +1,4 @@
+/* Estilos de la página Contacto. */
 .contacto-page {
   background: #fff5e1;
   color: #5d4037;
@@ -20,6 +21,7 @@
   color: #8b4513;
 }
 
+/* Portada */
 .contacto-hero {
   background: linear-gradient(135deg, #ffc0cb 0%, #fff5e1 100%);
   padding: 4rem 1.5rem;
@@ -56,6 +58,7 @@
   margin: 0 auto;
 }
 
+/* Dos columnas: formulario e información */
 .contacto-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr;
@@ -85,6 +88,7 @@
   margin-bottom: 0.5rem;
 }
 
+/* Campos del formulario */
 .contacto-campo-grupo {
   margin-bottom: 1.5rem;
 }
@@ -161,6 +165,7 @@
 }
 
 .contacto-boton-enviar,
+/* Botones */
 .contacto-boton-secundario {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -203,6 +208,7 @@
   outline-offset: 3px;
 }
 
+/* Tarjetas de información de contacto */
 .contacto-info-card {
   display: flex;
   gap: 1rem;
@@ -243,6 +249,7 @@
   text-decoration: underline;
 }
 
+/* Mensaje de envío exitoso */
 .contacto-exito {
   margin-top: 1.5rem;
 }
@@ -264,6 +271,7 @@
   margin-bottom: 1rem;
 }
 
+/* Móviles */
 @media (max-width: 768px) {
   .contacto-grid {
     grid-template-columns: 1fr;

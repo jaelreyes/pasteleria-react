@@ -1,5 +1,6 @@
 import Navigation from './Navigation'
 
+// Encabezado del sitio: solo contiene la barra de navegación.
 function Header({
   cantidad,
   onVerCarrito,

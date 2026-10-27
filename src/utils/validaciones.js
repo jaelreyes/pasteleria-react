@@ -1,3 +1,5 @@
+// Solo se aceptan correos de estos dominios.
+// Validaciones de formularios (registro, login, contacto, checkout).
 const dominiosPermitidos = [
   'duoc.cl',
   'profesor.duoc.cl',
@@ -28,6 +30,7 @@ function calcularDV(cuerpo) {
   return String(resultado)
 }
 
+// RUN válido: largo correcto, solo números y dígito verificador correcto.
 export function validarRun(run) {
   const limpio = normalizarRun(run)
 
@@ -42,6 +45,7 @@ export function validarRun(run) {
   return dv === calcularDV(cuerpo)
 }
 
+// Revisa el formato del correo y que su dominio esté permitido.
 export function validarCorreo(correo) {
   const limpio = correo.trim().toLowerCase()
   const formato = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -54,11 +58,13 @@ export function validarCorreo(correo) {
   return dominiosPermitidos.includes(dominio)
 }
 
+// La contraseña debe tener entre 4 y 10 caracteres.
 export function validarPassword(password) {
   const largo = password.trim().length
   return largo >= 4 && largo <= 10
 }
 
+// Teléfono opcional: si viene, entre 8 y 15 dígitos.
 export function validarTelefono(telefono) {
   const limpio = telefono.trim()
 
@@ -73,6 +79,7 @@ export function validarTelefono(telefono) {
   return digitos.length >= 8 && digitos.length <= 15
 }
 
+// Edad en años cumplidos a partir de la fecha de nacimiento.
 export function calcularEdad(fechaTexto) {
   const nacimiento = new Date(`${fechaTexto}T00:00:00`)
   const hoy = new Date()

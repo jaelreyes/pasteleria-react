@@ -1,3 +1,4 @@
+// Pruebas de la persistencia en db.js (productos, usuarios y órdenes).
 import productosIniciales from '../data/productos'
 import {
   obtenerUsuarios,
@@ -15,6 +16,7 @@ import {
 describe('Persistencia en db.js', () => {
   let almacenamiento
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {}
 

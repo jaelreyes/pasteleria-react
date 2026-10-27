@@ -1,3 +1,5 @@
+/* Portada */
+/* Estilos de la página de inicio. */
 .home-hero {
   position: relative;
   overflow: hidden;
@@ -73,6 +75,7 @@
   }
 }
 
+/* Categorías */
 .home-categorias {
   max-width: 1200px;
   margin: 0 auto;
@@ -138,6 +141,7 @@
   color: #8d6e63;
 }
 
+/* Productos estrella */
 .home-destacados {
   padding: 3rem 1.5rem;
   background-color: white;
@@ -204,6 +208,7 @@
   color: #8b4513;
 }
 
+/* Video */
 .home-video {
   padding: 3rem 1.5rem;
   text-align: center;
@@ -238,6 +243,7 @@
   font-style: italic;
 }
 
+/* Historia */
 .home-historia {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -281,6 +287,7 @@
   color: white;
 }
 
+/* Invitación final */
 .home-cta {
   padding: 3rem 1.5rem;
   background: linear-gradient(135deg, #8b4513, #a0522d);
@@ -303,6 +310,7 @@
   font-size: 1.1rem;
 }
 
+/* Móviles */
 @media (max-width: 768px) {
   .home-historia {
     grid-template-columns: 1fr;

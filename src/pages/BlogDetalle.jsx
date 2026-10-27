@@ -3,12 +3,14 @@ import { Alert } from 'react-bootstrap'
 import blogs from '../data/blogs'
 import '../styles/Blogs.css'
 
+// Detalle de un artículo del blog (/blogs/:id).
 function BlogDetalle() {
   const { id } = useParams()
 
   // El id de la URL es texto, por eso se convierte a número.
   const blog = blogs.find(blog => blog.id === Number(id))
 
+  // Si el id no existe, se muestra un aviso.
   if (!blog) {
     return (
       <section>
@@ -40,6 +42,7 @@ function BlogDetalle() {
 
       <p className="blog-intro">{blog.intro}</p>
 
+      {/* Secciones del artículo */}
       {blog.secciones.map(seccion => (
         <section key={seccion.titulo}>
           <h2>{seccion.titulo}</h2>

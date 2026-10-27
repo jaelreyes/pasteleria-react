@@ -1,3 +1,4 @@
+// Pruebas del cálculo de precios, descuentos y totales.
 import {
   obtenerDescuentoUsuario,
   calcularPrecioProducto,

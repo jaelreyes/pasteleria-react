@@ -1,3 +1,4 @@
+// Cálculo de precios, descuentos y totales del carrito.
 // Beneficio del usuario: se elige el mayor, no se suman.
 export function obtenerDescuentoUsuario(usuario) {
   if (!usuario) return 0
@@ -12,6 +13,7 @@ export function obtenerDescuentoUsuario(usuario) {
   )
 }
 
+// Aplica un porcentaje (0 a 100) y redondea al peso.
 export function aplicarDescuento(precio, descuento = 0) {
   const precioBase = Number(precio) || 0
   const porcentaje = Math.min(
@@ -42,6 +44,7 @@ export function calcularPrecioProducto(producto, descuentoUsuario = 0) {
   }
 }
 
+// Suma subtotal, ahorro y total de todo el carrito con reduce.
 export function calcularTotales(carrito, descuentoUsuario = 0) {
   return carrito.reduce(
     (totales, producto) => {
@@ -64,14 +67,17 @@ export function calcularTotales(carrito, descuentoUsuario = 0) {
   )
 }
 
+// Muestra el valor en pesos chilenos, ej: $45.000.
 export function formatearPrecio(valor) {
   return `$${Number(valor).toLocaleString('es-CL')}`
 }
 
+// Precio final solo con la oferta del producto.
 export function precioConOferta(producto) {
   return calcularPrecioProducto(producto).precioFinal
 }
 
+// Productos con descuento (vista Ofertas).
 export function obtenerOfertas(productos) {
   return productos.filter(
     producto => Number(producto.descuento) > 0

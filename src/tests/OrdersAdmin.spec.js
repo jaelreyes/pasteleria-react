@@ -1,4 +1,5 @@
 // src/tests/OrdersAdmin.spec.js
+// Pruebas básicas de la gestión de pedidos (OrdersAdmin).
 describe('Módulo OrdersAdmin - Gestión de Pedidos', () => {
   it('Debería listar los pedidos realizados por los clientes', () => {
     const listaPedidos = [

@@ -14,11 +14,13 @@ import { validarTelefono } from "../utils/validaciones";
 import { armarDireccion } from "../utils/direccion";
 import regionesComunas from "../data/regiones-comunas";
 
+// Checkout (/checkout): datos de despacho, región y comuna en cascada y pago simulado.
 export default function Checkout({
   carrito,
   descuento = 0,
   onCompraConfirmada,
 }) {
+  // Evita confirmar dos veces si se hace doble clic.
   const procesandoRef = useRef(false);
 
   const [error, setError] = useState("");
@@ -26,6 +28,7 @@ export default function Checkout({
   const [idOrdenConfirmada, setIdOrdenConfirmada] = useState(null);
   const [pagoRechazado, setPagoRechazado] = useState(null);
 
+  // Formulario precargado con los datos del usuario con sesión.
   const [formData, setFormData] = useState(() => {
     const usuario = obtenerUsuarioActivo();
 
@@ -45,6 +48,7 @@ export default function Checkout({
     };
   });
 
+  // Comunas de la región elegida (select en cascada).
   const regionSeleccionada = regionesComunas.find(
     (item) => item.region === formData.region
   );
@@ -84,6 +88,7 @@ export default function Checkout({
     return <Navigate to="/carrito" replace />;
   }
 
+  // Actualiza el campo que cambió (los checkbox usan checked).
   function handleChange(evento) {
     const { name, value, type, checked } = evento.target;
 
@@ -97,6 +102,7 @@ export default function Checkout({
     setError("");
   }
 
+  // Valida el formulario y confirma o rechaza el pago.
   function handleSubmit(evento) {
     evento.preventDefault();
 
@@ -109,6 +115,7 @@ export default function Checkout({
     const departamento = formData.departamento.trim();
     const indicaciones = formData.indicaciones.trim();
 
+    // Validaciones de los datos de despacho.
     if (!nombre || !email || !telefono || !direccion) {
       setError("Completa todos los campos obligatorios de despacho.");
       return;
@@ -147,6 +154,7 @@ export default function Checkout({
       return;
     }
 
+    // Datos de la orden; la dirección se arma en una sola línea.
     const datosCompra = {
       id: `ORD-${crypto.randomUUID()}`,
       nombre,
@@ -196,6 +204,7 @@ export default function Checkout({
     let ordenGuardada;
 
     try {
+      // Guarda la orden y descuenta stock (db.js). Si falla, muestra el error.
       ordenGuardada = confirmarCompra(datosCompra, carrito, descuento);
     } catch (errorCompra) {
       setError(
@@ -230,6 +239,7 @@ export default function Checkout({
         ningún cobro real.
       </Alert>
 
+      {/* Resumen de los productos y totales */}
       <div className="p-4 bg-white shadow-sm rounded mb-4">
         <h2 className="h4">Resumen de compra</h2>
 
@@ -280,6 +290,7 @@ export default function Checkout({
         onSubmit={handleSubmit}
         className="p-4 bg-white shadow-sm rounded"
       >
+        {/* Se deshabilita mientras se procesa la compra */}
         <fieldset disabled={procesando}>
           <legend className="h4">Datos de despacho</legend>
 

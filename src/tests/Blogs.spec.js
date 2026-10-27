@@ -1,3 +1,4 @@
+// Pruebas de las vistas Blogs y BlogDetalle.
 import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Blogs from '../pages/Blogs'

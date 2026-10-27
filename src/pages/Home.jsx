@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import '../styles/Home.css'
 
+// Categorías que se muestran en la portada, con su foto y descripción.
 const categorias = [
   {
     nombre: 'Tortas Cuadradas',
@@ -44,8 +45,10 @@ const categorias = [
   },
 ]
 
+// Códigos de los productos estrella.
 const codigosDestacados = ['TC001', 'TT002', 'PI002']
 
+// Página de inicio (/): portada, categorías, destacados, video e historia.
 function Home({ productos }) {
   // Busca los destacados en el catálogo recibido desde App.
   const productosDestacados = codigosDestacados

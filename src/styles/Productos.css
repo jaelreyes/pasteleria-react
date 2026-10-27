@@ -1,3 +1,5 @@
+/* Tarjeta de producto */
+/* Estilos del catálogo y de las tarjetas de producto. */
 .product-card {
   background-color: white;
   border: 1px solid rgba(255, 192, 203, 0.6);
@@ -73,6 +75,7 @@
   font-weight: 700;
 }
 
+/* Página del catálogo y filtros */
 .catalogo-page > h1 {
   font-family: 'Pacifico', cursive;
   color: #8b4513;
@@ -112,6 +115,7 @@
 }
 
 
+/* Precio tachado y etiqueta de oferta */
 .producto-precio-anterior {
   color: #8d6e63;
   font-size: 1rem;

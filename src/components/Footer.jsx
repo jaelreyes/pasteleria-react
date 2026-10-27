@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+// Pie de página con enlaces, contacto, redes y newsletter.
 function Footer() {
   const [correo, setCorreo] = useState('')
   const [error, setError] = useState('')
   const [suscrito, setSuscrito] = useState(false)
 
+  // Valida el correo del newsletter antes de suscribir.
   function suscribir(evento) {
     evento.preventDefault()
 
@@ -100,6 +102,7 @@ function Footer() {
             Suscríbete y entérate de nuestras novedades y promociones.
           </p>
 
+          {/* Confirmación o formulario del newsletter */}
           {suscrito ? (
             <p role="status">¡Gracias! Ya estás suscrito.</p>
           ) : (
@@ -136,6 +139,7 @@ function Footer() {
         </section>
       </div>
 
+      {/* Derechos y medios de pago */}
       <div className="footer-bottom">
         <p>
           © 2026 Pastelería 1000 Sabores. Todos los derechos reservados.

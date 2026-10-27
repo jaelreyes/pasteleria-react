@@ -1,3 +1,4 @@
+// Utilidades de categorías para la tienda (vista Categorías).
 // Convierte "Tortas Cuadradas" en "tortas-cuadradas" para usarlo en la URL.
 export function crearSlug(texto) {
   return texto

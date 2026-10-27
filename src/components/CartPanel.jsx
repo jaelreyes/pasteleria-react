@@ -1,6 +1,7 @@
 import { Offcanvas } from "react-bootstrap";
 import Cart from "./Cart";
 
+// Panel lateral (Offcanvas de Bootstrap) que muestra el carrito.
 function CartPanel({ mostrar, onCerrar, carrito, descuento, onVaciar,
   onEliminar, onCambiarCantidad }) {
   return (

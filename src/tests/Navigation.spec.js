@@ -1,3 +1,4 @@
+// Pruebas del menú de navegación y del acceso según el rol.
 import {
   render,
   screen,

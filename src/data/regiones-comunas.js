@@ -1,4 +1,5 @@
 
+// Regiones de Chile con sus comunas (selects en cascada del checkout).
 const REGIONES_COMUNAS = [
   {
     region: "Arica y Parinacota",

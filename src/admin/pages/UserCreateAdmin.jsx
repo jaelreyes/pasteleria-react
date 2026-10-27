@@ -20,6 +20,7 @@ import {
   calcularEdad,
 } from "../../utils/validaciones";
 
+// Campos vacíos del formulario.
 const datosIniciales = {
   run: "",
   nombre: "",
@@ -42,6 +43,7 @@ const ROLES = {
   cliente: "Cliente",
 };
 
+// Campos de texto del formulario; se dibujan con map.
 const campos = [
   {
     nombre: "run",
@@ -108,6 +110,7 @@ const campos = [
   },
 ];
 
+// Crear usuario desde el panel (solo Administrador); permite elegir el rol.
 export default function UserCreateAdmin() {
   const [datos, setDatos] = useState({ ...datosIniciales });
   const [error, setError] = useState("");
@@ -122,6 +125,7 @@ export default function UserCreateAdmin() {
     ? [...new Set(regionSeleccionada.comunas)]
     : [];
 
+  // Formulario controlado; al cambiar de región se limpia la comuna.
   function actualizarCampo(evento) {
     const { name, value } = evento.target;
 
@@ -134,6 +138,7 @@ export default function UserCreateAdmin() {
     setError("");
   }
 
+  // Valida los datos, revisa correo y RUN repetidos y guarda el usuario.
   function crearUsuario(evento) {
     evento.preventDefault();
 
@@ -148,6 +153,7 @@ export default function UserCreateAdmin() {
     const direccion = datos.direccion.trim();
     const codigo = datos.codigoPromocional.trim().toUpperCase();
 
+    // Validaciones: se detiene en el primer error y lo muestra.
     if (!validarRun(run)) {
       setError("Ingresa un RUN válido con su dígito verificador.");
       return;
@@ -211,6 +217,7 @@ export default function UserCreateAdmin() {
       return;
     }
 
+    // El rol debe ser uno de los definidos en ROLES.
     if (!Object.prototype.hasOwnProperty.call(ROLES, datos.rol)) {
       setError("Selecciona un rol válido.");
       return;
@@ -224,6 +231,7 @@ export default function UserCreateAdmin() {
     try {
       const usuarios = obtenerUsuarios();
 
+      // No se permiten correos ni RUN repetidos.
       const correoRepetido = usuarios.some(
         (usuario) =>
           String(usuario.email || usuario.correo || "")
@@ -246,6 +254,7 @@ export default function UserCreateAdmin() {
         return;
       }
 
+      // Beneficios: mismas reglas que en el Registro.
       const descuentoEdad =
         edad !== null && edad >= 50 && edad <= 120 ? 50 : 0;
 
@@ -273,6 +282,7 @@ export default function UserCreateAdmin() {
         );
       }
 
+      // Usuario nuevo con el rol elegido por el administrador.
       const usuario = {
         run,
         nombre,
@@ -317,6 +327,7 @@ export default function UserCreateAdmin() {
         Registra una cuenta y asigna su rol en el sistema.
       </p>
 
+      {/* Confirmación o formulario */}
       {creado ? (
         <Alert variant="success" role="status">
           <Alert.Heading>Usuario creado correctamente</Alert.Heading>
@@ -340,6 +351,7 @@ export default function UserCreateAdmin() {
             </p>
 
             <Row className="g-3">
+              {/* Campos de texto generados desde el arreglo campos */}
               {campos.map((campo) => {
                 const { nombre, etiqueta, ...propiedades } = campo;
 

@@ -1,4 +1,5 @@
 // src/tests/AdminHome.spec.js
+// Pruebas básicas del panel principal (AdminHome).
 describe('Componente AdminHome', () => {
   it('Debería renderizar el panel principal de administración correctamente', () => {
     const tituloPanel = "Panel de Control - Pastelería";

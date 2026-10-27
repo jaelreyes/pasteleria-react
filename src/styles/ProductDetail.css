@@ -1,3 +1,4 @@
+/* Estilos del detalle de producto (/productos/:id). */
 .detalle-producto {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -5,6 +6,7 @@
   align-items: start;
 }
 
+/* Imagen */
 .detalle-producto-imagen {
   margin: 0;
   overflow: hidden;
@@ -18,6 +20,7 @@
   height: auto;
 }
 
+/* Información, precio y botones */
 .detalle-producto-info {
   min-width: 0;
 }
@@ -78,6 +81,7 @@
   font-weight: 700;
 }
 
+/* Móviles */
 @media (max-width: 768px) {
   .detalle-producto {
     grid-template-columns: 1fr;
@@ -89,6 +93,7 @@
   }
 }
 
+/* Selector de cantidad y precio con descuento */
 .detalle-cantidad {
   max-width: 140px;
   border: 2px solid #ffc0cb;

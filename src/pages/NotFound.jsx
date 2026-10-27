@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { Button } from 'react-bootstrap'
 
+// Página 404: se muestra cuando la ruta no existe.
 function NotFound() {
   const ubicacion = useLocation()
 

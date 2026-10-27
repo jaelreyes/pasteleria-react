@@ -23,6 +23,7 @@ import BoletaAdmin from "./pages/BoletaAdmin";
 import HistorialUsuario from "./pages/HistorialUsuario";
 import "../styles/Admin.css";
 
+// Panel de administración: protege el acceso por rol, dibuja el menú lateral y define las rutas /admin/*.
 export function AdminRoutes() {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
@@ -33,6 +34,7 @@ export function AdminRoutes() {
     .trim()
     .toLowerCase();
 
+  // El administrador puede todo; el vendedor solo ve productos y gestiona órdenes.
   const esAdministrador =
     rol === "admin" || rol === "administrador";
 
@@ -45,17 +47,20 @@ export function AdminRoutes() {
     setMenuAbierto(false);
   }
 
+  // Borra la sesión y recarga en /login.
   function cerrarSesion() {
     localStorage.removeItem("usuarioActivo");
     window.location.assign("/login");
   }
 
+  // Marca en el menú el enlace de la página actual.
   function claseEnlace({ isActive }) {
     return `admin-menu-enlace${isActive ? " activo" : ""}`;
   }
 
   return (
     <div className="admin-layout">
+      {/* Encabezado del panel con usuario, rol y menú móvil */}
       <header className="admin-header">
         <div className="admin-header-contenido">
           <Link
@@ -132,10 +137,12 @@ export function AdminRoutes() {
       </header>
 
       <div className="admin-estructura">
+        {/* Menú lateral (se colapsa en celular) */}
         <aside
           id="admin-menu-lateral"
           className={`admin-sidebar${menuAbierto ? " abierto" : ""}`}
         >
+          {/* Enlaces del menú; los marcados con esAdministrador no los ve el vendedor */}
           <nav aria-label="Menú de administración">
             <NavLink
               to="/admin"
@@ -242,7 +249,9 @@ export function AdminRoutes() {
           </nav>
         </aside>
 
+        {/* Aquí se dibuja la página del panel según la ruta */}
         <main className="admin-contenido">
+          {/* Rutas del panel. Las que no corresponden al rol redirigen a /admin */}
           <Routes>
             <Route
               index
@@ -254,6 +263,7 @@ export function AdminRoutes() {
               element={<OrdersAdmin puedeModificar={true} />}
             />
 
+            {/* Boleta de una orden */}
             <Route path="ordenes/:id" element={<BoletaAdmin />} />
 
             <Route
@@ -352,6 +362,7 @@ export function AdminRoutes() {
         </main>
       </div>
 
+      {/* Pie de página del panel */}
       <footer className="admin-footer">
         <div className="admin-footer-contenido">
           <div>

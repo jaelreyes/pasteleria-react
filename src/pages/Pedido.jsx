@@ -5,6 +5,7 @@ import { obtenerOrdenes, obtenerUsuarioActivo } from "../data/db";
 import { formatearPrecio } from "../utils/precios";
 import "../styles/Pedido.css";
 
+// Texto y color del Badge de Bootstrap para cada estado.
 const ESTADOS = {
   pendiente: { texto: "Pendiente", color: "secondary" },
   procesando: { texto: "En preparación", color: "warning" },
@@ -13,6 +14,7 @@ const ESTADOS = {
   cancelado: { texto: "Cancelado", color: "danger" },
 };
 
+// Etapas del seguimiento, en orden.
 const ETAPAS = [
   {
     estado: "pendiente",
@@ -44,6 +46,7 @@ function normalizarId(id) {
   return String(id || "").trim().toUpperCase();
 }
 
+// Línea de avance del pedido según su estado.
 function SeguimientoPedido({ estado = "pendiente" }) {
   if (estado === "cancelado") {
     return (
@@ -58,6 +61,7 @@ function SeguimientoPedido({ estado = "pendiente" }) {
     (etapa) => etapa.estado === estado
   );
 
+  // Estado desconocido: no se muestra la línea de avance.
   if (pasoActual === -1) {
     return (
       <p className="text-muted">
@@ -74,6 +78,7 @@ function SeguimientoPedido({ estado = "pendiente" }) {
       <h3>Seguimiento de tu pedido</h3>
 
       <ol className="pedido-seguimiento-etapas">
+        {/* Cada etapa se marca como completa, actual o pendiente */}
         {ETAPAS.map((etapa, indice) => {
           const anterior = indice < pasoActual;
           const actual = indice === pasoActual;
@@ -119,6 +124,7 @@ function SeguimientoPedido({ estado = "pendiente" }) {
   );
 }
 
+// Mis pedidos (/pedido): con sesión lista tus compras; sin sesión, consulta por ID y correo.
 function Pedido() {
   const [ordenes, setOrdenes] = useState(() => obtenerOrdenes());
 
@@ -136,6 +142,7 @@ function Pedido() {
     usuario?.correo || usuario?.email
   );
 
+  // Pedidos a mostrar, del más reciente al más antiguo.
   const pedidos = ordenes
     .filter((orden) => {
       const correoOrden = normalizarCorreo(
@@ -173,6 +180,7 @@ function Pedido() {
     setErrorConsulta("");
   }
 
+  // Consulta de invitado: valida ID y correo y busca la orden.
   function consultarPedido(evento) {
     evento.preventDefault();
 
@@ -197,6 +205,7 @@ function Pedido() {
     setErrorConsulta("");
   }
 
+  // Vuelve a leer las órdenes (por si el admin cambió el estado).
   function actualizarPedidos() {
     setOrdenes(obtenerOrdenes());
   }
@@ -215,6 +224,7 @@ function Pedido() {
         Revisa tus compras y sigue el avance de cada pedido.
       </p>
 
+      {/* Sin sesión: formulario para consultar como invitado */}
       {!usuario && (
         <div className="pedido-consulta">
           <h2>Consultar una compra como invitado</h2>
@@ -304,6 +314,7 @@ function Pedido() {
         </Alert>
       )}
 
+      {/* Usuario sin compras */}
       {usuario && pedidos.length === 0 && (
         <div className="pedido-vacio">
           <h2>Aún no tienes pedidos</h2>
@@ -315,6 +326,7 @@ function Pedido() {
         </div>
       )}
 
+      {/* Una tarjeta por pedido con productos, totales y seguimiento */}
       {pedidos.map((orden) => {
         const estadoActual = orden.estado || "pendiente";
 

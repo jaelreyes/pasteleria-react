@@ -7,6 +7,7 @@ import {
 } from '../utils/precios'
 import '../styles/ProductDetail.css'
 
+// Detalle de un producto (/productos/:id) con selector de cantidad.
 function ProductDetail({
   productos,
   onAgregar,
@@ -17,6 +18,7 @@ function ProductDetail({
   const navegar = useNavigate()
   const [cantidad, setCantidad] = useState('1')
 
+  // El id de la URL es texto, por eso se convierte a número.
   const producto = productos.find(
     producto => producto.id === Number(id)
   )
@@ -45,6 +47,7 @@ function ProductDetail({
     ? itemEnCarrito.cantidad
     : 0
 
+  // Unidades que aún se pueden agregar (stock menos lo que ya está en el carrito).
   const disponibles = Math.max(
     0,
     producto.stock - cantidadEnCarrito
@@ -52,6 +55,7 @@ function ProductDetail({
 
   const cantidadNumero = Number(cantidad)
 
+  // La cantidad debe ser entera, mínimo 1 y sin pasar lo disponible.
   const cantidadValida =
     Number.isInteger(cantidadNumero) &&
     cantidadNumero >= 1 &&
@@ -107,6 +111,7 @@ function ProductDetail({
           Stock disponible: <strong>{producto.stock}</strong> unidades
         </p>
 
+        {/* Sin unidades disponibles se muestra un aviso en vez del formulario */}
         {disponibles === 0 ? (
           <Alert variant="warning">
             {producto.stock === 0

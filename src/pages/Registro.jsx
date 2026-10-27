@@ -13,6 +13,7 @@ import {
 import { obtenerUsuarios } from "../data/db";
 import "../styles/Auth.css";
 
+// Campos vacíos del formulario de registro.
 const datosIniciales = {
   run: "",
   nombre: "",
@@ -28,12 +29,14 @@ const datosIniciales = {
   codigoPromocional: "",
 };
 
+// Registro de clientes (/registro): valida datos, calcula beneficios y guarda la cuenta.
 function Registro() {
   const [datos, setDatos] = useState({ ...datosIniciales });
   const [errores, setErrores] = useState({});
   const [usuarioCreado, setUsuarioCreado] = useState(null);
   const formularioRef = useRef(null);
 
+  // Comunas de la región elegida (select en cascada).
   const regionSeleccionada = regionesComunas.find(
     (item) => item.region === datos.region
   );
@@ -42,6 +45,7 @@ function Registro() {
     ? [...new Set(regionSeleccionada.comunas)]
     : [];
 
+  // Formulario controlado; al cambiar de región se limpia la comuna.
   function actualizarCampo(evento) {
     const { name, value } = evento.target;
 
@@ -52,6 +56,7 @@ function Registro() {
     }));
   }
 
+  // Beneficios: 50% si tiene 50+ años, 10% con FELICES50 y torta gratis si es de Duoc.
   function obtenerBeneficios() {
     const correo = datos.correo.trim().toLowerCase();
     const codigo = datos.codigoPromocional.trim().toUpperCase();
@@ -97,14 +102,17 @@ function Registro() {
 
   const beneficiosDetectados = obtenerBeneficios().beneficios;
 
+  // Revisa cada campo y devuelve un objeto con los errores.
   function validarFormulario() {
     const nuevosErrores = {};
 
+    // RUN con dígito verificador correcto.
     if (!validarRun(datos.run)) {
       nuevosErrores.run =
         "Ingresa un RUN válido con su dígito verificador.";
     }
 
+    // Nombre y apellidos obligatorios, con largo máximo.
     const nombre = datos.nombre.trim();
 
     if (nombre.length < 2 || nombre.length > 50) {
@@ -119,11 +127,13 @@ function Registro() {
         "Los apellidos son obligatorios, máximo 100 caracteres.";
     }
 
+    // Correo con dominio permitido.
     if (!validarCorreo(datos.correo)) {
       nuevosErrores.correo =
         "Usa un correo @duoc.cl, @profesor.duoc.cl, @duocuc.cl o @gmail.com.";
     }
 
+    // Fecha opcional: si viene, no puede ser futura ni de más de 120 años.
     if (datos.fechaNacimiento) {
       const fecha = new Date(`${datos.fechaNacimiento}T00:00:00`);
 
@@ -146,6 +156,7 @@ function Registro() {
         "Selecciona una comuna de la región elegida.";
     }
 
+    // Región, comuna y dirección obligatorias.
     const direccion = datos.direccion.trim();
 
     if (!direccion || direccion.length > 300) {
@@ -158,6 +169,7 @@ function Registro() {
         "Ingresa un teléfono válido de 8 a 15 dígitos.";
     }
 
+    // Contraseña de 4 a 10 caracteres y confirmación igual.
     if (!validarPassword(datos.password)) {
       nuevosErrores.password =
         "La contraseña debe tener entre 4 y 10 caracteres.";
@@ -173,6 +185,7 @@ function Registro() {
 
     const codigo = datos.codigoPromocional.trim().toUpperCase();
 
+    // El código promocional es opcional; el único válido es FELICES50.
     if (codigo && codigo !== "FELICES50") {
       nuevosErrores.codigoPromocional =
         "El código vigente es FELICES50.";
@@ -181,6 +194,7 @@ function Registro() {
     return nuevosErrores;
   }
 
+  // Muestra los errores y pone el foco en el primer campo inválido.
   function mostrarErrores(nuevosErrores) {
     setErrores(nuevosErrores);
 
@@ -191,6 +205,7 @@ function Registro() {
       ?.focus();
   }
 
+  // Al enviar: valida, revisa correo y RUN repetidos y guarda el usuario.
   function crearCuenta(evento) {
     evento.preventDefault();
 
@@ -212,6 +227,7 @@ function Registro() {
       const correo = datos.correo.trim().toLowerCase();
       const run = normalizarRun(datos.run);
 
+      // No se permiten dos cuentas con el mismo correo o RUN.
       const correoRepetido = usuarios.some(
         (usuario) =>
           String(usuario.email || usuario.correo || "")
@@ -239,6 +255,7 @@ function Registro() {
         return;
       }
 
+      // Nueva cuenta: siempre se registra con rol cliente.
       const usuario = {
         run,
         nombre: datos.nombre.trim(),
@@ -273,6 +290,7 @@ function Registro() {
     }
   }
 
+  // Dibuja un campo del formulario con su ayuda y su mensaje de error.
   function mostrarCampo(nombre, etiqueta, opciones = {}) {
     const { ayuda, ...propiedades } = opciones;
     const ayudaId = `registro-ayuda-${nombre}`;
@@ -326,6 +344,7 @@ function Registro() {
             <p>Regístrate para acceder a ofertas exclusivas</p>
           </div>
 
+          {/* Cuenta creada: muestra los beneficios. Si no, el formulario */}
           {usuarioCreado ? (
             <div className="registro-exito">
               <Alert variant="success" role="status">
@@ -367,6 +386,7 @@ function Registro() {
                   Los campos marcados con * son obligatorios.
                 </p>
 
+                {/* Aviso general cuando hay errores */}
                 {Object.keys(errores).length > 0 && (
                   <Alert variant="danger" role="alert">
                     {errores.general ||
@@ -374,6 +394,7 @@ function Registro() {
                   </Alert>
                 )}
 
+                {/* Datos personales */}
                 {mostrarCampo("run", "RUN *", {
                   placeholder: "19.011.022-2",
                   required: true,
@@ -418,6 +439,7 @@ function Registro() {
                   placeholder: "+56 9 1234 5678",
                 })}
 
+                {/* Región y comuna en cascada */}
                 <Form.Group controlId="registro-region">
                   <Form.Label>Región *</Form.Label>
 
@@ -482,6 +504,7 @@ function Registro() {
                   ayuda: `${datos.direccion.length}/300 caracteres.`,
                 })}
 
+                {/* Contraseña y código promocional */}
                 {mostrarCampo("password", "Contraseña *", {
                   type: "password",
                   autoComplete: "new-password",
@@ -511,6 +534,7 @@ function Registro() {
                   }
                 )}
 
+                {/* Beneficios calculados mientras se completa el formulario */}
                 {beneficiosDetectados.length > 0 && (
                   <Alert variant="info">
                     <strong>Beneficios que obtendrás:</strong>

@@ -1,4 +1,5 @@
 // src/tests/UsersAdmin.spec.js
+// Pruebas básicas de la gestión de usuarios (UsersAdmin).
 describe('Módulo UsersAdmin - Control de Usuarios', () => {
   it('Debería validar la lista de usuarios registrados en el sistema', () => {
     const usuarios = [

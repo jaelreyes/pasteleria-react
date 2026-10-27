@@ -1,3 +1,4 @@
+// Pruebas del registro: validaciones, beneficios y cuentas demo.
 import {
   render,
   screen,
@@ -42,6 +43,7 @@ function crearCuenta() {
 describe('Registro', () => {
   let almacenamiento
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {}
 

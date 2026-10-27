@@ -1,3 +1,4 @@
+// Pruebas de productos en el panel: listar, crear, editar y permisos.
 import {
   render,
   screen,
@@ -50,6 +51,7 @@ function actualizarProducto() {
 describe("ProductsAdmin", () => {
   let almacenamiento;
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {
       productos: JSON.stringify([productoInicial]),

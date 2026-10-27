@@ -1,8 +1,11 @@
+// Capa de datos de la app: CRUD en localStorage de usuarios,
+// productos, categorías y órdenes. Las vistas solo llaman a estas funciones.
 import productosIniciales from "./productos";
 import { calcularPrecioProducto, calcularTotales } from "../utils/precios";
 
 // --- USUARIOS Y ROLES ---
 
+// Lee los usuarios; la primera vez crea las 3 cuentas demo.
 export const obtenerUsuarios = () => {
   try {
     const guardados = localStorage.getItem("usuarios");
@@ -49,6 +52,7 @@ export const obtenerUsuarios = () => {
   }
 };
 
+// Usuario con sesión iniciada, o null si no hay sesión.
 export const obtenerUsuarioActivo = () => {
   try {
     return JSON.parse(localStorage.getItem("usuarioActivo") || "null");
@@ -57,6 +61,7 @@ export const obtenerUsuarioActivo = () => {
   }
 };
 
+// Borra un usuario por su correo.
 export const eliminarUsuario = (email) => {
   try {
     const usuarios = obtenerUsuarios().filter(
@@ -69,6 +74,7 @@ export const eliminarUsuario = (email) => {
   }
 };
 
+// Solo admin y vendedor pueden entrar al panel /admin.
 export const puedeEntrarAlPanel = () => {
   const usuario = obtenerUsuarioActivo();
 
@@ -83,6 +89,7 @@ export const puedeEntrarAlPanel = () => {
 
 // --- PRODUCTOS ---
 
+// Lee los productos; la primera vez copia el catálogo inicial.
 export function obtenerProductos() {
   const guardados = localStorage.getItem("productos");
 
@@ -105,6 +112,7 @@ export function obtenerProductos() {
   return productos;
 }
 
+// Crear (sin id) o editar (con id) un producto.
 export const guardarProducto = (producto) => {
   try {
     let productos = obtenerProductos();
@@ -124,6 +132,7 @@ export const guardarProducto = (producto) => {
   }
 };
 
+// Borra un producto por su id.
 export const eliminarProducto = (id) => {
   try {
     const productos = obtenerProductos().filter(
@@ -138,6 +147,7 @@ export const eliminarProducto = (id) => {
 
 // --- CATEGORÍAS ---
 
+// Categorías base de la pastelería.
 const CATEGORIAS_INICIALES = [
   "Tortas Cuadradas",
   "Tortas Circulares",
@@ -149,6 +159,7 @@ const CATEGORIAS_INICIALES = [
   "Tortas Especiales",
 ];
 
+// Categorías guardadas, o las iniciales si nunca se han modificado.
 function leerCategoriasGuardadas() {
   const guardadas = localStorage.getItem("categorias");
 
@@ -166,6 +177,7 @@ function leerCategoriasGuardadas() {
   return categorias;
 }
 
+// Compara nombres sin importar mayúsculas ni espacios.
 function mismoNombre(a, b) {
   return String(a).trim().toLowerCase() === String(b).trim().toLowerCase();
 }
@@ -250,6 +262,7 @@ export const eliminarCategoria = (nombre) => {
 
 // --- ÓRDENES ---
 
+// Todas las órdenes de compra (lista vacía si no hay).
 export const obtenerOrdenes = () => {
   try {
     const ordenes = JSON.parse(localStorage.getItem("ordenes") || "[]");
@@ -260,6 +273,7 @@ export const obtenerOrdenes = () => {
   }
 };
 
+// Agrega una orden nueva al final de la lista.
 export const guardarOrden = (orden) => {
   try {
     const ordenes = obtenerOrdenes();
@@ -272,6 +286,7 @@ export const guardarOrden = (orden) => {
   }
 };
 
+// Busca una orden por id (se usa en la boleta).
 export const obtenerOrdenPorId = (id) => {
   try {
     return obtenerOrdenes().find((orden) => String(orden.id) === String(id));
@@ -314,12 +329,14 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
     return orden;
   }
 
+  // Una orden cancelada ya no puede cambiar de estado.
   if (estadoActual === "cancelado") {
     throw new Error(
       "Una orden cancelada no se puede reactivar. Debe realizarse una compra nueva.",
     );
   }
 
+  // Solo se devuelve stock si se descontó y aún no se devolvió.
   const debeRestituirStock =
     nuevoEstado === "cancelado" &&
     orden.stockDescontado === true &&
@@ -338,6 +355,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
     const catalogo = obtenerProductos();
     productosAnteriores = localStorage.getItem("productos");
 
+    // Suma por producto las unidades que vuelven al inventario.
     const cantidadesADevolver = new Map();
 
     for (const item of orden.productos) {
@@ -408,6 +426,7 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
     posicion === indice ? ordenActualizada : actual,
   );
 
+  // Si falla al guardar la orden, se restaura el stock anterior.
   let stockGuardado = false;
 
   try {
@@ -441,6 +460,8 @@ export const actualizarEstadoOrden = (id, nuevoEstado) => {
 
 // --- CONFIRMACIÓN DE COMPRA ---
 
+// Confirma una compra: valida el carrito contra el catálogo actual,
+// guarda la orden y descuenta el stock. Si algo falla, no guarda nada.
 export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
   if (!Array.isArray(carrito) || carrito.length === 0) {
     throw new Error("El carrito está vacío.");
@@ -459,12 +480,14 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
     throw new Error("Las órdenes guardadas no tienen un formato válido.");
   }
 
+  // Evita guardar dos veces la misma orden.
   if (ordenes.some((orden) => String(orden.id) === String(datosOrden.id))) {
     throw new Error("Esta orden ya fue registrada.");
   }
 
   const idsRevisados = new Set();
 
+  // Revisa cada producto: id, cantidad, stock y precio vigentes.
   const productosCompra = carrito.map((item) => {
     if (!item || item.id === null || item.id === undefined) {
       throw new Error("Hay un producto inválido en el carrito.");
@@ -517,6 +540,7 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
       descuentoUsuario,
     );
 
+    // Si el precio cambió desde que se agregó al carrito, se avisa.
     if (
       precioAnterior.precioBase !== precioActual.precioBase ||
       precioAnterior.precioFinal !== precioActual.precioFinal
@@ -537,6 +561,7 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
     descuentoUsuario,
   );
 
+  // Orden que se guarda, con los precios calculados al momento de comprar.
   const nuevaOrden = {
     ...datosOrden,
     estado: "pendiente",
@@ -572,6 +597,7 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
     productosCompra.map((producto) => [String(producto.id), producto.cantidad]),
   );
 
+  // Descuenta del stock las unidades compradas.
   const catalogoActualizado = catalogo.map((producto) => {
     const cantidad = cantidadesCompradas.get(String(producto.id));
 
@@ -583,6 +609,7 @@ export function confirmarCompra(datosOrden, carrito, descuentoUsuario = 0) {
     };
   });
 
+  // Si falla al guardar la orden, se restaura el stock anterior.
   let stockGuardado = false;
 
   try {

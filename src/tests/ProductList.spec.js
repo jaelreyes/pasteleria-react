@@ -1,3 +1,4 @@
+// Pruebas del catálogo: búsqueda y filtro por categoría.
 import {
   render,
   screen,

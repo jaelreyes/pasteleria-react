@@ -1,3 +1,4 @@
+// Artículos del blog (vistas Blogs y BlogDetalle). Datos fijos, no se editan.
 const blogs = [
   {
     id: 1,

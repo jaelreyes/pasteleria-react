@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import blogs from '../data/blogs'
 import '../styles/Blogs.css'
 
+// Listado de artículos del blog en tarjetas (/blogs).
 function Blogs() {
   return (
     <section className="blogs">
@@ -12,6 +13,7 @@ function Blogs() {
       </div>
 
       <Row xs={1} md={2} className="g-4">
+        {/* Una tarjeta por artículo */}
         {blogs.map(blog => (
           <Col key={blog.id}>
             <Card className="blog-card h-100">

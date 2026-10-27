@@ -1,3 +1,4 @@
+// Pruebas de la vista Ofertas (solo productos con descuento).
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Ofertas from "../pages/Ofertas";

@@ -1,3 +1,4 @@
+// Pruebas de la boleta de una orden y del historial de compras de un usuario.
 import { render, screen, cleanup } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import BoletaAdmin from "../admin/pages/BoletaAdmin";
@@ -47,6 +48,7 @@ function dibujar(ruta) {
 }
 
 describe("Boleta e historial de compras", () => {
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     spyOn(Storage.prototype, "getItem").and.callFake((clave) =>
       clave === "ordenes" ? JSON.stringify(ordenes) : null

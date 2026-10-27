@@ -1,3 +1,4 @@
+// Pruebas de Mis pedidos: listado y consulta por ID y correo.
 import {
   render,
   screen,
@@ -96,6 +97,7 @@ function obtenerEtapaActual() {
 describe('Pedido', () => {
   let almacenamiento
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {
       ordenes: JSON.stringify([

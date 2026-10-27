@@ -2,11 +2,13 @@
 const fs = require("fs");
 const { createInstrumenter } = require("istanbul-lib-instrument");
 
+// Instrumentador de istanbul: marca qué líneas se ejecutan para medir la cobertura.
 const instrumentador = createInstrumenter({
   esModules: true,
   parserPlugins: ["jsx"],
 });
 
+// Plugin de esbuild que instrumenta el código de la app (no los tests).
 const pluginCobertura = {
   name: "cobertura",
 
@@ -36,6 +38,7 @@ const pluginCobertura = {
 
 module.exports = function (config) {
   config.set({
+    // Las pruebas se escriben con Jasmine (describe, it, expect).
     frameworks: ["jasmine"],
 
     files: [
@@ -55,6 +58,7 @@ module.exports = function (config) {
       "/images/": "/base/public/images/",
     },
 
+    // esbuild transforma los tests (y el JSX que importan) antes de ejecutarlos.
     preprocessors: {
       "src/tests/**/*.spec.js": ["esbuild"],
     },
@@ -76,6 +80,7 @@ module.exports = function (config) {
       plugins: [pluginCobertura],
     },
 
+    // Muestra el avance y genera el informe de cobertura en coverage/html.
     reporters: ["progress", "coverage"],
 
     coverageReporter: {
@@ -87,6 +92,7 @@ module.exports = function (config) {
       ],
     },
 
+    // Ejecuta una vez en Chrome sin ventana (npm test).
     browsers: ["ChromeHeadless"],
     singleRun: true,
   });

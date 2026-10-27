@@ -8,11 +8,13 @@ export default function HistorialUsuario() {
   const { correo } = useParams();
   const buscado = String(correo || "").trim().toLowerCase();
 
+  // Órdenes cuyo correo coincide con el usuario.
   const compras = obtenerOrdenes().filter(
     (orden) =>
       String(orden.email || orden.correo || "").trim().toLowerCase() === buscado
   );
 
+  // Total gastado sin contar las canceladas.
   const totalGastado = compras
     .filter((orden) => orden.estado !== "cancelado")
     .reduce((suma, orden) => suma + (Number(orden.total) || 0), 0);
@@ -28,6 +30,7 @@ export default function HistorialUsuario() {
 
       <p className="text-muted">{correo}</p>
 
+      {/* Sin compras: aviso. Con compras: tabla con enlace a cada boleta */}
       {compras.length === 0 ? (
         <Alert variant="info">Este usuario todavía no tiene compras.</Alert>
       ) : (

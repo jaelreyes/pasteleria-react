@@ -1,3 +1,4 @@
+// Pruebas del inicio de sesión y la redirección según el rol.
 import {
   render,
   screen,
@@ -59,6 +60,7 @@ function enviarLogin() {
 }
 
 describe("Login", () => {
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     spyOn(Storage.prototype, "getItem").and.callFake((clave) =>
       clave === "usuarios" ? JSON.stringify(usuarios) : null

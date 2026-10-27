@@ -1,3 +1,4 @@
+// Prueba del flujo completo: confirmar compra, vaciar carrito e ir a la página de éxito.
 import { useState } from "react";
 import {
   render,
@@ -65,6 +66,7 @@ function FlujoCompra({ alConfirmar }) {
 describe("Flujo de confirmación de compra", () => {
   let almacenamiento;
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {
       productos: JSON.stringify([producto]),

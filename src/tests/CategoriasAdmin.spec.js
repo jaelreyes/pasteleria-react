@@ -1,3 +1,4 @@
+// Pruebas del CRUD de categorías (db.js) y de su vista en el panel.
 import { render, screen, fireEvent, cleanup } from "@testing-library/react";
 import CategoriasAdmin from "../admin/pages/CategoriasAdmin";
 import {
@@ -14,6 +15,7 @@ const productos = [
 describe("Categorías del panel", () => {
   let almacenamiento;
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     // Mock de localStorage con dos categorías y dos productos.
     almacenamiento = {

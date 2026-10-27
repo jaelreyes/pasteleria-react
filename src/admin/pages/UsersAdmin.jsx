@@ -26,12 +26,14 @@ import {
 } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
+// Nombre visible de cada rol.
 const ROLES = {
   admin: "Administrador",
   vendedor: "Vendedor",
   cliente: "Cliente",
 };
 
+// Cuentas demo: no se pueden eliminar.
 const CORREOS_DEMO = ["admin@duoc.cl", "vendedor@duoc.cl", "cliente@gmail.com"];
 
 function correoUsuario(usuario) {
@@ -40,6 +42,7 @@ function correoUsuario(usuario) {
     .toLowerCase();
 }
 
+// Rol normalizado (admin, vendedor o cliente).
 function rolUsuario(usuario) {
   const rol = String(usuario?.rol || usuario?.tipo || "cliente")
     .trim()
@@ -52,6 +55,7 @@ function esCuentaDemo(usuario) {
   return CORREOS_DEMO.includes(correoUsuario(usuario));
 }
 
+// Usuarios del panel (solo Administrador): buscar, filtrar, ver, editar, eliminar e historial.
 export function UsersAdmin() {
   const [usuarios, setUsuarios] = useState(() => obtenerUsuarios());
   const [busqueda, setBusqueda] = useState("");
@@ -76,6 +80,7 @@ export function UsersAdmin() {
     ? [...new Set(regionSeleccionada.comunas)]
     : [];
 
+  // Abre el modal de edición con los datos del usuario.
   function abrirEditar(usuario) {
     setUsuarioEditando(usuario);
     setErrorModal("");
@@ -106,6 +111,7 @@ export function UsersAdmin() {
     setErrorModal("");
   }
 
+  // Valida y guarda los cambios del usuario editado.
   function guardarCambios(evento) {
     evento.preventDefault();
 
@@ -118,6 +124,7 @@ export function UsersAdmin() {
     const correo = form.correo.trim().toLowerCase();
     const run = form.run.trim() ? normalizarRun(form.run) : "";
 
+    // Validaciones del formulario de edición.
     if (nombre.length < 2 || nombre.length > 50) {
       setErrorModal("El nombre debe tener entre 2 y 50 caracteres.");
       return;
@@ -194,6 +201,7 @@ export function UsersAdmin() {
     }
 
     try {
+      // Relee los usuarios para no pisar cambios recientes.
       const actuales = obtenerUsuarios();
       const indice = actuales.findIndex(
         (usuario) => correoUsuario(usuario) === correoOriginal,
@@ -231,6 +239,7 @@ export function UsersAdmin() {
         ? calcularEdad(form.fechaNacimiento)
         : null;
 
+      // Recalcula los beneficios con los datos nuevos.
       const descuentoEdad = edad !== null && edad >= 50 && edad <= 120 ? 50 : 0;
 
       const codigo = String(actuales[indice].codigoPromocional || "")
@@ -281,6 +290,7 @@ export function UsersAdmin() {
         beneficios,
       };
 
+      // Reemplaza solo el usuario editado y guarda.
       const lista = actuales.map((usuario, posicion) =>
         posicion === indice ? actualizado : usuario,
       );
@@ -297,6 +307,7 @@ export function UsersAdmin() {
     }
   }
 
+  // Elimina un usuario (no deja borrar cuentas demo ni la propia).
   function handleEliminar(usuario) {
     setError("");
     setMensaje("");
@@ -334,6 +345,7 @@ export function UsersAdmin() {
     }
   }
 
+  // Ordena la tabla por la columna elegida.
   function ordenarPor(campo) {
     setCriterioOrden((actual) => ({
       campo,
@@ -354,6 +366,7 @@ export function UsersAdmin() {
     return `${usuario.nombre || ""} ${usuario.apellidos || ""}`;
   }
 
+  // Aplica búsqueda, filtro por rol y orden.
   const usuariosMostrados = usuarios
     .filter((usuario) => {
       const texto = [
@@ -379,6 +392,7 @@ export function UsersAdmin() {
       return criterioOrden.direccion === "asc" ? resultado : -resultado;
     });
 
+  // Contadores por rol que se muestran arriba.
   const indicadores = [
     { titulo: "Total Usuarios", cantidad: usuarios.length },
     {
@@ -395,6 +409,7 @@ export function UsersAdmin() {
     },
   ];
 
+  // Dibuja un campo del formulario de edición.
   function campo(nombre, etiqueta, opciones = {}) {
     return (
       <Form.Group controlId={`usuario-${nombre}`}>
@@ -430,6 +445,7 @@ export function UsersAdmin() {
       {mensaje && <Alert variant="success">{mensaje}</Alert>}
 
       <Row className="g-3 mb-4">
+        {/* Contadores por rol */}
         {indicadores.map((indicador) => (
           <Col xs={12} sm={6} lg={3} key={indicador.titulo}>
             <Card className="shadow-sm border-0 p-3 text-center">
@@ -440,6 +456,7 @@ export function UsersAdmin() {
         ))}
       </Row>
 
+      {/* Búsqueda y filtro por rol */}
       <Card className="shadow-sm border-0 p-3 mb-4">
         <Row className="g-3">
           <Col md={8}>
@@ -473,6 +490,7 @@ export function UsersAdmin() {
         </Row>
       </Card>
 
+      {/* Tabla de usuarios (los encabezados ordenan con clic) */}
       <Card className="shadow-sm border-0">
         <Table responsive hover striped className="mb-0 align-middle">
           <thead>
@@ -592,6 +610,7 @@ export function UsersAdmin() {
         </Card.Footer>
       </Card>
 
+      {/* Modal: ver detalle del usuario */}
       <Modal
         show={Boolean(detalle)}
         onHide={() => setDetalle(null)}
@@ -657,6 +676,7 @@ export function UsersAdmin() {
         </Modal.Footer>
       </Modal>
 
+      {/* Modal: editar usuario */}
       <Modal
         show={Boolean(usuarioEditando)}
         onHide={() => setUsuarioEditando(null)}

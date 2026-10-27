@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import "../styles/Nosotros.css";
 
+// Valores de la pastelería (tarjetas de la sección Valores).
 const valores = [
   {
     nombre: "Pasión",
@@ -36,6 +37,7 @@ const valores = [
   },
 ];
 
+// Integrantes del equipo que se muestran en tarjetas.
 const equipoPasteleria = [
   {
     nombre: "María García",
@@ -60,6 +62,7 @@ const equipoPasteleria = [
   },
 ];
 
+// Página Nosotros: historia, misión y visión, video, valores y equipo.
 function Nosotros() {
   return (
     <div className="nosotros-page">
@@ -68,6 +71,7 @@ function Nosotros() {
         <p>Medio siglo creando momentos dulces</p>
       </section>
 
+      {/* Historia */}
       <section className="nosotros-historia">
         <div className="nosotros-historia-contenido">
           <h2>De un sueño a una tradición</h2>
@@ -137,6 +141,7 @@ function Nosotros() {
         </article>
       </section>
 
+      {/* Video */}
       <section className="nosotros-video">
         <h2>Conoce Nuestro Mundo</h2>
         <p>Un vistazo a cómo creamos nuestros dulces favoritos</p>
@@ -159,6 +164,7 @@ function Nosotros() {
         </figure>
       </section>
 
+      {/* Valores (se generan con map) */}
       <section className="nosotros-valores">
         <h2>Nuestros Valores</h2>
 
@@ -184,6 +190,7 @@ function Nosotros() {
         </div>
       </section>
 
+      {/* Equipo (se genera con map) */}
       <section className="nosotros-equipo">
         <h2>Nuestro Equipo</h2>
 
@@ -216,6 +223,7 @@ function Nosotros() {
         </div>
       </section>
 
+      {/* Invitación a contactarnos */}
       <section className="nosotros-cta">
         <h2>¿Quieres Conocernos?</h2>
         <p>Visítanos y descubre por qué somos los favoritos del barrio</p>

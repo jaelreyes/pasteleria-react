@@ -1,3 +1,4 @@
+// Pruebas de los cálculos de reportes (utils/reportes.js) y de su vista.
 import { render, screen, cleanup } from "@testing-library/react";
 import ReportesAdmin from "../admin/pages/ReportesAdmin";
 import { resumenVentas, resumenStock } from "../utils/reportes";

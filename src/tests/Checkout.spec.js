@@ -1,3 +1,4 @@
+// Pruebas del formulario de checkout y la confirmación de compra.
 import {
   render,
   screen,
@@ -102,6 +103,7 @@ function confirmarCompra() {
 describe("Checkout", () => {
   let almacenamiento;
 
+  // Antes de cada prueba: prepara datos limpios y los mocks.
   beforeEach(() => {
     almacenamiento = {
       productos: JSON.stringify([productoPrueba]),

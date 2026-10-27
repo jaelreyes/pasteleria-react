@@ -16,6 +16,7 @@ import {
 } from "react-bootstrap";
 import ProductDetailModal from "../components/ProductDetailModal";
 
+// Valores vacíos del formulario de producto.
 const formularioInicial = {
   id: "",
   codigo: "",
@@ -29,6 +30,7 @@ const formularioInicial = {
   descuento: 0,
 };
 
+// Límite de stock crítico; 5 si no tiene uno válido.
 function obtenerLimiteCritico(producto) {
   const valor = producto.stockCritico;
 
@@ -40,14 +42,17 @@ function obtenerLimiteCritico(producto) {
   return Number.isInteger(numero) && numero >= 0 ? numero : 5;
 }
 
+// true si el stock está en o bajo el límite crítico.
 function tieneStockCritico(producto) {
   return Number(producto.stock) <= obtenerLimiteCritico(producto);
 }
 
+// Productos críticos o agotados.
 function requiereAtencion(producto) {
   return Number(producto.stock) === 0 || tieneStockCritico(producto);
 }
 
+// Campos del formulario; se dibujan con map.
 const campos = [
   {
     name: "codigo",
@@ -119,6 +124,8 @@ const campos = [
   },
 ];
 
+// Productos del panel. Un solo componente para listar, crear y editar según la prop modo.
+// puedeModificar es false para el vendedor (solo consulta).
 export const ProductsAdmin = ({
   puedeModificar = false,
   modo = "listado",
@@ -133,6 +140,7 @@ export const ProductsAdmin = ({
   const [busqueda, setBusqueda] = useState("");
   const [categoriaFiltro, setCategoriaFiltro] = useState("");
 
+  // Columna y dirección por la que se ordena la tabla.
   const [orden, setOrden] = useState({
     campo: "nombre",
     direccion: "asc",
@@ -170,6 +178,7 @@ export const ProductsAdmin = ({
     }
   }, [mostrarFormulario, modoEdicion, form.id]);
 
+  // Cierra el formulario y lo deja vacío.
   function limpiarFormulario() {
     setForm({ ...formularioInicial });
     setModoEdicion(false);
@@ -177,6 +186,7 @@ export const ProductsAdmin = ({
     setError("");
   }
 
+  // Abre el formulario vacío para crear.
   function nuevoProducto() {
     if (!puedeModificar) return;
 
@@ -185,6 +195,7 @@ export const ProductsAdmin = ({
     setCreando(true);
   }
 
+  // Actualiza el campo que cambió en el formulario.
   function handleChange(evento) {
     if (!puedeModificar) return;
 
@@ -199,6 +210,7 @@ export const ProductsAdmin = ({
     setMensaje("");
   }
 
+  // Carga el producto en el formulario para editarlo.
   function handleEditar(producto) {
     if (!puedeModificar) return;
 
@@ -222,6 +234,7 @@ export const ProductsAdmin = ({
     setMensaje("");
   }
 
+  // Elimina el producto con db.js (solo si puede modificar).
   function handleEliminar(id) {
     if (!puedeModificar) return;
 
@@ -249,6 +262,7 @@ export const ProductsAdmin = ({
     }
   }
 
+  // Valida los campos y guarda el producto (nuevo o editado).
   function handleSubmit(evento) {
     evento.preventDefault();
 
@@ -278,6 +292,7 @@ export const ProductsAdmin = ({
       return;
     }
 
+    // Código: solo letras, números, guion y guion bajo (máx. 20).
     if (!/^[A-Z0-9_-]{1,20}$/.test(codigo)) {
       setError(
         "El código debe tener hasta 20 letras, números, guiones o guiones bajos."
@@ -290,6 +305,7 @@ export const ProductsAdmin = ({
     const stockCritico = Number(form.stockCritico);
     const descuento = Number(form.descuento || 0);
 
+    // Precio, stock y stock crítico no pueden ser negativos.
     if (!Number.isFinite(precio) || precio < 0) {
       setError("El precio debe ser un número mayor o igual a cero.");
       return;
@@ -316,6 +332,7 @@ export const ProductsAdmin = ({
       return;
     }
 
+    // La imagen puede ser una ruta local (/images/...) o una URL http/https.
     const rutaLocal = imagen.startsWith("/") && !imagen.startsWith("//");
     let urlValida;
 
@@ -336,6 +353,7 @@ export const ProductsAdmin = ({
     try {
       const catalogoActual = obtenerProductos();
 
+      // No se permiten dos productos con el mismo código.
       const codigoRepetido = catalogoActual.some(
         (producto) =>
           producto.id !== form.id &&
@@ -347,6 +365,7 @@ export const ProductsAdmin = ({
         return;
       }
 
+      // Producto a guardar; al editar conserva su id.
       const productoGuardar = {
         ...form,
         codigo,
@@ -367,6 +386,7 @@ export const ProductsAdmin = ({
         (producto) => producto.id === productoGuardar.id
       );
 
+      // Comprueba que el producto quedó bien guardado.
       const camposGuardados = [
         "codigo",
         "nombre",
@@ -404,12 +424,14 @@ export const ProductsAdmin = ({
     }
   }
 
+  // Quita búsqueda, categoría y filtro de críticos.
   function limpiarFiltros() {
     setBusqueda("");
     setCategoriaFiltro("");
     setSoloCriticos(false);
   }
 
+  // Ordena por la columna; si ya estaba, invierte la dirección.
   function cambiarOrden(campo) {
     setOrden((actual) => ({
       campo,
@@ -420,8 +442,10 @@ export const ProductsAdmin = ({
     }));
   }
 
+  // Productos que se avisan arriba por stock crítico o agotado.
   const productosAtencion = productos.filter(requiereAtencion);
 
+  // Aplica búsqueda, categoría, filtro de críticos y orden.
   const productosMostrados = productos
     .filter((producto) => {
       const texto = busqueda.trim().toLowerCase();
@@ -449,6 +473,7 @@ export const ProductsAdmin = ({
       return orden.direccion === "asc" ? resultado : -resultado;
     });
 
+  // Encabezado de tabla que se puede ordenar con clic.
   function encabezado(campo, etiqueta) {
     const activo = orden.campo === campo;
 
@@ -493,6 +518,7 @@ export const ProductsAdmin = ({
           : "Administra el catálogo de la tienda: precio, stock y categorías."}
       </p>
 
+      {/* Aviso para el vendedor: solo consulta */}
       {!puedeModificar && (
         <Alert variant="info">
           Tu acceso es de consulta. Puedes ver el detalle, filtrar
@@ -512,6 +538,7 @@ export const ProductsAdmin = ({
         </Alert>
       )}
 
+      {/* Formulario de nuevo/editar o listado de productos */}
       {mostrarFormulario ? (
         <div ref={formularioRef} className="admin-producto-formulario">
           <h3 className="h5 mb-4">
@@ -520,6 +547,7 @@ export const ProductsAdmin = ({
               : "Registrar Nuevo Producto"}
           </h3>
 
+          {/* Campos generados desde el arreglo campos */}
           <Form noValidate onSubmit={handleSubmit}>
             <Row className="g-3">
               {campos.map((campo) => {
@@ -608,6 +636,7 @@ export const ProductsAdmin = ({
         </div>
       ) : (
         <>
+          {/* Solo el administrador puede crear productos */}
           {puedeModificar && (
             <Button
               type="button"
@@ -618,6 +647,7 @@ export const ProductsAdmin = ({
             </Button>
           )}
 
+          {/* Aviso de productos con stock crítico o agotado */}
           {productosAtencion.length > 0 && (
             <div className="admin-productos-aviso">
               <strong>Hay productos con stock crítico o agotado:</strong>
@@ -642,6 +672,7 @@ export const ProductsAdmin = ({
             </div>
           )}
 
+          {/* Filtros: categoría, búsqueda y solo críticos */}
           <Row className="g-3 mb-3">
             <Col xs={12} md={5}>
               <Form.Group controlId="admin-filtro-categoria">
@@ -702,6 +733,7 @@ export const ProductsAdmin = ({
             </span>
           </div>
 
+          {/* Tabla de productos; las filas críticas y agotadas se colorean */}
           <Table responsive className="admin-productos-tabla align-middle">
             <thead>
               <tr>
@@ -827,6 +859,7 @@ export const ProductsAdmin = ({
         </>
       )}
 
+      {/* Modal con el detalle del producto */}
       <ProductDetailModal
         producto={productoDetalle}
         onCerrar={() => setProductoDetalle(null)}

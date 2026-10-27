@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { obtenerProductos, obtenerUsuarios } from "../../data/db";
 
+// Límite de stock crítico del producto; 5 si no tiene uno válido.
 function limiteCritico(producto) {
   const valor = producto.stockCritico;
 
@@ -14,6 +15,7 @@ function limiteCritico(producto) {
   return Number.isInteger(numero) && numero >= 0 ? numero : 5;
 }
 
+// Dashboard del panel: tarjetas con productos, stock, críticos y usuarios.
 export default function AdminHome({ esAdministrador = false }) {
   const [productos, setProductos] = useState(() => obtenerProductos());
 
@@ -21,6 +23,7 @@ export default function AdminHome({ esAdministrador = false }) {
     esAdministrador ? obtenerUsuarios() : [],
   );
 
+  // Vuelve a leer los datos desde db.js.
   function actualizarResumen() {
     setProductos(obtenerProductos());
 
@@ -34,10 +37,12 @@ export default function AdminHome({ esAdministrador = false }) {
     0,
   );
 
+  // Productos con stock igual o menor a su límite crítico.
   const cantidadCriticos = productos.filter(
     (producto) => Number(producto.stock) <= limiteCritico(producto),
   ).length;
 
+  // Datos de cada tarjeta del dashboard (se dibujan con map).
   const indicadores = [
     {
       titulo: "Productos",
@@ -76,6 +81,7 @@ export default function AdminHome({ esAdministrador = false }) {
           : "Consulta el catálogo y gestiona las órdenes de Pastelería 1000 Sabores."}
       </p>
 
+      {/* Tarjetas de indicadores */}
       <div className="admin-indicadores">
         {indicadores.map((indicador) => (
           <article className="admin-indicador" key={indicador.titulo}>
@@ -98,6 +104,7 @@ export default function AdminHome({ esAdministrador = false }) {
 
       <h2 className="admin-accesos-titulo">Accesos rápidos</h2>
 
+      {/* Accesos rápidos según el rol */}
       <div className="admin-accesos">
         <Link to="/admin/productos">Ver productos</Link>
 
