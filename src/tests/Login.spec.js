@@ -1,35 +1,81 @@
-import { render, screen, fireEvent, cleanup } from '@testing-library/react'
-import { MemoryRouter, Routes, Route } from 'react-router-dom'
+import {
+  render,
+  screen,
+  fireEvent,
+  cleanup,
+} from '@testing-library/react'
+import {
+  MemoryRouter,
+  Routes,
+  Route,
+} from 'react-router-dom'
 import Login from '../pages/Login'
 
 const usuarios = [
-  { correo: 'admin@duoc.cl', password: 'admin123', nombre: 'Ana', tipo: 'Administrador' },
-  { correo: 'cliente@gmail.com', password: 'cliente1', nombre: 'Camila', tipo: 'Cliente' },
+  {
+    correo: 'admin@duoc.cl',
+    password: 'admin123',
+    nombre: 'Ana',
+    tipo: 'Administrador',
+  },
+  {
+    correo: 'cliente@gmail.com',
+    password: 'cliente1',
+    nombre: 'Camila',
+    tipo: 'Cliente',
+  },
 ]
 
-// Dibuja el Login dentro de un router con las páginas de destino.
-function dibujarLogin(onIniciarSesion = jasmine.createSpy('onIniciarSesion')) {
+function dibujarLogin(
+  onIniciarSesion = jasmine.createSpy('onIniciarSesion')
+) {
   render(
     <MemoryRouter initialEntries={['/login']}>
       <Routes>
-        <Route path="/login" element={<Login onIniciarSesion={onIniciarSesion} />} />
-        <Route path="/" element={<p>Página de inicio</p>} />
-        <Route path="/admin" element={<p>Panel de administración</p>} />
+        <Route
+          path="/login"
+          element={
+            <Login onIniciarSesion={onIniciarSesion} />
+          }
+        />
+
+        <Route
+          path="/"
+          element={<p>Página de inicio</p>}
+        />
+
+        <Route
+          path="/admin/ordenes"
+          element={<p>Panel de administración</p>}
+        />
       </Routes>
     </MemoryRouter>
   )
+
   return onIniciarSesion
 }
 
 function escribir(etiqueta, valor) {
-  fireEvent.change(screen.getByLabelText(etiqueta), { target: { value: valor } })
+  fireEvent.change(screen.getByLabelText(etiqueta), {
+    target: { value: valor },
+  })
+}
+
+function enviarFormulario() {
+  fireEvent.click(
+    screen.getByRole('button', {
+      name: /^iniciar sesión$/i,
+    })
+  )
 }
 
 describe('Login', () => {
   beforeEach(() => {
-    // Mock: localStorage devuelve usuarios de prueba en vez de los reales.
-    spyOn(Storage.prototype, 'getItem').and.callFake(clave =>
-      clave === 'usuarios' ? JSON.stringify(usuarios) : null
+    spyOn(Storage.prototype, 'getItem').and.callFake(
+      clave =>
+        clave === 'usuarios'
+          ? JSON.stringify(usuarios)
+          : null
     )
   })
 
@@ -37,41 +83,80 @@ describe('Login', () => {
 
   it('no muestra mensajes de error al abrir la página', () => {
     dibujarLogin()
+
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('actualiza el estado del campo correo al escribir', () => {
     dibujarLogin()
-    escribir('Correo electrónico', 'ana@duoc.cl')
-    expect(screen.getByLabelText('Correo electrónico').value).toBe('ana@duoc.cl')
+
+    escribir(/^correo electrónico/i, 'ana@duoc.cl')
+
+    expect(
+      screen.getByLabelText(/^correo electrónico/i).value
+    ).toBe('ana@duoc.cl')
   })
 
   it('muestra un error si la contraseña es incorrecta', () => {
     const onIniciarSesion = dibujarLogin()
-    escribir('Correo electrónico', 'cliente@gmail.com')
-    escribir('Contraseña', 'otra123')
-    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
-    expect(screen.getByRole('alert').textContent).toContain('Correo o contraseña incorrectos')
+    escribir(/^correo electrónico/i, 'cliente@gmail.com')
+    escribir(/^contraseña/i, 'otra123')
+
+    enviarFormulario()
+
+    expect(screen.getByRole('alert').textContent).toContain(
+      'Correo o contraseña incorrectos'
+    )
+
     expect(onIniciarSesion).not.toHaveBeenCalled()
+
+    expect(
+      screen.queryByText('Página de inicio')
+    ).toBeNull()
   })
 
   it('envía al Cliente a la tienda al iniciar sesión', () => {
     const onIniciarSesion = dibujarLogin()
-    escribir('Correo electrónico', 'cliente@gmail.com')
-    escribir('Contraseña', 'cliente1')
-    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
 
-    expect(onIniciarSesion).toHaveBeenCalledWith(jasmine.objectContaining({ nombre: 'Camila' }))
-    expect(screen.getByText('Página de inicio')).toBeTruthy()
+    escribir(/^correo electrónico/i, 'cliente@gmail.com')
+    escribir(/^contraseña/i, 'cliente1')
+
+    enviarFormulario()
+
+    expect(onIniciarSesion).toHaveBeenCalledTimes(1)
+
+    expect(onIniciarSesion).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        nombre: 'Camila',
+        correo: 'cliente@gmail.com',
+      })
+    )
+
+    expect(
+      screen.getByText('Página de inicio')
+    ).toBeTruthy()
   })
 
   it('envía al Administrador al panel al iniciar sesión', () => {
-    dibujarLogin()
-    escribir('Correo electrónico', 'admin@duoc.cl')
-    escribir('Contraseña', 'admin123')
-    fireEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }))
+    const onIniciarSesion = dibujarLogin()
 
-    expect(screen.getByText('Panel de administración')).toBeTruthy()
+    escribir(/^correo electrónico/i, 'admin@duoc.cl')
+    escribir(/^contraseña/i, 'admin123')
+
+    enviarFormulario()
+
+    expect(onIniciarSesion).toHaveBeenCalledTimes(1)
+
+    expect(onIniciarSesion).toHaveBeenCalledWith(
+      jasmine.objectContaining({
+        nombre: 'Ana',
+        tipo: 'Administrador',
+      })
+    )
+
+    expect(
+      screen.getByText('Panel de administración')
+    ).toBeTruthy()
   })
 })
