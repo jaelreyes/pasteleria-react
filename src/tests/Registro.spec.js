@@ -1,4 +1,5 @@
-// Pruebas del registro: validaciones, beneficios y cuentas demo.
+// Pruebas del registro: validaciones del formulario y envío al backend.
+// La API se simula con spyOn sobre api.post (no se llama al servidor real).
 import {
   render,
   screen,
@@ -7,6 +8,24 @@ import {
 } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Registro from '../pages/Registro'
+import api from '../services/api'
+
+// Respuesta del backend en POST /auth/registro (201 con el usuario creado).
+function respuestaRegistro(usuario) {
+  return Promise.resolve({
+    data: { nombre: 'Ana', rol: 'cliente', beneficios: [], ...usuario },
+  })
+}
+
+// Error HTTP como lo entrega axios.
+function errorHttp(status, mensaje) {
+  return Promise.reject({ response: { status, data: { mensaje } } })
+}
+
+// Datos que el formulario envió al backend en la última llamada.
+function datosEnviados() {
+  return api.post.calls.mostRecent().args[1]
+}
 
 function dibujarRegistro() {
   render(
@@ -59,6 +78,9 @@ describe('Registro', () => {
         almacenamiento[clave] = String(valor)
       }
     )
+
+    // Por defecto el backend crea la cuenta; algunas pruebas cambian la respuesta.
+    spyOn(api, 'post').and.returnValue(respuestaRegistro())
   })
 
   afterEach(cleanup)
@@ -113,7 +135,7 @@ describe('Registro', () => {
       )
     ).toBeTruthy()
 
-    expect(localStorage.setItem).not.toHaveBeenCalled()
+    expect(api.post).not.toHaveBeenCalled()
   })
 
   it('rechaza contraseñas que no coinciden', () => {
@@ -127,131 +149,124 @@ describe('Registro', () => {
       screen.getByText('Las contraseñas deben coincidir.')
     ).toBeTruthy()
 
-    expect(localStorage.setItem).not.toHaveBeenCalled()
+    expect(api.post).not.toHaveBeenCalled()
   })
 
-  it('guarda una cuenta válida sin guardar la confirmación', () => {
+  it('envía una cuenta válida al backend sin la confirmación', async () => {
     dibujarRegistro()
     completarFormulario()
 
     crearCuenta()
 
-    const usuarios = JSON.parse(almacenamiento.usuarios)
+    expect(
+      await screen.findByText('¡Cuenta creada correctamente!')
+    ).toBeTruthy()
 
-    // 3 cuentas demo + la cuenta nueva, que queda al final.
-    expect(usuarios.length).toBe(4)
-    expect(usuarios.at(-1)).toEqual(
+    expect(api.post).toHaveBeenCalledTimes(1)
+    expect(api.post.calls.mostRecent().args[0]).toBe('/auth/registro')
+
+    expect(datosEnviados()).toEqual(
       jasmine.objectContaining({
         run: '190110222',
         nombre: 'Ana',
         correo: 'ana@gmail.com',
-        tipo: 'Cliente',
+        password: 'clave123',
         region: 'Valparaíso',
         comuna: 'Viña del Mar',
       })
     )
 
-    expect(usuarios.at(-1).confirmPassword).toBeUndefined()
-
-    expect(
-      screen.getByText('¡Cuenta creada correctamente!')
-    ).toBeTruthy()
+    expect(datosEnviados().confirmPassword).toBeUndefined()
   })
 
-  it('rechaza un correo ya registrado sin modificar las cuentas', () => {
-    almacenamiento.usuarios = JSON.stringify([
-      {
-        run: '123456785',
-        correo: 'ANA@gmail.com',
-        nombre: 'Otra persona',
-      },
-    ])
-
-    const guardadoAnterior = almacenamiento.usuarios
+  it('muestra el error del backend si el correo ya existe', async () => {
+    api.post.and.returnValue(
+      errorHttp(409, 'Ya existe una cuenta con ese correo.')
+    )
 
     dibujarRegistro()
     completarFormulario()
     crearCuenta()
 
     expect(
-      screen.getByText('Ya existe una cuenta con este correo.')
+      await screen.findByText('Ya existe una cuenta con ese correo.')
     ).toBeTruthy()
 
-    expect(localStorage.setItem).not.toHaveBeenCalled()
-    expect(almacenamiento.usuarios).toBe(guardadoAnterior)
+    expect(
+      screen.queryByText('¡Cuenta creada correctamente!')
+    ).toBeNull()
   })
 
-  it('rechaza un RUN ya registrado aunque tenga otro formato', () => {
-    almacenamiento.usuarios = JSON.stringify([
-      {
-        run: '19.011.022-2',
-        correo: 'otra@gmail.com',
-        nombre: 'Otra persona',
-      },
-    ])
+  it('muestra el error del backend si el RUN ya existe', async () => {
+    api.post.and.returnValue(
+      errorHttp(409, 'Ya existe una cuenta con ese RUN.')
+    )
 
     dibujarRegistro()
     completarFormulario()
     crearCuenta()
 
     expect(
-      screen.getByText('Ya existe una cuenta con este RUN.')
+      await screen.findByText('Ya existe una cuenta con ese RUN.')
     ).toBeTruthy()
-
-    expect(localStorage.setItem).not.toHaveBeenCalled()
   })
 
-  it('guarda el beneficio del 50% para una persona mayor de 50 años', () => {
+  it('envía la fecha de nacimiento y muestra los beneficios que calcula el backend', async () => {
+    api.post.and.returnValue(
+      respuestaRegistro({
+        beneficios: ['50% de descuento de por vida por edad.'],
+      })
+    )
+
     dibujarRegistro()
     completarFormulario()
     escribir(/^Fecha de nacimiento/, '1970-01-01')
 
     crearCuenta()
 
-    const usuario = JSON.parse(almacenamiento.usuarios).at(-1)
+    expect(
+      await screen.findByText('¡Cuenta creada correctamente!')
+    ).toBeTruthy()
 
-    expect(usuario.descuentoEdad).toBe(50)
-    expect(usuario.beneficios).toContain(
-      '50% de descuento de por vida por edad.'
-    )
+    expect(datosEnviados().fechaNacimiento).toBe('1970-01-01')
+    expect(
+      screen.getByText('50% de descuento de por vida por edad.')
+    ).toBeTruthy()
   })
 
-  it('guarda el beneficio del código FELICES50', () => {
+  it('envía el código FELICES50 en mayúsculas', async () => {
     dibujarRegistro()
     completarFormulario()
     escribir(/^Código promocional/, 'felices50')
 
     crearCuenta()
 
-    const usuario = JSON.parse(almacenamiento.usuarios).at(-1)
+    await screen.findByText('¡Cuenta creada correctamente!')
 
-    expect(usuario.codigoPromocional).toBe('FELICES50')
-    expect(usuario.descuentoCodigo).toBe(10)
+    expect(datosEnviados().codigoPromocional).toBe('FELICES50')
   })
 
-  it('guarda el beneficio de cumpleaños para un correo Duoc', () => {
+  it('muestra la vista previa del beneficio de cumpleaños para un correo Duoc', () => {
     dibujarRegistro()
     completarFormulario()
     escribir(/^Correo electrónico/, 'ana@duoc.cl')
 
-    crearCuenta()
-
-    const usuario = JSON.parse(almacenamiento.usuarios).at(-1)
-
-    expect(usuario.tortaGratisDuoc).toBe(true)
+    expect(
+      screen.getByText(
+        'Torta gratis en tu cumpleaños por ser de la comunidad Duoc.'
+      )
+    ).toBeTruthy()
   })
 
-  it('muestra un error si el navegador no permite guardar', () => {
-    localStorage.setItem.and.throwError('Almacenamiento bloqueado')
+  it('avisa si no se puede conectar con el servidor', async () => {
+    api.post.and.returnValue(Promise.reject({}))
 
     dibujarRegistro()
     completarFormulario()
     crearCuenta()
 
     expect(
-      screen.getByText(
-        'No se pudo guardar la cuenta en este navegador.'
-      )
+      await screen.findByText('No se pudo conectar con el servidor.')
     ).toBeTruthy()
 
     expect(

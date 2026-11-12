@@ -10,7 +10,8 @@ import {
   validarTelefono,
   calcularEdad,
 } from "../utils/validaciones";
-import { obtenerUsuarios } from "../data/db";
+import { registrar } from "../services/authService";
+import { mensajeError } from "../services/api";
 import "../styles/Auth.css";
 
 // Campos vacíos del formulario de registro.
@@ -29,7 +30,7 @@ const datosIniciales = {
   codigoPromocional: "",
 };
 
-// Registro de clientes (/registro): valida datos, calcula beneficios y guarda la cuenta.
+// Registro de clientes (/registro): valida datos y crea la cuenta en el backend.
 function Registro() {
   const [datos, setDatos] = useState({ ...datosIniciales });
   const [errores, setErrores] = useState({});
@@ -56,7 +57,8 @@ function Registro() {
     }));
   }
 
-  // Beneficios: 50% si tiene 50+ años, 10% con FELICES50 y torta gratis si es de Duoc.
+  // Vista previa de beneficios mientras se llena el formulario
+  // (el cálculo oficial lo hace el backend al crear la cuenta).
   function obtenerBeneficios() {
     const correo = datos.correo.trim().toLowerCase();
     const codigo = datos.codigoPromocional.trim().toUpperCase();
@@ -205,8 +207,9 @@ function Registro() {
       ?.focus();
   }
 
-  // Al enviar: valida, revisa correo y RUN repetidos y guarda el usuario.
-  function crearCuenta(evento) {
+  // Al enviar: valida el formulario y crea la cuenta en el backend.
+  // El backend revisa correo/RUN repetidos, encripta la contraseña y calcula los beneficios.
+  async function crearCuenta(evento) {
     evento.preventDefault();
 
     const nuevosErrores = validarFormulario();
@@ -217,76 +220,26 @@ function Registro() {
     }
 
     try {
-      // obtenerUsuarios() crea las cuentas demo si todavía no existen.
-      const usuarios = obtenerUsuarios();
-
-      if (!Array.isArray(usuarios)) {
-        throw new Error("Datos de usuarios inválidos");
-      }
-
-      const correo = datos.correo.trim().toLowerCase();
-      const run = normalizarRun(datos.run);
-
-      // No se permiten dos cuentas con el mismo correo o RUN.
-      const correoRepetido = usuarios.some(
-        (usuario) =>
-          String(usuario.email || usuario.correo || "")
-            .trim()
-            .toLowerCase() === correo
-      );
-
-      const runRepetido = usuarios.some(
-        (usuario) =>
-          normalizarRun(String(usuario.run || "")) === run
-      );
-
-      if (correoRepetido) {
-        nuevosErrores.correo =
-          "Ya existe una cuenta con este correo.";
-      }
-
-      if (runRepetido) {
-        nuevosErrores.run =
-          "Ya existe una cuenta con este RUN.";
-      }
-
-      if (Object.keys(nuevosErrores).length > 0) {
-        mostrarErrores(nuevosErrores);
-        return;
-      }
-
-      // Nueva cuenta: siempre se registra con rol cliente.
-      const usuario = {
-        run,
+      const usuario = await registrar({
+        run: normalizarRun(datos.run),
         nombre: datos.nombre.trim(),
         apellidos: datos.apellidos.trim(),
-        correo,
+        correo: datos.correo.trim().toLowerCase(),
         password: datos.password,
         fechaNacimiento: datos.fechaNacimiento || null,
         region: datos.region,
         comuna: datos.comuna,
         direccion: datos.direccion.trim(),
-        telefono: datos.telefono.trim() || null,
-        codigoPromocional:
-          datos.codigoPromocional.trim().toUpperCase(),
-        ...obtenerBeneficios(),
-        rol: "cliente",
-        tipo: "Cliente",
-        fechaRegistro: new Date().toISOString(),
-      };
-
-      localStorage.setItem(
-        "usuarios",
-        JSON.stringify([...usuarios, usuario])
-      );
+        // Sin espacios para no superar los 15 caracteres del backend.
+        telefono: datos.telefono.replace(/\s/g, "") || null,
+        codigoPromocional: datos.codigoPromocional.trim().toUpperCase(),
+      });
 
       setUsuarioCreado(usuario);
       setErrores({});
       setDatos({ ...datosIniciales });
-    } catch {
-      setErrores({
-        general: "No se pudo guardar la cuenta en este navegador.",
-      });
+    } catch (err) {
+      setErrores({ general: mensajeError(err, "No se pudo crear la cuenta.") });
     }
   }
 

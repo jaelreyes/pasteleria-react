@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { obtenerUsuarioActivo } from "../../data/db";
 import {
-  obtenerUsuarios,
-  obtenerUsuarioActivo,
+  listarUsuarios,
+  actualizarUsuario,
   eliminarUsuario,
-} from "../../data/db";
+} from "../../services/usuarioService";
+import { mensajeError } from "../../services/api";
 import regionesComunas from "../../data/regiones-comunas";
 import {
   normalizarRun,
@@ -57,7 +59,7 @@ function esCuentaDemo(usuario) {
 
 // Usuarios del panel (solo Administrador): buscar, filtrar, ver, editar, eliminar e historial.
 export function UsersAdmin() {
-  const [usuarios, setUsuarios] = useState(() => obtenerUsuarios());
+  const [usuarios, setUsuarios] = useState([]);
   const [busqueda, setBusqueda] = useState("");
   const [filtroRol, setFiltroRol] = useState("");
   const [criterioOrden, setCriterioOrden] = useState({
@@ -71,6 +73,15 @@ export function UsersAdmin() {
   const [error, setError] = useState("");
   const [errorModal, setErrorModal] = useState("");
   const [mensaje, setMensaje] = useState("");
+  
+  // Carga la lista de usuarios desde el backend al abrir la página.
+  useEffect(() => {
+    listarUsuarios()
+      .then(setUsuarios)
+      .catch((err) =>
+        setError(mensajeError(err, "No se pudieron cargar los usuarios.")),
+      );
+  }, []);
 
   const regionSeleccionada = regionesComunas.find(
     (item) => item.region === form.region,
@@ -112,7 +123,7 @@ export function UsersAdmin() {
   }
 
   // Valida y guarda los cambios del usuario editado.
-  function guardarCambios(evento) {
+  async function guardarCambios(evento) {
     evento.preventDefault();
 
     if (!usuarioEditando) return;
@@ -200,115 +211,39 @@ export function UsersAdmin() {
       return;
     }
 
-    try {
-      // Relee los usuarios para no pisar cambios recientes.
-      const actuales = obtenerUsuarios();
-      const indice = actuales.findIndex(
-        (usuario) => correoUsuario(usuario) === correoOriginal,
-      );
-
-      if (indice === -1) {
-        setErrorModal("El usuario ya no existe. Cierra y actualiza la página.");
-        return;
-      }
-
-      const correoRepetido = actuales.some(
-        (usuario, posicion) =>
-          posicion !== indice && correoUsuario(usuario) === correo,
-      );
-
-      const runRepetido =
-        run &&
-        actuales.some(
-          (usuario, posicion) =>
-            posicion !== indice &&
-            normalizarRun(String(usuario.run || "")) === run,
-        );
-
-      if (correoRepetido) {
-        setErrorModal("Ya existe una cuenta con ese correo.");
-        return;
-      }
-
-      if (runRepetido) {
-        setErrorModal("Ya existe una cuenta con ese RUN.");
-        return;
-      }
-
-      const edad = form.fechaNacimiento
-        ? calcularEdad(form.fechaNacimiento)
-        : null;
-
-      // Recalcula los beneficios con los datos nuevos.
-      const descuentoEdad = edad !== null && edad >= 50 && edad <= 120 ? 50 : 0;
-
-      const codigo = String(actuales[indice].codigoPromocional || "")
-        .trim()
-        .toUpperCase();
-
-      const descuentoCodigo = codigo === "FELICES50" ? 10 : 0;
-
-      const tortaGratisDuoc = [
-        "duoc.cl",
-        "profesor.duoc.cl",
-        "duocuc.cl",
-      ].includes(correo.split("@")[1]);
-
-      const beneficios = [];
-
-      if (descuentoEdad) {
-        beneficios.push("50% de descuento de por vida por edad.");
-      }
-
-      if (descuentoCodigo) {
-        beneficios.push("10% de descuento de por vida por FELICES50.");
-      }
-
-      if (tortaGratisDuoc) {
-        beneficios.push(
-          "Torta gratis en tu cumpleaños por ser de la comunidad Duoc.",
-        );
-      }
-
-      const actualizado = {
-        ...actuales[indice],
-        run,
+        try {
+      // El backend valida correo/RUN repetidos, recalcula beneficios y guarda en MySQL.
+      const actualizado = await actualizarUsuario(usuarioEditando.id, {
+        run: run || null,
         nombre,
         apellidos,
         correo,
-        email: correo,
         fechaNacimiento: form.fechaNacimiento || null,
-        telefono: form.telefono.trim() || null,
+        telefono: form.telefono.replace(/\s/g, "") || null,
         region: form.region,
         comuna: form.comuna,
         direccion: form.direccion.trim(),
+        codigoPromocional: usuarioEditando.codigoPromocional || "",
         rol: form.rol,
-        tipo: ROLES[form.rol],
-        descuentoEdad,
-        descuentoCodigo,
-        tortaGratisDuoc,
-        beneficios,
-      };
+      });
 
-      // Reemplaza solo el usuario editado y guarda.
-      const lista = actuales.map((usuario, posicion) =>
-        posicion === indice ? actualizado : usuario,
+      // Reemplaza solo el usuario editado en la tabla.
+      setUsuarios((lista) =>
+        lista.map((u) => (u.id === actualizado.id ? actualizado : u)),
       );
-
-      localStorage.setItem("usuarios", JSON.stringify(lista));
-      setUsuarios(lista);
       setUsuarioEditando(null);
       setError("");
       setMensaje(
         "Usuario actualizado correctamente. Si tenía una sesión abierta, debe volver a iniciar sesión para actualizar sus datos y beneficios.",
       );
-    } catch {
-      setErrorModal("No se pudieron guardar los cambios en este navegador.");
+    } catch (err) {
+      setErrorModal(mensajeError(err, "No se pudieron guardar los cambios."));
     }
   }
 
+
   // Elimina un usuario (no deja borrar cuentas demo ni la propia).
-  function handleEliminar(usuario) {
+  async function handleEliminar(usuario) {
     setError("");
     setMensaje("");
 
@@ -324,26 +259,16 @@ export function UsersAdmin() {
       return;
     }
 
-    try {
-      const correo = usuario.email || usuario.correo;
-
-      eliminarUsuario(correo);
-
-      const actuales = obtenerUsuarios();
-
-      if (
-        actuales.some((item) => correoUsuario(item) === correoUsuario(usuario))
-      ) {
-        setError("No se pudo eliminar el usuario.");
-        return;
-      }
-
-      setUsuarios(actuales);
+        try {
+      // DELETE /api/v1/usuarios/{id} (solo Administrador).
+      await eliminarUsuario(usuario.id);
+      setUsuarios((lista) => lista.filter((u) => u.id !== usuario.id));
       setMensaje("Usuario eliminado correctamente.");
-    } catch {
-      setError("Ocurrió un error al eliminar el usuario.");
+    } catch (err) {
+      setError(mensajeError(err, "Ocurrió un error al eliminar el usuario."));
     }
   }
+
 
   // Ordena la tabla por la columna elegida.
   function ordenarPor(campo) {

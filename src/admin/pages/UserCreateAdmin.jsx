@@ -9,7 +9,8 @@ import {
   Button,
   Alert,
 } from "react-bootstrap";
-import { obtenerUsuarios } from "../../data/db";
+import { crearUsuario as crearUsuarioApi } from "../../services/usuarioService";
+import { mensajeError } from "../../services/api";
 import regionesComunas from "../../data/regiones-comunas";
 import {
   normalizarRun,
@@ -139,7 +140,7 @@ export default function UserCreateAdmin() {
   }
 
   // Valida los datos, revisa correo y RUN repetidos y guarda el usuario.
-  function crearUsuario(evento) {
+ async function crearUsuario(evento) {
     evento.preventDefault();
 
     if (creado) return;
@@ -181,11 +182,9 @@ export default function UserCreateAdmin() {
       return;
     }
 
-    let edad = null;
-
-    if (datos.fechaNacimiento) {
+          if (datos.fechaNacimiento) {
       const fecha = new Date(`${datos.fechaNacimiento}T00:00:00`);
-      edad = calcularEdad(datos.fechaNacimiento);
+      const edad = calcularEdad(datos.fechaNacimiento);
 
       if (
         Number.isNaN(fecha.getTime()) ||
@@ -228,94 +227,30 @@ export default function UserCreateAdmin() {
       return;
     }
 
-    try {
-      const usuarios = obtenerUsuarios();
-
-      // No se permiten correos ni RUN repetidos.
-      const correoRepetido = usuarios.some(
-        (usuario) =>
-          String(usuario.email || usuario.correo || "")
-            .trim()
-            .toLowerCase() === correo
-      );
-
-      const runRepetido = usuarios.some(
-        (usuario) =>
-          normalizarRun(String(usuario.run || "")) === run
-      );
-
-      if (correoRepetido) {
-        setError("Ya existe una cuenta con este correo.");
-        return;
-      }
-
-      if (runRepetido) {
-        setError("Ya existe una cuenta con este RUN.");
-        return;
-      }
-
-      // Beneficios: mismas reglas que en el Registro.
-      const descuentoEdad =
-        edad !== null && edad >= 50 && edad <= 120 ? 50 : 0;
-
-      const descuentoCodigo = codigo === "FELICES50" ? 10 : 0;
-
-      const tortaGratisDuoc = [
-        "duoc.cl",
-        "profesor.duoc.cl",
-        "duocuc.cl",
-      ].includes(correo.split("@")[1]);
-
-      const beneficios = [];
-
-      if (descuentoEdad) {
-        beneficios.push("50% de descuento de por vida por edad.");
-      }
-
-      if (descuentoCodigo) {
-        beneficios.push("10% de descuento de por vida por FELICES50.");
-      }
-
-      if (tortaGratisDuoc) {
-        beneficios.push(
-          "Torta gratis en tu cumpleaños por ser de la comunidad Duoc."
-        );
-      }
-
-      // Usuario nuevo con el rol elegido por el administrador.
-      const usuario = {
+        try {
+      // El backend valida correo/RUN repetidos, encripta la contraseña y calcula beneficios.
+      await crearUsuarioApi({
         run,
         nombre,
         apellidos,
         correo,
-        email: correo,
+        password: datos.password,
         fechaNacimiento: datos.fechaNacimiento || null,
-        telefono: datos.telefono.trim() || null,
+        telefono: datos.telefono.replace(/\s/g, "") || null,
         region: datos.region,
         comuna: datos.comuna,
         direccion,
-        password: datos.password,
         codigoPromocional: codigo,
-        descuentoEdad,
-        descuentoCodigo,
-        tortaGratisDuoc,
-        beneficios,
         rol: datos.rol,
-        tipo: ROLES[datos.rol],
-        fechaRegistro: new Date().toISOString(),
-      };
-
-      localStorage.setItem(
-        "usuarios",
-        JSON.stringify([...usuarios, usuario])
-      );
+      });
 
       setCreado(true);
       setDatos({ ...datosIniciales });
-    } catch {
-      setError("No se pudo guardar el usuario en este navegador.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudo crear el usuario."));
     }
   }
+
 
   return (
     <Container className="my-4" style={{ maxWidth: "900px" }}>

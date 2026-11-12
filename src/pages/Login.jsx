@@ -1,7 +1,8 @@
 import { useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Form, Alert } from "react-bootstrap";
-import { obtenerUsuarios } from "../data/db";
+import { login } from "../services/authService";
+import { mensajeError } from "../services/api";
 import "../styles/Auth.css";
 import { validarCorreo } from "../utils/validaciones";
 
@@ -11,12 +12,13 @@ export default function Login({ onIniciarSesion }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [errores, setErrores] = useState({});
+  const [cargando, setCargando] = useState(false);
 
   const formularioRef = useRef(null);
   const navigate = useNavigate();
 
   // Se ejecuta al enviar el formulario.
-  function handleSubmit(evento) {
+  async function handleSubmit(evento) {
     evento.preventDefault();
     setError("");
 
@@ -45,38 +47,24 @@ export default function Login({ onIniciarSesion }) {
     }
 
     try {
-      // 2) Busca un usuario con ese correo y contraseña en db.js.
-      const usuarios = obtenerUsuarios();
+      setCargando(true);
 
-      const usuarioEncontrado = usuarios.find((usuario) => {
-        const correoUsuario = String(usuario.email || usuario.correo || "")
-          .trim()
-          .toLowerCase();
-
-        return (
-          correoUsuario === correoNormalizado && usuario.password === password
-        );
-      });
-
-      if (!usuarioEncontrado) {
-        setError("Correo o contraseña incorrectos.");
-        return;
-      }
+      // 2) Envía correo y contraseña al backend. Si son correctos,
+      //    devuelve el token JWT y los datos del usuario (authService los guarda).
+      const usuarioEncontrado = await login(correoNormalizado, password);
 
       // 3) Guarda la sesión (función de App) y redirige: panel o tienda.
       onIniciarSesion(usuarioEncontrado);
 
-      const rol = String(usuarioEncontrado.rol || usuarioEncontrado.tipo || "")
-        .trim()
-        .toLowerCase();
+      const rol = String(usuarioEncontrado.rol || "").trim().toLowerCase();
+      const tienePanel = ["admin", "vendedor"].includes(rol);
 
-      const tienePanel = ["admin", "administrador", "vendedor"].includes(rol);
-
-      navigate(tienePanel ? "/admin/ordenes" : "/", {
-        replace: true,
-      });
-    } catch {
-      setError("No se pudo iniciar sesión. Inténtalo nuevamente.");
+      navigate(tienePanel ? "/admin/ordenes" : "/", { replace: true });
+    } catch (err) {
+      // Muestra el mensaje que envía el backend (ej: "Correo o contraseña incorrectos.").
+      setError(mensajeError(err, "No se pudo iniciar sesión. Inténtalo nuevamente."));
+    } finally {
+      setCargando(false);
     }
   }
 
@@ -174,8 +162,8 @@ export default function Login({ onIniciarSesion }) {
               </Form.Control.Feedback>
             </Form.Group>
 
-            <button type="submit" className="login-boton">
-              Iniciar Sesión
+            <button type="submit" className="login-boton" disabled={cargando}>
+              {cargando ? "Ingresando..." : "Iniciar Sesión"}
             </button>
           </Form>
 
