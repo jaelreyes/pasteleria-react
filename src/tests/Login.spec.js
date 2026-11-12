@@ -1,3 +1,4 @@
+// Pruebas del login conectado al backend: la API se simula con spyOn sobre api.post.
 import {
   render,
   screen,
@@ -10,21 +11,24 @@ import {
   Route,
 } from 'react-router-dom'
 import Login from '../pages/Login'
+import api from '../services/api'
 
-const usuarios = [
-  {
-    correo: 'admin@duoc.cl',
-    password: 'admin123',
-    nombre: 'Ana',
-    tipo: 'Administrador',
-  },
-  {
-    correo: 'cliente@gmail.com',
-    password: 'cliente1',
-    nombre: 'Camila',
-    tipo: 'Cliente',
-  },
-]
+// Respuesta que devuelve el backend en POST /auth/login.
+function respuestaLogin(usuario) {
+  return Promise.resolve({
+    data: {
+      token: 'token-de-prueba',
+      refreshToken: 'refresh-de-prueba',
+      tipoToken: 'Bearer',
+      usuario,
+    },
+  })
+}
+
+// Error HTTP como lo entrega axios.
+function errorHttp(status, mensaje) {
+  return Promise.reject({ response: { status, data: { mensaje } } })
+}
 
 function dibujarLogin(
   onIniciarSesion = jasmine.createSpy('onIniciarSesion')
@@ -70,13 +74,23 @@ function enviarFormulario() {
 }
 
 describe('Login', () => {
+  let almacenamiento
+
   beforeEach(() => {
-    spyOn(Storage.prototype, 'getItem').and.callFake(
-      clave =>
-        clave === 'usuarios'
-          ? JSON.stringify(usuarios)
-          : null
+    almacenamiento = {}
+
+    // localStorage simulado: no se tocan datos reales del navegador.
+    spyOn(Storage.prototype, 'getItem').and.callFake(clave =>
+      Object.prototype.hasOwnProperty.call(almacenamiento, clave)
+        ? almacenamiento[clave]
+        : null
     )
+    spyOn(Storage.prototype, 'setItem').and.callFake((clave, valor) => {
+      almacenamiento[clave] = String(valor)
+    })
+
+    // Por defecto el backend no responde; cada prueba define su respuesta.
+    spyOn(api, 'post').and.callFake(() => Promise.reject({}))
   })
 
   afterEach(cleanup)
@@ -97,7 +111,21 @@ describe('Login', () => {
     ).toBe('ana@duoc.cl')
   })
 
-  it('muestra un error si la contraseña es incorrecta', () => {
+  it('no llama al backend si el formulario es inválido', () => {
+    dibujarLogin()
+
+    escribir(/^correo electrónico/i, 'correo-malo')
+    escribir(/^contraseña/i, '12')
+
+    enviarFormulario()
+
+    expect(api.post).not.toHaveBeenCalled()
+  })
+
+  it('muestra el error del backend si la contraseña es incorrecta', async () => {
+    api.post.and.returnValue(
+      errorHttp(401, 'Correo o contraseña incorrectos.')
+    )
     const onIniciarSesion = dibujarLogin()
 
     escribir(/^correo electrónico/i, 'cliente@gmail.com')
@@ -105,18 +133,35 @@ describe('Login', () => {
 
     enviarFormulario()
 
-    expect(screen.getByRole('alert').textContent).toContain(
-      'Correo o contraseña incorrectos'
-    )
+    const alerta = await screen.findByRole('alert')
 
+    expect(alerta.textContent).toContain('Correo o contraseña incorrectos')
     expect(onIniciarSesion).not.toHaveBeenCalled()
-
-    expect(
-      screen.queryByText('Página de inicio')
-    ).toBeNull()
+    expect(screen.queryByText('Página de inicio')).toBeNull()
   })
 
-  it('envía al Cliente a la tienda al iniciar sesión', () => {
+  it('avisa si no se puede conectar con el servidor', async () => {
+    dibujarLogin()
+
+    escribir(/^correo electrónico/i, 'cliente@gmail.com')
+    escribir(/^contraseña/i, 'cliente1')
+
+    enviarFormulario()
+
+    const alerta = await screen.findByRole('alert')
+
+    expect(alerta.textContent).toContain('No se pudo conectar con el servidor')
+  })
+
+  it('envía al Cliente a la tienda y guarda el token', async () => {
+    api.post.and.returnValue(
+      respuestaLogin({
+        nombre: 'Camila',
+        correo: 'cliente@gmail.com',
+        rol: 'cliente',
+        tipo: 'Cliente',
+      })
+    )
     const onIniciarSesion = dibujarLogin()
 
     escribir(/^correo electrónico/i, 'cliente@gmail.com')
@@ -124,8 +169,14 @@ describe('Login', () => {
 
     enviarFormulario()
 
-    expect(onIniciarSesion).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('Página de inicio')).toBeTruthy()
 
+    expect(api.post).toHaveBeenCalledWith('/auth/login', {
+      correo: 'cliente@gmail.com',
+      password: 'cliente1',
+    })
+
+    expect(onIniciarSesion).toHaveBeenCalledTimes(1)
     expect(onIniciarSesion).toHaveBeenCalledWith(
       jasmine.objectContaining({
         nombre: 'Camila',
@@ -133,12 +184,20 @@ describe('Login', () => {
       })
     )
 
-    expect(
-      screen.getByText('Página de inicio')
-    ).toBeTruthy()
+    // La sesión queda guardada para sobrevivir a una recarga.
+    expect(almacenamiento.token).toBe('token-de-prueba')
+    expect(almacenamiento.refreshToken).toBe('refresh-de-prueba')
   })
 
-  it('envía al Administrador al panel al iniciar sesión', () => {
+  it('envía al Administrador al panel al iniciar sesión', async () => {
+    api.post.and.returnValue(
+      respuestaLogin({
+        nombre: 'Ana',
+        correo: 'admin@duoc.cl',
+        rol: 'admin',
+        tipo: 'Administrador',
+      })
+    )
     const onIniciarSesion = dibujarLogin()
 
     escribir(/^correo electrónico/i, 'admin@duoc.cl')
@@ -146,17 +205,14 @@ describe('Login', () => {
 
     enviarFormulario()
 
-    expect(onIniciarSesion).toHaveBeenCalledTimes(1)
+    expect(await screen.findByText('Panel de administración')).toBeTruthy()
 
+    expect(onIniciarSesion).toHaveBeenCalledTimes(1)
     expect(onIniciarSesion).toHaveBeenCalledWith(
       jasmine.objectContaining({
         nombre: 'Ana',
         tipo: 'Administrador',
       })
     )
-
-    expect(
-      screen.getByText('Panel de administración')
-    ).toBeTruthy()
   })
 })
