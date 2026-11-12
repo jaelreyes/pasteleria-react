@@ -22,6 +22,7 @@ import CategoriasAdmin from "./pages/CategoriasAdmin";
 import ReportesAdmin from "./pages/ReportesAdmin";
 import BoletaAdmin from "./pages/BoletaAdmin";
 import HistorialUsuario from "./pages/HistorialUsuario";
+import { limpiarSesion } from "../services/sesion";
 import "../styles/Admin.css";
 
 // Panel de administración: protege el acceso por rol, dibuja el menú lateral y define las rutas /admin/*.
@@ -52,9 +53,9 @@ export function AdminRoutes() {
     setMenuAbierto(false);
   }
 
-  // Borra la sesión y recarga en /login.
+    // Borra la sesión (token, refreshToken y usuarioActivo) y recarga en /login.
   function cerrarSesion() {
-    localStorage.removeItem("usuarioActivo");
+    limpiarSesion();
     window.location.assign("/login");
   }
 

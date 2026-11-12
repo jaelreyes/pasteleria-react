@@ -8,6 +8,8 @@ import {
   useLocation,
 } from "react-router-dom";
 import { Toast, ToastContainer } from "react-bootstrap";
+import { haySesionValida, limpiarSesion, obtenerToken } from "./services/sesion";
+import { obtenerPerfil } from "./services/authService";
 
 import ProductList from "./components/ProductList";
 import Cart from "./components/Cart";
@@ -171,8 +173,14 @@ function App() {
   // Catálogo leído desde db.js (localStorage).
   const [productos, setProductos] = useState(() => obtenerProductos());
 
-  // Sesión actual; null si nadie inició sesión.
+    // Sesión actual; null si nadie inició sesión.
+  // Al recargar la página: si el refresh token sigue vigente se recupera la sesión;
+  // si venció (o no hay token), se borra todo y el usuario queda como invitado.
   const [usuarioActivo, setUsuarioActivo] = useState(() => {
+    if (!haySesionValida()) {
+      limpiarSesion();
+      return null;
+    }
     try {
       return JSON.parse(
         localStorage.getItem("usuarioActivo") || "null"
@@ -430,12 +438,24 @@ function App() {
     setEstadoCarrito(leerCarrito(productos, sesion));
   }
 
-  // Borra la sesión y vuelve al carrito de invitado.
+    // Borra la sesión (token, refreshToken y usuarioActivo) y vuelve al carrito de invitado.
   function cerrarSesion() {
-    localStorage.removeItem("usuarioActivo");
+    limpiarSesion();
     setUsuarioActivo(null);
     setEstadoCarrito(leerCarrito(productos, null));
   }
+
+  // Al abrir la app (o recargar la página) se confirma con el backend que el token
+  // sigue siendo válido y se actualizan los datos del usuario (por si un admin los cambió).
+  // Si el token venció, api.js lo renueva solo con el refresh token.
+  useEffect(() => {
+    if (!obtenerToken()) return;
+
+    obtenerPerfil()
+      .then((perfil) => iniciarSesion(perfil))
+      .catch(() => cerrarSesion());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Descuento del usuario (por edad o código), 0 si no tiene.
   const descuentoUsuario = obtenerDescuentoUsuario(usuarioActivo);
