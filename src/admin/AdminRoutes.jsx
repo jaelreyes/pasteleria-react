@@ -1,4 +1,5 @@
 // PESTAÑA 4 · Protección del panel por rol (filtro 1: entrar al panel; filtro 2: páginas solo de admin).
+import { esAdministrador as usuarioEsAdministrador, rutaInicioSegunRol } from "../utils/roles";
 import { useState } from "react";
 import {
   Navigate,
@@ -34,14 +35,8 @@ export function AdminRoutes({ onCatalogoActualizado }) {
   // true solo si el rol es admin o vendedor (función de db.js).
   const autorizado = puedeEntrarAlPanel();
 
-  // Rol en minúsculas para compararlo sin errores de mayúsculas.
-  const rol = String(usuario?.rol || usuario?.tipo || "")
-    .trim()
-    .toLowerCase();
-
-  // El administrador puede todo; el vendedor solo ve productos y gestiona órdenes.
-  const esAdministrador =
-    rol === "admin" || rol === "administrador";
+  const esAdministrador = usuarioEsAdministrador(usuario);
+  const inicioPanel = rutaInicioSegunRol(usuario);
 
   // FILTRO 1: si no puede entrar, Navigate lo saca antes de dibujar el panel.
   if (!autorizado) {
@@ -70,7 +65,7 @@ export function AdminRoutes({ onCatalogoActualizado }) {
       <header className="admin-header">
         <div className="admin-header-contenido">
           <Link
-            to="/admin"
+            to={inicioPanel}
             className="admin-logo"
             onClick={cerrarMenu}
           >
@@ -150,14 +145,16 @@ export function AdminRoutes({ onCatalogoActualizado }) {
         >
           {/* Enlaces del menú; los marcados con esAdministrador no los ve el vendedor */}
           <nav aria-label="Menú de administración">
-            <NavLink
-              to="/admin"
-              end
-              className={claseEnlace}
-              onClick={cerrarMenu}
-            >
-              Inicio
-            </NavLink>
+            {esAdministrador && (
+              <NavLink
+                to={inicioPanel}
+                end
+                className={claseEnlace}
+                onClick={cerrarMenu}
+              >
+                Inicio
+              </NavLink>
+            )}
 
             <p className="admin-menu-grupo">Productos</p>
 
@@ -233,15 +230,18 @@ export function AdminRoutes({ onCatalogoActualizado }) {
               </>
             )}
 
-            <p className="admin-menu-grupo">Cuenta</p>
-
-            <NavLink
-              to="/admin/perfil"
-              className={claseEnlace}
-              onClick={cerrarMenu}
-            >
-              Mi Perfil
-            </NavLink>
+            {esAdministrador && (
+              <>
+                <p className="admin-menu-grupo">Cuenta</p>
+                <NavLink
+                  to="/admin/perfil"
+                  className={claseEnlace}
+                  onClick={cerrarMenu}
+                >
+                  Mi Perfil
+                </NavLink>
+              </>
+            )}
 
             <p className="admin-menu-grupo">Tienda</p>
 
@@ -257,41 +257,49 @@ export function AdminRoutes({ onCatalogoActualizado }) {
 
         {/* Aquí se dibuja la página del panel según la ruta */}
         <main className="admin-contenido">
-          {/* Rutas del panel. Las que no corresponden al rol redirigen a /admin */}
+          {/* Las rutas no permitidas redirigen al inicio autorizado para el rol. */}
           <Routes>
             <Route
               index
-              element={<AdminHome esAdministrador={esAdministrador} />}
+              element={esAdministrador ? (
+                <AdminHome esAdministrador={true} />
+              ) : (
+                <Navigate to="/admin/productos" replace />
+              )}
             />
 
             <Route
               path="ordenes"
-              element={<OrdersAdmin puedeModificar={true} />}
+              element={
+                <OrdersAdmin
+                  puedeModificar={esAdministrador}
+                  puedeExportar={esAdministrador}
+                />
+              }
             />
 
             {/* Boleta de una orden */}
-            <Route path="ordenes/:id" element={<BoletaAdmin />} />
+            <Route path="ordenes/:id" element={<BoletaAdmin puedeImprimir={esAdministrador} />} />
 
-            {/* FILTRO 2: CategoriasAdmin solo para el administrador; el vendedor vuelve a /admin */}
+            {/* Categorías y reportes solo para ADMIN. */}
             <Route
               path="categorias"
               element={
                 esAdministrador ? (
                   <CategoriasAdmin onCatalogoActualizado={onCatalogoActualizado} />
                 ) : (
-                  <Navigate to="/admin" replace />
+                  <Navigate to={inicioPanel} replace />
                 )
               }
             />
 
-            {/* FILTRO 2: ReportesAdmin solo para el administrador; el vendedor vuelve a /admin */}
             <Route
               path="reportes"
               element={
                 esAdministrador ? (
                   <ReportesAdmin />
                 ) : (
-                  <Navigate to="/admin" replace />
+                  <Navigate to={inicioPanel} replace />
                 )
               }
             />
@@ -330,7 +338,7 @@ export function AdminRoutes({ onCatalogoActualizado }) {
                 esAdministrador ? (
                   <UsersAdmin />
                 ) : (
-                  <Navigate to="/admin" replace />
+                  <Navigate to={inicioPanel} replace />
                 )
               }
             />
@@ -341,7 +349,7 @@ export function AdminRoutes({ onCatalogoActualizado }) {
                 esAdministrador ? (
                   <HistorialUsuario />
                 ) : (
-                  <Navigate to="/admin" replace />
+                  <Navigate to={inicioPanel} replace />
                 )
               }
             />
@@ -352,20 +360,20 @@ export function AdminRoutes({ onCatalogoActualizado }) {
                 esAdministrador ? (
                   <UserCreateAdmin />
                 ) : (
-                  <Navigate to="/admin" replace />
+                  <Navigate to={inicioPanel} replace />
                 )
               }
             />
 
-            <Route path="perfil" element={<AdminProfile />} />
+            <Route path="perfil" element={esAdministrador ? <AdminProfile /> : <Navigate to="/admin/productos" replace />} />
 
             <Route
               path="*"
               element={
-                <div>
+                esAdministrador ? <div>
                   <h1>Página del panel no encontrada</h1>
-                  <Link to="/admin">Volver al inicio del panel</Link>
-                </div>
+                  <Link to={inicioPanel}>Volver al inicio del panel</Link>
+                </div> : <Navigate to="/admin/productos" replace />
               }
             />
           </Routes>

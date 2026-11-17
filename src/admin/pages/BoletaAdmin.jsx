@@ -13,7 +13,7 @@ const ESTADOS = {
 };
 
 // Detalle (boleta) de una orden: /admin/ordenes/:id
-export default function BoletaAdmin() {
+export default function BoletaAdmin({ puedeImprimir = false }) {
   const { id } = useParams();
   // Busca la orden con el id de la URL.
   const orden = obtenerOrdenPorId(id);
@@ -38,9 +38,11 @@ export default function BoletaAdmin() {
             Volver
           </Button>
           {/* Imprime la boleta (los botones se ocultan al imprimir) */}
-          <Button variant="primary" onClick={() => window.print()}>
-            Imprimir
-          </Button>
+          {puedeImprimir && (
+            <Button variant="primary" onClick={() => { if (puedeImprimir) window.print(); }}>
+              Imprimir
+            </Button>
+          )}
         </div>
       </div>
 

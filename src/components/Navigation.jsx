@@ -11,7 +11,7 @@ import {
   NavLink,
   useNavigate,
 } from "react-router-dom";
-import { puedeEntrarAlPanel } from "../utils/roles";
+import { puedeEntrarAlPanel, rutaInicioSegunRol } from "../utils/roles";
 import "../styles/Navigation.css";
 
 // Barra de navegación (Navbar de Bootstrap) con menú, sesión y carrito.
@@ -131,7 +131,7 @@ function Navigation({
                 {puedeEntrarAlPanel(usuarioActivo) && (
                   <NavDropdown.Item
                     as={Link}
-                    to="/admin"
+                    to={rutaInicioSegunRol(usuarioActivo)}
                     onClick={cerrarMenu}
                   >
                     Panel de administración

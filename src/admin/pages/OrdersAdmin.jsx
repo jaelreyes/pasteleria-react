@@ -60,7 +60,7 @@ function celdaCSV(valor) {
 }
 
 // Órdenes del panel: listado con filtros, cambio de estado y exportación CSV/PDF.
-export function OrdersAdmin({ puedeModificar = false }) {
+export function OrdersAdmin({ puedeModificar = false, puedeExportar = false }) {
   const [ordenes, setOrdenes] = useState(() => obtenerOrdenes());
   const [filtroEstado, setFiltroEstado] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -114,6 +114,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
   }
   // Descarga todas las órdenes en un archivo CSV.
   function exportarCSV() {
+    if (!puedeExportar) return;
     setError("");
 
     const actuales = obtenerOrdenes();
@@ -161,6 +162,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
   // Abre una ventana imprimible para guardar las órdenes como PDF.
   function exportarPDF() {
+    if (!puedeExportar) return;
     setError("");
 
     const actuales = obtenerOrdenes();
@@ -348,7 +350,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
       <div className="ordenes-cabecera">
         <div>
           <h1>Gestión de Órdenes</h1>
-          <p>Revisa las compras y actualiza el estado de los pedidos.</p>
+          <p>{puedeModificar ? "Revisa las compras y actualiza el estado de los pedidos." : "Consulta los listados y detalles de órdenes."}</p>
         </div>
 
         <div className="ordenes-exportaciones">
@@ -356,19 +358,22 @@ export function OrdersAdmin({ puedeModificar = false }) {
             Actualizar
           </Button>
 
-          <Button variant="outline-secondary" onClick={exportarCSV}>
-            Exportar CSV
-          </Button>
-
-          <Button className="ordenes-boton-principal" onClick={exportarPDF}>
-            Exportar PDF
-          </Button>
+          {puedeExportar && (
+            <>
+              <Button variant="outline-secondary" onClick={exportarCSV}>
+                Exportar CSV
+              </Button>
+              <Button className="ordenes-boton-principal" onClick={exportarPDF}>
+                Exportar PDF
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
       {!puedeModificar && (
         <Alert variant="info">
-          Tu acceso es de consulta. Puedes revisar y exportar órdenes.
+          Tu acceso es de consulta. Puedes revisar los listados y detalles de órdenes.
         </Alert>
       )}
 
@@ -434,8 +439,8 @@ export function OrdersAdmin({ puedeModificar = false }) {
       </div>
 
       <p className="ordenes-contador" role="status">
-        Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes. Las
-        exportaciones incluyen todas las órdenes.
+        Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes.
+        {puedeExportar && " Las exportaciones incluyen todas las órdenes."}
       </p>
 
       {/* Mensaje vacío o tabla de órdenes */}
@@ -463,7 +468,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
                     <th>Dirección</th>
                     <th>Total</th>
                     <th>Estado</th>
-                    <th>Cambiar estado</th>
+                    {puedeModificar && <th>Cambiar estado</th>}
                   </tr>
                 </thead>
 
@@ -492,7 +497,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
                       </td>
 
                       <td>{mostrarEstado(orden)}</td>
-                      <td>{selectorEstado(orden)}</td>
+                      {puedeModificar && <td>{selectorEstado(orden)}</td>}
                     </tr>
                   ))}
                 </tbody>
@@ -528,10 +533,12 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   <dd className="orden-monto">{formatearMonto(orden.total)}</dd>
                 </dl>
 
-                <div className="orden-tarjeta-accion">
-                  <p>Cambiar estado</p>
-                  {selectorEstado(orden)}
-                </div>
+                {puedeModificar && (
+                  <div className="orden-tarjeta-accion">
+                    <p>Cambiar estado</p>
+                    {selectorEstado(orden)}
+                  </div>
+                )}
               </article>
             ))}
           </div>

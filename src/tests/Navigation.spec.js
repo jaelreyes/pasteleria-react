@@ -53,7 +53,7 @@ describe('Acceso según el rol', () => {
 
     expect(
       rutaInicioSegunRol({ tipo: 'Vendedor' })
-    ).toBe('/admin')
+    ).toBe('/admin/productos')
 
     expect(
       rutaInicioSegunRol({ tipo: 'Cliente' })
@@ -99,8 +99,7 @@ describe('Acceso según el rol', () => {
   it('muestra el acceso al panel al Vendedor al abrir su cuenta', () => {
     dibujarMenu({
       nombre: 'Carlos',
-      tipo: 'Vendedor',
-      rol: 'vendedor',
+      rol: 'VENDEDOR',
     })
 
     abrirCuenta('Carlos')
@@ -108,8 +107,8 @@ describe('Acceso según el rol', () => {
     expect(
       screen.getByRole('link', {
         name: /panel/i,
-      })
-    ).toBeTruthy()
+      }).getAttribute('href')
+    ).toBe('/admin/productos')
   })
 
   it('no muestra acceso al panel al Cliente aunque abra su cuenta', () => {
