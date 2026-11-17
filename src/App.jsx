@@ -1,13 +1,13 @@
 // Componente principal de la tienda: guarda el catálogo, el carrito y la sesión,
 // y define las rutas. Pasa datos y funciones a las páginas por props.
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Routes,
   Route,
   Link,
   useLocation,
 } from "react-router-dom";
-import { Toast, ToastContainer } from "react-bootstrap";
+import { Toast, ToastContainer, Alert, Button } from "react-bootstrap";
 import { haySesionValida, limpiarSesion, obtenerToken } from "./services/sesion";
 import { obtenerPerfil } from "./services/authService";
 
@@ -16,7 +16,9 @@ import Cart from "./components/Cart";
 import Layout from "./components/Layout";
 import CartPanel from "./components/CartPanel";
 
-import { obtenerProductos } from "./data/db";
+import { obtenerProductosAPI } from "./services/productoService";
+import { obtenerCategoriasAPI } from "./services/categoriaService";
+import { sincronizarCarrito } from "./utils/carrito";
 import { obtenerDescuentoUsuario } from "./utils/precios";
 
 import NotFound from "./pages/NotFound";
@@ -36,101 +38,6 @@ import PagoExito from "./pages/PagoExito";
 import PagoFallo from "./pages/PagoFallo";
 import AdminRoutes from "./admin/AdminRoutes";
 
-// Recupera los datos actuales del catálogo conservando las cantidades.
-function sincronizarCarrito(items, catalogo) {
-  const productosPorId = new Map(
-    catalogo.map((producto) => [String(producto.id), producto])
-  );
-
-  // Junta cantidades del mismo producto y descarta ítems inválidos.
-  const cantidadesPorId = new Map();
-
-  let retirados = false;
-  let cantidadesAjustadas = false;
-  let preciosActualizados = false;
-
-  for (const item of items) {
-    if (!item || item.id === undefined || item.id === null) {
-      retirados = true;
-      continue;
-    }
-
-    const cantidad = Number(item.cantidad ?? 1);
-
-    if (!Number.isInteger(cantidad) || cantidad < 1) {
-      retirados = true;
-      continue;
-    }
-
-    const id = String(item.id);
-
-    cantidadesPorId.set(
-      id,
-      (cantidadesPorId.get(id) || 0) + cantidad
-    );
-  }
-
-  // Usa el producto actual del catálogo y limita la cantidad al stock.
-  const actualizados = [];
-
-  for (const [id, cantidadSolicitada] of cantidadesPorId) {
-    const producto = productosPorId.get(id);
-    const stock = Number(producto?.stock);
-
-    if (
-      !producto ||
-      !Number.isInteger(stock) ||
-      stock <= 0
-    ) {
-      retirados = true;
-      continue;
-    }
-
-    const cantidad = Math.min(cantidadSolicitada, stock);
-
-    if (cantidad !== cantidadSolicitada) {
-      cantidadesAjustadas = true;
-    }
-
-    const anterior = items.find(
-      (item) => item && String(item.id) === id
-    );
-
-    if (
-      Number(anterior?.precio) !== Number(producto.precio) ||
-      Number(anterior?.descuento || 0) !==
-        Number(producto.descuento || 0)
-    ) {
-      preciosActualizados = true;
-    }
-
-    actualizados.push({
-      ...producto,
-      cantidad,
-    });
-  }
-
-  // Mensajes para avisar al cliente qué cambió en su carrito.
-  const mensajes = [];
-
-  if (preciosActualizados) {
-    mensajes.push("Actualizamos los precios y ofertas de tu carrito.");
-  }
-
-  if (cantidadesAjustadas) {
-    mensajes.push("Ajustamos algunas cantidades al stock disponible.");
-  }
-
-  if (retirados) {
-    mensajes.push("Retiramos productos que ya no están disponibles.");
-  }
-
-  return {
-    items: actualizados,
-    aviso: mensajes.join(" "),
-  };
-}
-
 // Obtiene la clave según la sesión activa (correo o email)
 function obtenerClaveCarrito(usuario) {
   try {
@@ -145,7 +52,7 @@ function obtenerClaveCarrito(usuario) {
 }
 
 // Lee el carrito correspondiente a la sesión
-function leerCarrito(catalogo, usuario) {
+function leerCarrito(usuario) {
   try {
     const clave = obtenerClaveCarrito(usuario);
     const guardado = JSON.parse(
@@ -156,7 +63,7 @@ function leerCarrito(catalogo, usuario) {
       throw new Error("Carrito inválido");
     }
 
-    return sincronizarCarrito(guardado, catalogo);
+    return { items: guardado, aviso: "", persistir: false };
   } catch {
     return {
       items: [],
@@ -167,16 +74,21 @@ function leerCarrito(catalogo, usuario) {
 }
 
 // Lee el carrito que se armó sin sesión (un usuario sin correo usa la clave "carrito_invitado").
-function leerCarritoInvitado(catalogo) {
-  return leerCarrito(catalogo, {});
+function leerCarritoInvitado() {
+  return leerCarrito({});
 }
 
 // --- Estado global de la tienda ---
 function App() {
   const ubicacion = useLocation();
 
-  // Catálogo leído desde db.js (localStorage).
-  const [productos, setProductos] = useState(() => obtenerProductos());
+  // Catálogo remoto; no se escribe en la base local del panel administrativo.
+  const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [cargandoCatalogo, setCargandoCatalogo] = useState(true);
+  const [errorCatalogo, setErrorCatalogo] = useState("");
+  const [catalogoListo, setCatalogoListo] = useState(false);
+  const peticionCatalogo = useRef(0);
 
     // Sesión actual; null si nadie inició sesión.
   // Al recargar la página: si el refresh token sigue vigente se recupera la sesión;
@@ -197,7 +109,7 @@ function App() {
 
   // Carrito de la sesión + mensaje de aviso (toast).
   const [estadoCarrito, setEstadoCarrito] = useState(() =>
-    leerCarrito(productos, usuarioActivo)
+    leerCarrito(usuarioActivo)
   );
 
   const carrito = estadoCarrito.items;
@@ -207,74 +119,43 @@ function App() {
   // Guarda en localStorage usando la clave dinámica del usuario conectado
   useEffect(() => {
     const clave = obtenerClaveCarrito(usuarioActivo);
-    localStorage.setItem(clave, JSON.stringify(carrito));
-  }, [carrito, usuarioActivo]);
+    if (estadoCarrito.persistir) localStorage.setItem(clave, JSON.stringify(carrito));
+  }, [carrito, usuarioActivo, estadoCarrito.persistir]);
 
-  // Relee los productos y ajusta el carrito si cambiaron precios o stock.
-  const actualizarCatalogo = useCallback(() => {
-    const catalogoActual = obtenerProductos();
-
-    setProductos(catalogoActual);
-
-    setEstadoCarrito((actual) => {
-      const sincronizado = sincronizarCarrito(
-        actual.items,
-        catalogoActual
-      );
-
-      const mismosItems =
-        JSON.stringify(actual.items) ===
-        JSON.stringify(sincronizado.items);
-
-      const aviso = sincronizado.aviso || actual.aviso;
-
-      if (mismosItems && aviso === actual.aviso) {
-        return actual;
+  // Solo una respuesta completa y vigente sustituye el catálogo en memoria.
+  const actualizarCatalogo = useCallback(async () => {
+    const peticion = ++peticionCatalogo.current;
+    setCargandoCatalogo(true);
+    setErrorCatalogo("");
+    try {
+      const [nuevosProductos, nuevasCategorias] = await Promise.all([
+        obtenerProductosAPI(), obtenerCategoriasAPI(),
+      ]);
+      if (peticion !== peticionCatalogo.current) return;
+      setProductos(nuevosProductos);
+      setCategorias(nuevasCategorias);
+      setCatalogoListo(true);
+    } catch {
+      if (peticion === peticionCatalogo.current) {
+        setErrorCatalogo("No se pudo actualizar el catálogo. Tu carrito se conserva.");
       }
-
-      return {
-        items: mismosItems ? actual.items : sincronizado.items,
-        aviso,
-      };
-    });
+    } finally {
+      if (peticion === peticionCatalogo.current) setCargandoCatalogo(false);
+    }
   }, []);
 
-  // Recupera los cambios al navegar entre páginas.
   useEffect(() => {
+    // La petición sincroniza el estado con el servidor al cambiar de ruta.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     actualizarCatalogo();
+    return () => { peticionCatalogo.current += 1; };
   }, [ubicacion.pathname, actualizarCatalogo]);
 
-  // Recupera cambios realizados en otra pestaña o al volver a la página.
-  useEffect(() => {
-    function alCambiarAlmacenamiento(evento) {
-      if (evento.key === "productos" || evento.key === null) {
-        actualizarCatalogo();
-      }
-    }
-
-    function alCambiarVisibilidad() {
-      if (document.visibilityState === "visible") {
-        actualizarCatalogo();
-      }
-    }
-
-    window.addEventListener("focus", actualizarCatalogo);
-    window.addEventListener("storage", alCambiarAlmacenamiento);
-    document.addEventListener(
-      "visibilitychange",
-      alCambiarVisibilidad
-    );
-
-    return () => {
-      window.removeEventListener("focus", actualizarCatalogo);
-      window.removeEventListener("storage", alCambiarAlmacenamiento);
-      document.removeEventListener(
-        "visibilitychange",
-        alCambiarVisibilidad
-      );
-    };
-  }, [actualizarCatalogo]);
+  // Se verifica por código, nunca únicamente por el ID de la antigua base local.
+  const carritoVerificado = catalogoListo
+    ? sincronizarCarrito(carrito, productos)
+    : { items: carrito, pendiente: true, aviso: "" };
+  const carritoBloqueado = cargandoCatalogo || Boolean(errorCatalogo) || carritoVerificado.pendiente;
 
   // --- Acciones del carrito (se pasan a las páginas por props) ---
   function abrirCarrito() {
@@ -293,8 +174,8 @@ function App() {
   function agregarProducto(producto, cantidad = 1) {
     if (!Number.isInteger(cantidad) || cantidad < 1) return;
 
-    const catalogoActual = obtenerProductos();
-    setProductos(catalogoActual);
+    if (carritoBloqueado) return;
+    const catalogoActual = productos;
 
     setEstadoCarrito((actual) => {
       const sincronizado = sincronizarCarrito(
@@ -350,6 +231,7 @@ function App() {
           ];
 
       return {
+        persistir: true,
         items,
         aviso:
           cantidadAgregar < cantidad
@@ -362,6 +244,7 @@ function App() {
   // Deja el carrito vacío (también se usa al confirmar la compra).
   function vaciarCarrito() {
     setEstadoCarrito({
+      persistir: true,
       items: [],
       aviso: "",
     });
@@ -369,9 +252,14 @@ function App() {
 
   // Quita un producto del carrito.
   function eliminarProducto(idAEliminar) {
+    if (carritoVerificado.items.filter(item => item?.id === idAEliminar).length !== 1) {
+      setEstadoCarrito(actual => ({ ...actual, aviso: "Hay identificadores repetidos en el carrito. Revisa los productos antes de eliminarlos." }));
+      return;
+    }
     setEstadoCarrito((actual) => ({
+      persistir: true,
       items: actual.items.filter(
-        (item) => item.id !== idAEliminar
+        (_item, indice) => carritoVerificado.items[indice]?.id !== idAEliminar
       ),
       aviso: actual.aviso,
     }));
@@ -379,9 +267,13 @@ function App() {
 
   // Cambia la cantidad si está entre 1 y el stock.
   function cambiarCantidad(id, nuevaCantidad) {
-    const catalogoActual = obtenerProductos();
-
-    setProductos(catalogoActual);
+    if (!catalogoListo || cargandoCatalogo || errorCatalogo) return;
+    const indices = carritoVerificado.items.flatMap((item, indice) => item.id === id ? [indice] : []);
+    if (indices.length !== 1) return;
+    const original = carrito[indices[0]];
+    const candidatos = productos.filter(p => p.codigo && p.codigo === original.codigo);
+    if (candidatos.length !== 1) return;
+    const catalogoActual = productos;
 
     setEstadoCarrito((actual) => {
       const sincronizado = sincronizarCarrito(
@@ -397,7 +289,7 @@ function App() {
         !productoActual ||
         !Number.isInteger(nuevaCantidad) ||
         nuevaCantidad < 1 ||
-        nuevaCantidad > Number(productoActual.stock)
+        (nuevaCantidad > Number(productoActual.stock) && nuevaCantidad >= original.cantidad)
       ) {
         return {
           items: sincronizado.items,
@@ -408,12 +300,13 @@ function App() {
       }
 
       return {
+        persistir: true,
         items: sincronizado.items.map((item) =>
           item.id === productoActual.id
             ? { ...productoActual, cantidad: nuevaCantidad }
             : item
         ),
-        aviso: sincronizado.aviso || actual.aviso,
+        aviso: "Cantidad actualizada.",
       };
     });
   }
@@ -439,17 +332,16 @@ function App() {
     };
 
     // Carrito armado como invitado: se lee ANTES de guardar la sesión.
-    const carritoInvitado = leerCarritoInvitado(productos);
+    const carritoInvitado = leerCarritoInvitado();
 
     localStorage.setItem("usuarioActivo", JSON.stringify(sesion));
     setUsuarioActivo(sesion);
 
     // Si el usuario no tenía nada en su carrito, se lleva lo que agregó como invitado
     // (así no pierde su compra al iniciar sesión en el checkout).
-    const carritoUsuario = leerCarrito(productos, sesion);
+    const carritoUsuario = leerCarrito(sesion);
 
     if (carritoUsuario.items.length === 0 && carritoInvitado.items.length > 0) {
-      localStorage.removeItem("carrito_invitado");
       setEstadoCarrito(carritoInvitado);
     } else {
       setEstadoCarrito(carritoUsuario);
@@ -460,7 +352,7 @@ function App() {
   function cerrarSesion() {
     limpiarSesion();
     setUsuarioActivo(null);
-    setEstadoCarrito(leerCarrito(productos, null));
+    setEstadoCarrito(leerCarrito(null));
   }
 
   // Al abrir la app (o recargar la página) se confirma con el backend que el token
@@ -472,7 +364,6 @@ function App() {
     obtenerPerfil()
       .then((perfil) => iniciarSesion(perfil))
       .catch(() => cerrarSesion());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Descuento del usuario (por edad o código), 0 si no tiene.
@@ -504,6 +395,14 @@ function App() {
               onVerCarrito={abrirCarrito}
               usuarioActivo={usuarioActivo}
               onCerrarSesion={cerrarSesion}
+              avisoCatalogo={
+                <>
+                  {cargandoCatalogo && <p role="status">Cargando catálogo...</p>}
+                  {errorCatalogo && <Alert variant="danger">{errorCatalogo} <Button onClick={actualizarCatalogo}>Reintentar</Button></Alert>}
+                  {carritoVerificado.aviso && <Alert variant="warning">{carritoVerificado.aviso}</Alert>}
+                </>
+              }
+              ocultarContenido={(!catalogoListo || Boolean(errorCatalogo)) && (/^\/(productos|categorias|ofertas)(\/|$)/.test(ubicacion.pathname) || ubicacion.pathname === "/") }
             />
           }
         >
@@ -514,6 +413,7 @@ function App() {
             element={
               <ProductList
                 productos={productos}
+                categoriasAPI={categorias}
                 onAgregar={agregarProducto}
                 descuentoUsuario={descuentoUsuario}
               />
@@ -525,8 +425,9 @@ function App() {
             element={
               <ProductDetail
                 productos={productos}
+                categoriasAPI={categorias}
                 onAgregar={agregarProducto}
-                carrito={carrito}
+                carrito={carritoVerificado.items}
                 descuentoUsuario={descuentoUsuario}
               />
             }
@@ -536,7 +437,7 @@ function App() {
             path="carrito"
             element={
               <Cart
-                carrito={carrito}
+                carrito={carritoVerificado.items}
                 descuento={descuentoUsuario}
                 onVaciar={vaciarCarrito}
                 onEliminar={eliminarProducto}
@@ -548,8 +449,8 @@ function App() {
           <Route
             path="checkout"
             element={
-              <Checkout
-                carrito={carrito}
+              carritoBloqueado ? <Alert variant="warning">Es necesario cargar el catálogo y verificar los productos y cantidades del carrito antes de continuar. <Link to="/carrito">Revisar carrito</Link> <Button onClick={actualizarCatalogo}>Reintentar</Button></Alert> : <Checkout
+                carrito={carritoVerificado.items}
                 descuento={descuentoUsuario}
                 onCompraConfirmada={vaciarCarrito}
               />
@@ -569,6 +470,7 @@ function App() {
             element={
               <Categorias
                 productos={productos}
+                categoriasAPI={categorias}
                 onAgregar={agregarProducto}
                 descuentoUsuario={descuentoUsuario}
               />
@@ -580,6 +482,7 @@ function App() {
             element={
               <Categorias
                 productos={productos}
+                categoriasAPI={categorias}
                 onAgregar={agregarProducto}
                 descuentoUsuario={descuentoUsuario}
               />
@@ -591,6 +494,7 @@ function App() {
             element={
               <Ofertas
                 productos={productos}
+                categoriasAPI={categorias}
                 onAgregar={agregarProducto}
                 descuentoUsuario={descuentoUsuario}
               />
@@ -620,7 +524,7 @@ function App() {
       <CartPanel
         mostrar={mostrarCarrito}
         onCerrar={() => setMostrarCarrito(false)}
-        carrito={carrito}
+        carrito={carritoVerificado.items}
         descuento={descuentoUsuario}
         onVaciar={vaciarCarrito}
         onEliminar={eliminarProducto}

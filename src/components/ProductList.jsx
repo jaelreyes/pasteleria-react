@@ -5,14 +5,14 @@ import "../styles/Productos.css";
 import { calcularPrecioProducto } from "../utils/precios";
 
 // Catálogo con búsqueda y filtro por categoría. Los filtros viven en la URL (?q=&categoria=).
-function ProductList({ productos, onAgregar, descuentoUsuario = 0 }) {
+function ProductList({ productos, categoriasAPI, onAgregar, descuentoUsuario = 0 }) {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const busqueda = searchParams.get("q") || "";
   const categoria = searchParams.get("categoria") || "";
 
   // Categorías sin repetir para el select.
-  const categorias = [
+  const categorias = categoriasAPI ? categoriasAPI.map(c => c.nombre) : [
     ...new Set(productos.map((producto) => producto.categoria)),
   ];
 

@@ -3,19 +3,23 @@ import { Link, useParams } from "react-router-dom";
 import { Alert, Col, Row } from "react-bootstrap";
 import CategoriaCard from "../components/CategoriaCard";
 import ProductCard from "../components/ProductCard";
-import { obtenerCategorias } from "../utils/categorias";
+import { obtenerCategorias, crearSlug } from "../utils/categorias";
 import "../styles/Productos.css";
 import "../styles/Categorias.css";
 import { calcularPrecioProducto } from "../utils/precios";
 
 // /categorias muestra las tarjetas.
 // /categorias/:slug muestra además los productos de esa categoría.
-function Categorias({ productos, onAgregar, descuentoUsuario = 0 }) {
+function Categorias({ productos, categoriasAPI, onAgregar, descuentoUsuario = 0 }) {
   // slug = categoría de la URL, ej: "tortas-cuadradas". En /categorias no viene (undefined).
   const { slug } = useParams();
 
   // Arma la lista de categorías a partir de los productos (utils/categorias.js).
-  const categorias = obtenerCategorias(productos);
+  const categorias = categoriasAPI ? categoriasAPI.map(categoria => {
+    const asociados = productos.filter(p => String(p.categoriaId) === String(categoria.id));
+    return { ...categoria, slug: crearSlug(categoria.nombre), cantidad: asociados.length,
+      imagen: asociados[0]?.imagen || "/images/logo.png" };
+  }) : obtenerCategorias(productos);
   // Categoría elegida según el slug de la URL.
   const categoriaActiva = categorias.find(
     (categoria) => categoria.slug === slug,
