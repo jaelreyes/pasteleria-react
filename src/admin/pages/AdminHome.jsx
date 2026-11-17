@@ -1,48 +1,49 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { obtenerProductos, obtenerUsuarios } from "../../data/db";
+import { listarProductosAdmin } from "../../services/productoAdminService";
+import { listarUsuarios } from "../../services/usuarioService";
 
-// Límite de stock crítico del producto; 5 si no tiene uno válido.
 function limiteCritico(producto) {
   const valor = producto.stockCritico;
-
   if (valor === "" || valor === null || valor === undefined) {
     return 5;
   }
-
   const numero = Number(valor);
-
   return Number.isInteger(numero) && numero >= 0 ? numero : 5;
 }
 
-// Dashboard del panel: tarjetas con productos, stock, críticos y usuarios.
 export default function AdminHome({ esAdministrador = false }) {
-  const [productos, setProductos] = useState(() => obtenerProductos());
+  const [productos, setProductos] = useState([]);
+  const [usuarios, setUsuarios] = useState([]);
 
-  const [usuarios, setUsuarios] = useState(() =>
-    esAdministrador ? obtenerUsuarios() : [],
-  );
+  async function actualizarResumen() {
+    try {
+      const listaProd = await listarProductosAdmin();
+      setProductos(listaProd);
 
-  // Vuelve a leer los datos desde db.js.
-  function actualizarResumen() {
-    setProductos(obtenerProductos());
-
-    if (esAdministrador) {
-      setUsuarios(obtenerUsuarios());
+      if (esAdministrador) {
+        const listaUsr = await listarUsuarios();
+        setUsuarios(listaUsr);
+      }
+    } catch {
+      // Mantiene indicadores en 0 si falla la conexión inicial
     }
   }
 
+  useEffect(() => {
+    actualizarResumen();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [esAdministrador]);
+
   const stockTotal = productos.reduce(
     (suma, producto) => suma + (Number(producto.stock) || 0),
-    0,
+    0
   );
 
-  // Productos con stock igual o menor a su límite crítico.
   const cantidadCriticos = productos.filter(
-    (producto) => Number(producto.stock) <= limiteCritico(producto),
+    (producto) => Number(producto.stock) <= limiteCritico(producto)
   ).length;
 
-  // Datos de cada tarjeta del dashboard (se dibujan con map).
   const indicadores = [
     {
       titulo: "Productos",
@@ -78,10 +79,9 @@ export default function AdminHome({ esAdministrador = false }) {
       <p className="admin-inicio-descripcion">
         {esAdministrador
           ? "Gestiona los productos y usuarios de Pastelería 1000 Sabores."
-          : "Consulta el catálogo y gestiona las órdenes de Pastelería 1000 Sabores."}
+          : "Consulta el catálogo y las órdenes de Pastelería 1000 Sabores."}
       </p>
 
-      {/* Tarjetas de indicadores */}
       <div className="admin-indicadores">
         {indicadores.map((indicador) => (
           <article className="admin-indicador" key={indicador.titulo}>
@@ -104,7 +104,6 @@ export default function AdminHome({ esAdministrador = false }) {
 
       <h2 className="admin-accesos-titulo">Accesos rápidos</h2>
 
-      {/* Accesos rápidos según el rol */}
       <div className="admin-accesos">
         <Link to="/admin/productos">Ver productos</Link>
 
