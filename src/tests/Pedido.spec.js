@@ -8,6 +8,7 @@ import {
 } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Pedido from '../pages/Pedido'
+import api from '../services/api'
 
 const ordenAna = {
   id: 'ORD-ANA-001',
@@ -115,6 +116,9 @@ describe('Pedido', () => {
         ? almacenamiento[clave]
         : null
     )
+
+    // Con sesión, Pedido pide las boletas al backend: aquí se simula la respuesta.
+    spyOn(api, 'get').and.callFake(() => Promise.resolve({ data: [] }))
   })
 
   afterEach(cleanup)
@@ -136,15 +140,21 @@ describe('Pedido', () => {
     ).toBeNull()
   })
 
-  it('muestra únicamente las compras del usuario conectado', () => {
+  it('muestra las boletas del usuario conectado que entrega el backend', async () => {
     almacenamiento.usuarioActivo = JSON.stringify({
       nombre: 'Ana Soto',
       correo: ' ANA@GMAIL.COM ',
     })
+    api.get.and.returnValue(
+      Promise.resolve({ data: [ordenAna, otraOrdenAna] })
+    )
 
     dibujarPedido()
 
-    expect(buscarTituloPedido(ordenAna.id)).toBeTruthy()
+    expect(
+      await screen.findByRole('heading', { name: `Pedido ${ordenAna.id}` })
+    ).toBeTruthy()
+    expect(api.get).toHaveBeenCalledWith('/boletas/mis-boletas')
     expect(buscarTituloPedido(otraOrdenAna.id)).toBeTruthy()
     expect(buscarTituloPedido(ordenBeatriz.id)).toBeNull()
 

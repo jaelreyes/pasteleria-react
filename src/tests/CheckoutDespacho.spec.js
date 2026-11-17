@@ -62,6 +62,8 @@ describe("Checkout: dirección y pago rechazado", () => {
     almacenamiento = {
       productos: JSON.stringify([producto]),
       ordenes: "[]",
+      // El checkout exige sesión iniciada.
+      usuarioActivo: JSON.stringify({ correo: "pedro@gmail.com", rol: "cliente" }),
     };
 
     spyOn(Storage.prototype, "getItem").and.callFake((clave) =>

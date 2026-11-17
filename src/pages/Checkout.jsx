@@ -2,10 +2,9 @@
 import { useState, useRef } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { Form, Button, Alert, Row, Col } from "react-bootstrap";
-import {
-  obtenerUsuarioActivo,
-  confirmarCompra,
-} from "../data/db";
+import { obtenerUsuarioActivo } from "../data/db";
+import { comprar } from "../services/boletaService";
+import { mensajeError } from "../services/api";
 import {
   calcularTotales,
   calcularPrecioProducto,
@@ -26,7 +25,8 @@ export default function Checkout({
 
   const [error, setError] = useState("");
   const [procesando, setProcesando] = useState(false);
-  const [idOrdenConfirmada, setIdOrdenConfirmada] = useState(null);
+  // Boleta que devolvió el backend al confirmar la compra.
+  const [boletaConfirmada, setBoletaConfirmada] = useState(null);
   // Si tiene datos, el componente redirige a /pago/error.
   const [pagoRechazado, setPagoRechazado] = useState(null);
 
@@ -66,10 +66,11 @@ export default function Checkout({
   );
 
   // La confirmación tiene prioridad aunque el carrito ya esté vacío.
-  if (idOrdenConfirmada) {
+  if (boletaConfirmada) {
     return (
       <Navigate
-        to={`/pago/exito/${idOrdenConfirmada}`}
+        to={`/pago/exito/${boletaConfirmada.id}`}
+        state={{ orden: boletaConfirmada }}
         replace
       />
     );
@@ -91,6 +92,12 @@ export default function Checkout({
     return <Navigate to="/carrito" replace />;
   }
 
+  // Comprar exige sesión: la boleta queda a nombre del usuario (POST /boletas pide token).
+  // Después del login, Login.jsx lo trae de vuelta aquí.
+  if (!obtenerUsuarioActivo()) {
+    return <Navigate to="/login" state={{ desde: "/checkout" }} replace />;
+  }
+
   // Actualiza el campo que cambió (los checkbox usan checked).
   function handleChange(evento) {
     // name dice qué campo cambió; así una sola función sirve para todo el formulario.
@@ -107,7 +114,7 @@ export default function Checkout({
   }
 
   // Valida el formulario y confirma o rechaza el pago.
-  function handleSubmit(evento) {
+  async function handleSubmit(evento) {
     evento.preventDefault();
 
     if (procesandoRef.current) return;
@@ -206,28 +213,27 @@ export default function Checkout({
     setProcesando(true);
     setError("");
 
-    let ordenGuardada;
-
     try {
-      // Guarda la orden y descuenta stock (db.js). Si falla, muestra el error.
-      ordenGuardada = confirmarCompra(datosCompra, carrito, descuento);
-    } catch (errorCompra) {
-      setError(
-        errorCompra instanceof Error
-          ? errorCompra.message
-          : "No se pudo completar la compra."
-      );
+      // El backend valida el stock, calcula el total, descuenta el stock y guarda la boleta en MySQL.
+      const boleta = await comprar(carrito, {
+        nombre: datosCompra.nombre,
+        telefono: datosCompra.telefono,
+        direccion: datosCompra.direccion,
+        region: datosCompra.region,
+        comuna: datosCompra.comuna,
+        indicaciones: datosCompra.indicaciones,
+        metodoPago: datosCompra.metodoPago,
+      });
 
+      // Guarda primero la boleta (para ir a la confirmación) y después vacía el carrito.
+      setBoletaConfirmada(boleta);
+      onCompraConfirmada();
+    } catch (errorCompra) {
+      // Muestra el mensaje del backend, por ejemplo "Solo quedan 3 unidades de ...".
+      setError(mensajeError(errorCompra, "No se pudo completar la compra."));
       procesandoRef.current = false;
       setProcesando(false);
-      return;
     }
-
-    // Guarda primero el destino de confirmación.
-    setIdOrdenConfirmada(ordenGuardada.id);
-
-    // Después vacía el carrito.
-    onCompraConfirmada();
   }
 
   return (
