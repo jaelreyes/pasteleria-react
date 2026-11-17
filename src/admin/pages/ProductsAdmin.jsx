@@ -1,10 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import {
-  obtenerProductos,
-  guardarProducto,
-  eliminarProducto,
-  obtenerCategorias,
-} from "../../data/db";
+import { listarProductosAdmin, crearProducto, actualizarProducto, eliminarProductoAPI, errorCatalogo } from "../../services/productoService";
+import { obtenerCategoriasAPI } from "../../services/categoriaService";
 import {
   Table,
   Button,
@@ -26,7 +22,8 @@ const formularioInicial = {
   precio: "",
   stock: "",
   stockCritico: 5,
-  categoria: "",
+  categoriaId: "",
+  activo: true,
   descuento: 0,
 };
 
@@ -65,7 +62,7 @@ const campos = [
   {
     name: "nombre",
     etiqueta: "Nombre",
-    maxLength: 100,
+    maxLength: 150,
     required: true,
     md: 8,
   },
@@ -73,8 +70,8 @@ const campos = [
     name: "precio",
     etiqueta: "Precio",
     type: "number",
-    min: 0,
-    step: "any",
+    min: 0.01,
+    step: 0.01,
     required: true,
     md: 3,
   },
@@ -102,14 +99,14 @@ const campos = [
     type: "number",
     min: 0,
     max: 100,
-    step: 1,
+    step: 0.01,
     md: 3,
   },
   {
     name: "imagen",
     etiqueta: "Imagen",
     placeholder: "/images/productos/TC001.jpg",
-    maxLength: 1000,
+    maxLength: 500,
     required: true,
     md: 12,
   },
@@ -129,8 +126,14 @@ const campos = [
 export const ProductsAdmin = ({
   puedeModificar = false,
   modo = "listado",
+  onCatalogoActualizado,
 }) => {
-  const [productos, setProductos] = useState(() => obtenerProductos());
+  const [productos, setProductos] = useState([]);
+  const [categorias, setCategorias] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const operacion = useRef(false);
+  const carga = useRef(0);
   const [form, setForm] = useState({ ...formularioInicial });
   const [modoEdicion, setModoEdicion] = useState(false);
   const [creando, setCreando] = useState(false);
@@ -155,12 +158,43 @@ export const ProductsAdmin = ({
   const mostrarFormulario =
     puedeModificar && (modoEdicion || creando || modo === "nuevo");
 
-  const categorias = [
-    ...new Set([
-      ...obtenerCategorias(),
-      ...productos.map((producto) => producto.categoria),
-    ]),
-  ].filter(Boolean);
+  async function recargar() {
+    const version = ++carga.current;
+    setCargando(true);
+    setError("");
+    try {
+      const [lista, grupos] = await Promise.all([listarProductosAdmin(), obtenerCategoriasAPI()]);
+      if (version !== carga.current) return;
+      setProductos(lista);
+      setCategorias(grupos);
+      return true;
+    } catch (e) {
+      if (version === carga.current) setError(errorCatalogo(e));
+      return false;
+    } finally {
+      if (version === carga.current) setCargando(false);
+    }
+  }
+
+  useEffect(() => {
+    // Sincroniza la vista con la API al montar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    recargar();
+    return () => { carga.current += 1; };
+  }, []);
+
+  async function refrescarTrasGuardar(texto) {
+    setMensaje(texto);
+    if (await recargar() === false) setError("El cambio fue guardado. No se pudo refrescar el listado; reintenta la lectura.");
+    try { await onCatalogoActualizado?.(); }
+    catch { setError("El cambio fue guardado. No se pudo refrescar el catalogo publico; reintenta su lectura."); }
+  }
+
+  async function reintentarLectura() {
+    await recargar();
+    try { await onCatalogoActualizado?.(); }
+    catch { setError("No se pudo refrescar el catálogo público. Puedes reintentar la lectura."); }
+  }
 
   const categoriasFiltro = [
     ...new Set(productos.map((producto) => producto.categoria)),
@@ -224,7 +258,7 @@ export const ProductsAdmin = ({
       precio: producto.precio ?? "",
       stock: producto.stock ?? "",
       stockCritico: obtenerLimiteCritico(producto),
-      categoria: producto.categoria || "",
+      categoriaId: producto.categoriaId ?? "",
       descuento: producto.descuento ?? 0,
     });
 
@@ -234,39 +268,27 @@ export const ProductsAdmin = ({
     setMensaje("");
   }
 
-  // Elimina el producto con db.js (solo si puede modificar).
-  function handleEliminar(id) {
-    if (!puedeModificar) return;
-
+  // Desactiva en MySQL; nunca elimina el registro fisicamente.
+  async function handleEliminar(id) {
+    if (!puedeModificar || operacion.current || cargando) return;
+    if (!window.confirm("Desactivar este producto? Se conservara en MySQL.")) return;
+    operacion.current = true;
+    setGuardando(true);
     setError("");
     setMensaje("");
-
     try {
-      eliminarProducto(id);
-
-      const actualizados = obtenerProductos();
-
-      if (actualizados.some((producto) => producto.id === id)) {
-        setError("No se pudo eliminar el producto.");
-        return;
-      }
-
-      if (form.id === id) {
-        limpiarFormulario();
-      }
-
-      setProductos(actualizados);
-      setMensaje("Producto eliminado correctamente.");
-    } catch {
-      setError("Ocurrió un error al eliminar el producto.");
-    }
+      await eliminarProductoAPI(id);
+      if (form.id === id) limpiarFormulario();
+      await refrescarTrasGuardar("Producto desactivado correctamente.");
+    } catch (e) { setError(errorCatalogo(e)); }
+    finally { operacion.current = false; setGuardando(false); }
   }
 
   // Valida los campos y guarda el producto (nuevo o editado).
-  function handleSubmit(evento) {
+  async function handleSubmit(evento) {
     evento.preventDefault();
 
-    if (!puedeModificar) return;
+    if (!puedeModificar || operacion.current || cargando) return;
 
     setError("");
     setMensaje("");
@@ -281,7 +303,7 @@ export const ProductsAdmin = ({
       !nombre ||
       !descripcion ||
       !imagen ||
-      !form.categoria ||
+      !form.categoriaId ||
       String(form.precio).trim() === "" ||
       String(form.stock).trim() === "" ||
       String(form.stockCritico).trim() === ""
@@ -306,8 +328,8 @@ export const ProductsAdmin = ({
     const descuento = Number(form.descuento || 0);
 
     // Precio, stock y stock crítico no pueden ser negativos.
-    if (!Number.isFinite(precio) || precio < 0) {
-      setError("El precio debe ser un número mayor o igual a cero.");
+    if (!Number.isFinite(precio) || precio <= 0) {
+      setError("El precio debe ser un número mayor que cero.");
       return;
     }
 
@@ -324,11 +346,11 @@ export const ProductsAdmin = ({
     }
 
     if (
-      !Number.isInteger(descuento) ||
+      !Number.isFinite(descuento) ||
       descuento < 0 ||
       descuento > 100
     ) {
-      setError("El descuento debe ser un número entero entre 0 y 100.");
+      setError("El descuento debe ser un numero entre 0 y 100.");
       return;
     }
 
@@ -350,78 +372,22 @@ export const ProductsAdmin = ({
       return;
     }
 
-    try {
-      const catalogoActual = obtenerProductos();
-
-      // No se permiten dos productos con el mismo código.
-      const codigoRepetido = catalogoActual.some(
-        (producto) =>
-          producto.id !== form.id &&
-          String(producto.codigo || "").trim().toUpperCase() === codigo
-      );
-
-      if (codigoRepetido) {
-        setError("Ya existe un producto con este código.");
-        return;
-      }
-
-      // Producto a guardar; al editar conserva su id.
-      const productoGuardar = {
-        ...form,
-        codigo,
-        nombre,
-        descripcion,
-        imagen,
-        precio,
-        stock,
-        stockCritico,
-        descuento,
-      };
-
-      guardarProducto(productoGuardar);
-
-      const actualizados = obtenerProductos();
-
-      const guardado = actualizados.find(
-        (producto) => producto.id === productoGuardar.id
-      );
-
-      // Comprueba que el producto quedó bien guardado.
-      const camposGuardados = [
-        "codigo",
-        "nombre",
-        "descripcion",
-        "imagen",
-        "precio",
-        "stock",
-        "stockCritico",
-        "categoria",
-        "descuento",
-      ];
-
-      if (
-        !guardado ||
-        !camposGuardados.every(
-          (campo) => guardado[campo] === productoGuardar[campo]
-        )
-      ) {
-        setError("No se pudo guardar el producto. Revisa el almacenamiento.");
-        return;
-      }
-
-      const estabaEditando = modoEdicion;
-
-      limpiarFormulario();
-      setProductos(actualizados);
-
-      setMensaje(
-        estabaEditando
-          ? "Producto actualizado correctamente."
-          : "Producto creado correctamente."
-      );
-    } catch {
-      setError("Ocurrió un error al guardar el producto.");
+    if (nombre.length > 150 || descripcion.length > 1000 || imagen.length > 500 ||
+        !categorias.some(c => String(c.id) === String(form.categoriaId))) {
+      setError("Revisa los limites de los campos y selecciona una categoria existente.");
+      return;
     }
+    operacion.current = true;
+    setGuardando(true);
+    try {
+      const datos = { ...form, codigo, nombre, descripcion, imagen, precio, stock, stockCritico, descuento };
+      if (modoEdicion) await actualizarProducto(form.id, datos);
+      else await crearProducto(datos);
+      const texto = modoEdicion ? "Producto actualizado correctamente." : "Producto creado correctamente.";
+      limpiarFormulario();
+      await refrescarTrasGuardar(texto);
+    } catch (e) { setError(errorCatalogo(e)); }
+    finally { operacion.current = false; setGuardando(false); }
   }
 
   // Quita búsqueda, categoría y filtro de críticos.
@@ -526,9 +492,10 @@ export const ProductsAdmin = ({
         </Alert>
       )}
 
+      {cargando && <p role="status">Cargando productos y categorias...</p>}
       {error && (
         <Alert variant="danger" role="alert">
-          {error}
+          {error} <Button onClick={reintentarLectura} disabled={guardando || cargando}>Reintentar lectura</Button>
         </Alert>
       )}
 
@@ -549,6 +516,7 @@ export const ProductsAdmin = ({
 
           {/* Campos generados desde el arreglo campos */}
           <Form noValidate onSubmit={handleSubmit}>
+            <fieldset disabled={guardando || cargando}>
             <Row className="g-3">
               {campos.map((campo) => {
                 const { name, etiqueta, md, ...propiedades } = campo;
@@ -562,6 +530,7 @@ export const ProductsAdmin = ({
                         {...propiedades}
                         ref={name === "nombre" ? nombreRef : undefined}
                         name={name}
+                        readOnly={name === "codigo" && modoEdicion}
                         value={form[name]}
                         onChange={handleChange}
                       />
@@ -588,16 +557,16 @@ export const ProductsAdmin = ({
                   <Form.Label>Categoría</Form.Label>
 
                   <Form.Select
-                    name="categoria"
-                    value={form.categoria}
+                    name="categoriaId"
+                    value={form.categoriaId}
                     onChange={handleChange}
                     required
                   >
                     <option value="">Seleccione Categoría</option>
 
                     {categorias.map((categoria) => (
-                      <option key={categoria} value={categoria}>
-                        {categoria}
+                      <option key={categoria.id} value={categoria.id}>
+                        {categoria.nombre}
                       </option>
                     ))}
                   </Form.Select>
@@ -632,6 +601,7 @@ export const ProductsAdmin = ({
                 </p>
               )}
             </div>
+            </fieldset>
           </Form>
         </div>
       ) : (
@@ -805,7 +775,7 @@ export const ProductsAdmin = ({
                                 : "disponible"
                           }`}
                         >
-                          {agotado
+                          {producto.activo === false ? "Inactivo" : agotado
                             ? "Agotado"
                             : critico
                               ? "Crítico"
@@ -827,6 +797,7 @@ export const ProductsAdmin = ({
                             <>
                               <button
                                 type="button"
+                                disabled={guardando || cargando}
                                 className="accion-editar"
                                 onClick={() => handleEditar(producto)}
                               >
@@ -835,6 +806,7 @@ export const ProductsAdmin = ({
 
                               <button
                                 type="button"
+                                disabled={guardando || cargando || producto.activo === false}
                                 className="accion-eliminar"
                                 onClick={() => handleEliminar(producto.id)}
                               >

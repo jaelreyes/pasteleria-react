@@ -51,4 +51,24 @@ describe('Carga remota del catálogo en App', () => {
     );
     expect(screen.queryByText(/Conservamos tu carrito/)).toBeNull();
   });
+
+  it('refresca tras una baja administrativa sin modificar el carrito guardado', async () => {
+    const sesion = { correo: 'admin@duoc.cl', rol: 'admin', nombre: 'Admin' };
+    almacenamiento.usuarioActivo = JSON.stringify(sesion);
+    almacenamiento.refreshToken = `cabecera.${btoa(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }))}.firma`;
+    almacenamiento['carrito_admin@duoc.cl'] = JSON.stringify(anterior);
+    let activo = true;
+    spyOn(window, 'confirm').and.returnValue(true);
+    spyOn(api, 'get').and.callFake(ruta => Promise.resolve({ data:
+      ruta === '/categorias' ? [{ id: 3, nombre: 'Tortas' }] :
+      ruta === '/productos/admin' ? [{ ...remoto, activo }] : activo ? [remoto] : [] }));
+    spyOn(api, 'delete').and.callFake(() => { activo = false; return Promise.resolve({}); });
+    render(<MemoryRouter initialEntries={['/admin/productos']}><App /></MemoryRouter>);
+    fireEvent.click(await screen.findByRole('button', { name: 'Eliminar', exact: true }));
+    await screen.findByText('Inactivo');
+    await new Promise(resolve => setTimeout(resolve, 0));
+    expect(api.get.calls.allArgs().filter(([ruta]) => ruta === '/productos').length).toBeGreaterThan(1);
+    expect(almacenamiento['carrito_admin@duoc.cl']).toBe(JSON.stringify(anterior));
+    expect(Storage.prototype.setItem.calls.allArgs().some(([clave]) => clave.startsWith('carrito_'))).toBe(false);
+  });
 });

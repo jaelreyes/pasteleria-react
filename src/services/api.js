@@ -56,13 +56,14 @@ api.interceptors.response.use(
           return api(original);
         } catch (errorRefresh) {
           limpiarSesion();
-          window.location.assign("/login");
+          // Los formularios administrativos conservan sus datos y muestran el 401.
+          if (!original.conservarFormulario) window.location.assign("/login");
           return Promise.reject(errorRefresh);
         }
       }
 
       limpiarSesion();
-      window.location.assign("/login");
+      if (!original.conservarFormulario) window.location.assign("/login");
     }
 
     return Promise.reject(error);

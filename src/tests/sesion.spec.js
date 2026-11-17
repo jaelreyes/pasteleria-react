@@ -91,4 +91,12 @@ describe('Sesión (services/sesion.js y api.js)', () => {
 
     expect(respuesta.data.Authorization).toBe('Bearer mi-token')
   })
+
+  it('devuelve el 401 al formulario administrativo sin redirigir ni perder sus datos', async () => {
+    almacenamiento.token = 'token-invalido'
+    const error = { response: { status: 401 }, config: { url: '/productos/17', conservarFormulario: true } }
+    await expectAsync(api.interceptors.response.handlers[0].rejected(error)).toBeRejectedWith(error)
+    expect(almacenamiento.token).toBeUndefined()
+    expect(error.config._reintento).toBe(true)
+  })
 })

@@ -1,11 +1,18 @@
 import api from '../services/api';
-import { obtenerProductosAPI } from '../services/productoService';
+import { obtenerProductosAPI, errorCatalogo } from '../services/productoService';
 import { obtenerCategoriasAPI } from '../services/categoriaService';
 import { sincronizarCarrito } from '../utils/carrito';
 
 describe('Catálogo HTTP y protección del carrito', () => {
   const producto = { id: 95, codigo: 'TC001', nombre: 'Torta', precio: '45000', descuento: '15', stock: 3,
     imagenUrl: '/images/productos/TC001.jpg', categoria: { id: 8, nombre: 'Tortas' } };
+
+  it('informa los errores HTTP y las validaciones de campos', () => {
+    for (const status of [400, 401, 403, 404, 409]) {
+      expect(errorCatalogo({ response: { status, data: {} } })).toContain(String(status));
+    }
+    expect(errorCatalogo({ response: { status: 400, data: { errores: { precio: 'Debe ser positivo' } } } })).toContain('Debe ser positivo');
+  });
 
   it('usa el cliente compartido y adapta el DTO sin perder categoría ni imagen', async () => {
     spyOn(api, 'get').and.resolveTo({ data: [producto] });

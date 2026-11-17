@@ -135,10 +135,12 @@ function App() {
       setProductos(nuevosProductos);
       setCategorias(nuevasCategorias);
       setCatalogoListo(true);
+      return true;
     } catch {
       if (peticion === peticionCatalogo.current) {
         setErrorCatalogo("No se pudo actualizar el catálogo. Tu carrito se conserva.");
       }
+      return false;
     } finally {
       if (peticion === peticionCatalogo.current) setCargandoCatalogo(false);
     }
@@ -517,7 +519,9 @@ function App() {
         </Route>
 
         {/* Panel de administración (tiene su propio diseño y rutas) */}
-        <Route path="/admin/*" element={<AdminRoutes />} />
+        <Route path="/admin/*" element={<AdminRoutes onCatalogoActualizado={async () => {
+          if (await actualizarCatalogo() === false) throw new Error("No se pudo refrescar el catalogo.");
+        }} />} />
       </Routes>
 
       {/* Carrito lateral que se abre desde el menú */}

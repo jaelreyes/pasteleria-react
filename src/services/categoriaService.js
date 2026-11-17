@@ -7,3 +7,15 @@ export async function obtenerCategoriasAPI() {
   }
   return data;
 }
+
+export async function crearCategoria(datos) {
+  const { data } = await api.post("/categorias", { nombre: datos.nombre, descripcion: datos.descripcion || "" }, { conservarFormulario: true });
+  return data;
+}
+export async function actualizarCategoria(id, datos) {
+  const { data } = await api.put(`/categorias/${id}`, { nombre: datos.nombre, descripcion: datos.descripcion || "" }, { conservarFormulario: true });
+  return data;
+}
+export async function eliminarCategoriaAPI(id) {
+  await api.delete(`/categorias/${id}`, { conservarFormulario: true });
+}

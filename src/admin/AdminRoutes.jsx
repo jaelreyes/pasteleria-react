@@ -26,7 +26,7 @@ import { limpiarSesion } from "../services/sesion";
 import "../styles/Admin.css";
 
 // Panel de administración: protege el acceso por rol, dibuja el menú lateral y define las rutas /admin/*.
-export function AdminRoutes() {
+export function AdminRoutes({ onCatalogoActualizado }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
   // Usuario con sesión iniciada (null si nadie inició sesión).
@@ -277,7 +277,7 @@ export function AdminRoutes() {
               path="categorias"
               element={
                 esAdministrador ? (
-                  <CategoriasAdmin />
+                  <CategoriasAdmin onCatalogoActualizado={onCatalogoActualizado} />
                 ) : (
                   <Navigate to="/admin" replace />
                 )
@@ -300,6 +300,7 @@ export function AdminRoutes() {
               path="productos"
               element={
                 <ProductsAdmin
+                  onCatalogoActualizado={onCatalogoActualizado}
                   key="listado"
                   modo="listado"
                   puedeModificar={esAdministrador}
@@ -312,6 +313,7 @@ export function AdminRoutes() {
               element={
                 esAdministrador ? (
                   <ProductsAdmin
+                    onCatalogoActualizado={onCatalogoActualizado}
                     key="nuevo"
                     modo="nuevo"
                     puedeModificar={true}

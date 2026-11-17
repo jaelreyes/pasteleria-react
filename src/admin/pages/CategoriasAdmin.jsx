@@ -1,76 +1,112 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Alert, Badge, Button, Card, Form, InputGroup, Table } from "react-bootstrap";
-import {
-  obtenerCategorias,
-  contarProductosPorCategoria,
-  guardarCategoria,
-  eliminarCategoria,
-} from "../../data/db";
+import { obtenerCategoriasAPI, crearCategoria, actualizarCategoria, eliminarCategoriaAPI } from "../../services/categoriaService";
+import { listarProductosAdmin, errorCatalogo } from "../../services/productoService";
 
 // Crear, editar y eliminar categorías (solo Administrador).
-export default function CategoriasAdmin() {
-  const [categorias, setCategorias] = useState(() => obtenerCategorias());
+export default function CategoriasAdmin({ onCatalogoActualizado }) {
+  const [categorias, setCategorias] = useState([]);
+  const [productos, setProductos] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [errorLectura, setErrorLectura] = useState(false);
+  const operacion = useRef(false);
+  const carga = useRef(0);
   const [nueva, setNueva] = useState("");
   const [editando, setEditando] = useState(null); // nombre que se está editando
   const [nombreEditado, setNombreEditado] = useState("");
   const [mensaje, setMensaje] = useState({ tipo: "", texto: "" });
 
-  // Relee las categorías y muestra un mensaje de éxito.
-  function recargar(texto) {
-    setCategorias(obtenerCategorias());
-    setMensaje({ tipo: "success", texto });
-  }
-
-  // Ejecuta una acción de db.js y muestra su error si falla.
-  function intentar(accion) {
+  async function recargar() {
+    const version = ++carga.current;
+    setCargando(true);
     try {
-      accion();
-    } catch (error) {
-      setMensaje({ tipo: "danger", texto: error.message });
+      const [grupos, lista] = await Promise.all([obtenerCategoriasAPI(), listarProductosAdmin()]);
+      if (version !== carga.current) return;
+      setCategorias(grupos);
+      setProductos(lista);
+      setErrorLectura(false);
+      return true;
+    } catch (e) {
+      if (version === carga.current) {
+        setErrorLectura(true);
+        setMensaje({ tipo: "danger", texto: errorCatalogo(e) });
+      }
+      return false;
+    } finally { if (version === carga.current) setCargando(false); }
+  }
+  useEffect(() => {
+    // Sincroniza la vista con la API al montar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    recargar();
+    return () => { carga.current += 1; };
+  }, []);
+
+  async function reintentarLectura() {
+    setMensaje({ tipo: "", texto: "" });
+    await recargar();
+    try { await onCatalogoActualizado?.(); }
+    catch {
+      setErrorLectura(true);
+      setMensaje({ tipo: "warning", texto: "No se pudo refrescar el catálogo público. Reintenta la lectura." });
     }
   }
 
-  // Agrega una categoría con el nombre escrito.
+  async function intentar(accion, texto) {
+    if (operacion.current || cargando) return;
+    operacion.current = true;
+    setGuardando(true);
+    setMensaje({ tipo: "", texto: "" });
+    try {
+      await accion();
+      setNueva("");
+      setEditando(null);
+      setMensaje({ tipo: "success", texto });
+      const leido = await recargar();
+      if (!leido) setMensaje({ tipo: "warning", texto: "Cambio guardado. No se pudo refrescar el listado; reintenta la lectura." });
+      try { await onCatalogoActualizado?.(); }
+      catch {
+        setErrorLectura(true);
+        setMensaje({ tipo: "warning", texto: "Cambio guardado. No se pudo refrescar el catalogo publico." });
+      }
+    } catch (e) { setMensaje({ tipo: "danger", texto: errorCatalogo(e) }); }
+    finally { operacion.current = false; setGuardando(false); }
+  }
+
+  function validarNombre(nombre) {
+    if (nombre.trim().length < 3 || nombre.trim().length > 100) {
+      setMensaje({ tipo: "danger", texto: "El nombre debe tener entre 3 y 100 caracteres." });
+      return false;
+    }
+    return true;
+  }
   function crear(evento) {
     evento.preventDefault();
-    intentar(() => {
-      const nombre = guardarCategoria(nueva);
-      setNueva("");
-      recargar(`Categoría "${nombre}" creada.`);
-    });
+    if (validarNombre(nueva)) intentar(() => crearCategoria({ nombre: nueva.trim() }), "Categoria creada correctamente.");
   }
-
-  // Pasa la fila a modo edición.
-  function empezarEdicion(nombre) {
-    setEditando(nombre);
-    setNombreEditado(nombre);
+  function empezarEdicion(categoria) {
+    setEditando(categoria.id);
+    setNombreEditado(categoria.nombre);
     setMensaje({ tipo: "", texto: "" });
   }
-
-  // Guarda el nuevo nombre (también actualiza sus productos).
   function guardarEdicion(evento) {
     evento.preventDefault();
-    intentar(() => {
-      const nombre = guardarCategoria(nombreEditado, editando);
-      setEditando(null);
-      recargar(`Categoría actualizada a "${nombre}".`);
-    });
+    const categoria = categorias.find(c => c.id === editando);
+    if (categoria && validarNombre(nombreEditado)) intentar(
+      () => actualizarCategoria(editando, { ...categoria, nombre: nombreEditado.trim() }), "Categoria actualizada correctamente.");
   }
-
-  // Pide confirmación y elimina la categoría si no tiene productos.
-  function eliminar(nombre) {
-    if (!window.confirm(`¿Eliminar la categoría "${nombre}"?`)) return;
-
-    intentar(() => {
-      eliminarCategoria(nombre);
-      recargar(`Categoría "${nombre}" eliminada.`);
-    });
+  function eliminar(categoria) {
+    if (!window.confirm(`Eliminar la categoria "${categoria.nombre}"?`)) return;
+    intentar(() => eliminarCategoriaAPI(categoria.id), "Categoria eliminada correctamente.");
   }
 
   return (
     <section>
       <h1 className="admin-productos-titulo">Categorías</h1>
 
+      {cargando && <p role="status">Cargando categorias...</p>}
+      {errorLectura && <Button onClick={reintentarLectura} disabled={cargando || guardando}>Reintentar lectura</Button>}
+      <fieldset disabled={cargando || guardando}>
       {/* Mensaje de éxito o error */}
       {mensaje.texto && (
         <Alert
@@ -92,7 +128,7 @@ export default function CategoriasAdmin() {
               <Form.Control
                 id="categoria-nueva"
                 placeholder="Ej: Galletas"
-                maxLength={50}
+                maxLength={100}
                 value={nueva}
                 onChange={(evento) => setNueva(evento.target.value)}
               />
@@ -114,18 +150,19 @@ export default function CategoriasAdmin() {
           </tr>
         </thead>
         <tbody>
-          {categorias.map((nombre) => {
-            const cantidad = contarProductosPorCategoria(nombre);
+          {categorias.map((categoria) => {
+            const { id, nombre } = categoria;
+            const cantidad = productos.filter(p => String(p.categoriaId) === String(id)).length;
 
             return (
-              <tr key={nombre}>
+              <tr key={id}>
                 <td>
-                  {editando === nombre ? (
+                  {editando === id ? (
                     <Form onSubmit={guardarEdicion} className="d-flex gap-2">
                       <Form.Control
                         size="sm"
                         aria-label={`Nuevo nombre para ${nombre}`}
-                        maxLength={50}
+                        maxLength={100}
                         value={nombreEditado}
                         onChange={(evento) => setNombreEditado(evento.target.value)}
                       />
@@ -152,7 +189,7 @@ export default function CategoriasAdmin() {
                     <Button
                       size="sm"
                       variant="outline-primary"
-                      onClick={() => empezarEdicion(nombre)}
+                      onClick={() => empezarEdicion(categoria)}
                       disabled={editando !== null}
                     >
                       Editar
@@ -160,7 +197,7 @@ export default function CategoriasAdmin() {
                     <Button
                       size="sm"
                       variant="outline-danger"
-                      onClick={() => eliminar(nombre)}
+                      onClick={() => eliminar(categoria)}
                       disabled={cantidad > 0}
                       title={cantidad > 0 ? "Tiene productos asociados" : undefined}
                     >
@@ -173,6 +210,7 @@ export default function CategoriasAdmin() {
           })}
         </tbody>
       </Table>
+      </fieldset>
     </section>
   );
 }
