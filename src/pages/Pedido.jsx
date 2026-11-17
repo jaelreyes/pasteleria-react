@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Alert, Button, Badge, Form } from "react-bootstrap";
 import { obtenerOrdenes, obtenerUsuarioActivo } from "../data/db";
 import { formatearPrecio } from "../utils/precios";
+import { misBoletas } from "../services/boletaService";
 import "../styles/Pedido.css";
 
 // Texto y color del Badge de Bootstrap para cada estado.
@@ -126,7 +127,11 @@ function SeguimientoPedido({ estado = "pendiente" }) {
 
 // Mis pedidos (/pedido): con sesión lista tus compras; sin sesión, consulta por ID y correo.
 function Pedido() {
-  const [ordenes, setOrdenes] = useState(() => obtenerOrdenes());
+  // Con sesión, los pedidos se cargan del backend (abajo, en useEffect).
+  const [ordenes, setOrdenes] = useState(() =>
+    obtenerUsuarioActivo() ? [] : obtenerOrdenes()
+  );
+  const [errorCarga, setErrorCarga] = useState("");
 
   const [datosConsulta, setDatosConsulta] = useState({
     id: "",
@@ -137,6 +142,20 @@ function Pedido() {
   const [errorConsulta, setErrorConsulta] = useState("");
 
   const usuario = obtenerUsuarioActivo();
+
+  // Carga las boletas del usuario con sesión: GET /api/v1/boletas/mis-boletas.
+  function cargarMisBoletas() {
+    misBoletas()
+      .then((boletas) => {
+        setOrdenes(boletas);
+        setErrorCarga("");
+      })
+      .catch(() => setErrorCarga("No se pudieron cargar tus pedidos. Inténtalo nuevamente."));
+  }
+
+  useEffect(() => {
+    if (obtenerUsuarioActivo()) cargarMisBoletas();
+  }, []);
 
   const correoUsuario = normalizarCorreo(
     usuario?.correo || usuario?.email
@@ -207,6 +226,10 @@ function Pedido() {
 
   // Vuelve a leer las órdenes (por si el admin cambió el estado).
   function actualizarPedidos() {
+    if (usuario) {
+      cargarMisBoletas();
+      return;
+    }
     setOrdenes(obtenerOrdenes());
   }
 
@@ -223,6 +246,12 @@ function Pedido() {
       <p className="pedido-subtitulo">
         Revisa tus compras y sigue el avance de cada pedido.
       </p>
+
+      {errorCarga && (
+        <Alert variant="danger" role="alert">
+          {errorCarga}
+        </Alert>
+      )}
 
       {/* Sin sesión: formulario para consultar como invitado */}
       {!usuario && (

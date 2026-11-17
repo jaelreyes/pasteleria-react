@@ -215,4 +215,27 @@ describe('Login', () => {
       })
     )
   })
+
+  it('si viene del checkout, vuelve al checkout después de iniciar sesión', async () => {
+    api.post.and.returnValue(
+      respuestaLogin({ nombre: 'Camila', correo: 'cliente@gmail.com', rol: 'cliente', tipo: 'Cliente' })
+    )
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/login', state: { desde: '/checkout' } }]}>
+        <Routes>
+          <Route path="/login" element={<Login onIniciarSesion={() => {}} />} />
+          <Route path="/checkout" element={<p>Página del checkout</p>} />
+        </Routes>
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('Inicia sesión para finalizar tu compra.')).toBeTruthy()
+
+    escribir(/^correo electrónico/i, 'cliente@gmail.com')
+    escribir(/^contraseña/i, 'cliente1')
+    enviarFormulario()
+
+    expect(await screen.findByText('Página del checkout')).toBeTruthy()
+  })
 })

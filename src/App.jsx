@@ -166,6 +166,11 @@ function leerCarrito(catalogo, usuario) {
   }
 }
 
+// Lee el carrito que se armó sin sesión (un usuario sin correo usa la clave "carrito_invitado").
+function leerCarritoInvitado(catalogo) {
+  return leerCarrito(catalogo, {});
+}
+
 // --- Estado global de la tienda ---
 function App() {
   const ubicacion = useLocation();
@@ -433,9 +438,22 @@ function App() {
       fechaLogin: new Date().toISOString(),
     };
 
+    // Carrito armado como invitado: se lee ANTES de guardar la sesión.
+    const carritoInvitado = leerCarritoInvitado(productos);
+
     localStorage.setItem("usuarioActivo", JSON.stringify(sesion));
     setUsuarioActivo(sesion);
-    setEstadoCarrito(leerCarrito(productos, sesion));
+
+    // Si el usuario no tenía nada en su carrito, se lleva lo que agregó como invitado
+    // (así no pierde su compra al iniciar sesión en el checkout).
+    const carritoUsuario = leerCarrito(productos, sesion);
+
+    if (carritoUsuario.items.length === 0 && carritoInvitado.items.length > 0) {
+      localStorage.removeItem("carrito_invitado");
+      setEstadoCarrito(carritoInvitado);
+    } else {
+      setEstadoCarrito(carritoUsuario);
+    }
   }
 
     // Borra la sesión (token, refreshToken y usuarioActivo) y vuelve al carrito de invitado.

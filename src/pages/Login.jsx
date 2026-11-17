@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { Form, Alert } from "react-bootstrap";
 import { login } from "../services/authService";
 import { mensajeError } from "../services/api";
@@ -16,6 +16,8 @@ export default function Login({ onIniciarSesion }) {
 
   const formularioRef = useRef(null);
   const navigate = useNavigate();
+  // Si llegó desde el checkout, después del login vuelve allá.
+  const desde = useLocation().state?.desde;
 
   // Se ejecuta al enviar el formulario.
   async function handleSubmit(evento) {
@@ -59,7 +61,7 @@ export default function Login({ onIniciarSesion }) {
       const rol = String(usuarioEncontrado.rol || "").trim().toLowerCase();
       const tienePanel = ["admin", "vendedor"].includes(rol);
 
-      navigate(tienePanel ? "/admin/ordenes" : "/", { replace: true });
+      navigate(tienePanel ? "/admin/ordenes" : desde || "/", { replace: true });
     } catch (err) {
       // Muestra el mensaje que envía el backend (ej: "Correo o contraseña incorrectos.").
       setError(mensajeError(err, "No se pudo iniciar sesión. Inténtalo nuevamente."));
@@ -84,6 +86,12 @@ export default function Login({ onIniciarSesion }) {
             <h1 id="login-titulo">Iniciar Sesión</h1>
             <p>Ingresa tus credenciales para continuar</p>
           </div>
+
+          {desde === "/checkout" && !error && (
+            <Alert variant="info" role="status">
+              Inicia sesión para finalizar tu compra.
+            </Alert>
+          )}
 
           {error && (
             <Alert variant="danger" role="alert">

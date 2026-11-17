@@ -9,6 +9,27 @@ import {
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import Checkout from "../pages/Checkout";
 import PagoExito from "../pages/PagoExito";
+import api from "../services/api";
+
+// Boleta que responde el backend en POST /boletas.
+const boletaBackend = {
+  id: 1234,
+  fecha: "2026-11-17T10:00:00",
+  estado: "pendiente",
+  nombre: "Ana Soto",
+  email: "ana@gmail.com",
+  telefono: "+56 9 1234 5678",
+  direccion: "Calle Las Flores 123, Viña del Mar, Valparaíso",
+  pagoSimulado: true,
+  descuentoUsuario: 0,
+  subtotal: 90000,
+  ahorro: 0,
+  total: 90000,
+  productos: [
+    { id: 1, codigo: "TC001", nombre: "Torta de Chocolate", imagen: "/images/productos/TC001.jpg",
+      cantidad: 2, precioBase: 45000, descuentoAplicado: 0, precioFinal: 45000, subtotal: 90000 },
+  ],
+};
 
 const producto = {
   id: 1,
@@ -71,6 +92,8 @@ describe("Flujo de confirmación de compra", () => {
     almacenamiento = {
       productos: JSON.stringify([producto]),
       ordenes: JSON.stringify([]),
+      // El checkout exige sesión iniciada.
+      usuarioActivo: JSON.stringify({ correo: "ana@gmail.com", rol: "cliente" }),
     };
 
     spyOn(Storage.prototype, "getItem").and.callFake((clave) =>
@@ -88,6 +111,9 @@ describe("Flujo de confirmación de compra", () => {
     spyOn(Storage.prototype, "removeItem").and.callFake((clave) => {
       delete almacenamiento[clave];
     });
+
+    // El backend confirma la compra y devuelve la boleta.
+    spyOn(api, "post").and.returnValue(Promise.resolve({ data: boletaBackend }));
   });
 
   afterEach(cleanup);
@@ -147,11 +173,15 @@ describe("Flujo de confirmación de compra", () => {
       })
     ).toBeNull();
 
-    const ordenes = JSON.parse(almacenamiento.ordenes);
+    // Se envió al backend solo el id y la cantidad (los precios los calcula el servidor).
+    expect(api.post).toHaveBeenCalledTimes(1);
+    expect(api.post.calls.mostRecent().args[0]).toBe("/boletas");
+    expect(api.post.calls.mostRecent().args[1].items).toEqual([
+      { productoId: 1, cantidad: 2 },
+    ]);
 
-    expect(ordenes.length).toBe(1);
-    expect(ordenes[0].estado).toBe("pendiente");
-    expect(screen.getByText(ordenes[0].id)).toBeTruthy();
+    // Se muestra la boleta que devolvió el backend.
+    expect(screen.getByText("1234")).toBeTruthy();
 
     expect(
       screen.getByRole("button", {
@@ -164,10 +194,5 @@ describe("Flujo de confirmación de compra", () => {
         name: "Descargar comprobante",
       })
     ).toBeTruthy();
-
-    // Las dos unidades compradas se descontaron una sola vez.
-    expect(
-      JSON.parse(almacenamiento.productos)[0].stock
-    ).toBe(3);
   });
 });

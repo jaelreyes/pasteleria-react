@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { Alert, Button, Badge } from "react-bootstrap";
 import { obtenerOrdenPorId } from "../data/db";
 import { formatearPrecio } from "../utils/precios";
@@ -16,6 +16,7 @@ const ESTADOS = {
 // Compra exitosa (/pago/exito/:idOrden): muestra la orden recién guardada.
 export default function PagoExito() {
   const { idOrden } = useParams();
+  const location = useLocation();
 
   const [aviso, setAviso] = useState({
     id: "",
@@ -23,8 +24,10 @@ export default function PagoExito() {
     tipo: "success",
   });
 
-  // Busca la orden en db.js usando el id de la URL.
-  const orden = idOrden ? obtenerOrdenPorId(idOrden) : null;
+  // La boleta llega desde el checkout (respuesta del backend).
+  // Si no viene, se busca en las órdenes antiguas de db.js por el id de la URL.
+  const orden =
+    location.state?.orden || (idOrden ? obtenerOrdenPorId(idOrden) : null);
 
   function mostrarAviso(texto, tipo = "success") {
     setAviso({
