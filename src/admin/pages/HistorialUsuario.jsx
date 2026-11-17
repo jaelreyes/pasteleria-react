@@ -1,20 +1,32 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Alert, Button, Table } from "react-bootstrap";
-import { obtenerOrdenes } from "../../data/db";
+import { listarBoletasAdmin } from "../../services/boletaAdminService";
+import { mensajeError } from "../../services/api";
 import { formatearPrecio } from "../../utils/precios";
 
-// Compras de un usuario: /admin/usuarios/:correo/historial
 export default function HistorialUsuario() {
   const { correo } = useParams();
   const buscado = String(correo || "").trim().toLowerCase();
 
-  // Órdenes cuyo correo coincide con el usuario.
-  const compras = obtenerOrdenes().filter(
+  const [ordenes, setOrdenes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    listarBoletasAdmin()
+      .then(setOrdenes)
+      .catch((err) =>
+        setError(mensajeError(err, "No se pudo cargar el historial."))
+      )
+      .finally(() => setCargando(false));
+  }, []);
+
+  const compras = ordenes.filter(
     (orden) =>
       String(orden.email || orden.correo || "").trim().toLowerCase() === buscado
   );
 
-  // Total gastado sin contar las canceladas.
   const totalGastado = compras
     .filter((orden) => orden.estado !== "cancelado")
     .reduce((suma, orden) => suma + (Number(orden.total) || 0), 0);
@@ -30,8 +42,11 @@ export default function HistorialUsuario() {
 
       <p className="text-muted">{correo}</p>
 
-      {/* Sin compras: aviso. Con compras: tabla con enlace a cada boleta */}
-      {compras.length === 0 ? (
+      {error && <Alert variant="danger">{error}</Alert>}
+
+      {cargando ? (
+        <p className="text-muted">Cargando historial...</p>
+      ) : compras.length === 0 ? (
         <Alert variant="info">Este usuario todavía no tiene compras.</Alert>
       ) : (
         <>
@@ -48,7 +63,7 @@ export default function HistorialUsuario() {
             <tbody>
               {compras.map((orden) => (
                 <tr key={orden.id}>
-                  <td>{orden.id}</td>
+                  <td>#{orden.id}</td>
                   <td>
                     {orden.fecha
                       ? new Date(orden.fecha).toLocaleDateString("es-CL")

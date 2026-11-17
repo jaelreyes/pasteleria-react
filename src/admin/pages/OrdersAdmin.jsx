@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { obtenerOrdenes, actualizarEstadoOrden } from "../../data/db";
+import {
+  listarBoletasAdmin,
+  actualizarEstadoBoletaAdmin,
+} from "../../services/boletaAdminService";
+import { mensajeError } from "../../services/api";
 import { Form, Button, Alert } from "react-bootstrap";
 import "../../styles/OrdersAdmin.css";
 
-// Estados posibles de una orden y su texto.
 const ESTADOS = {
   pendiente: "Pendiente",
   procesando: "En preparación",
@@ -13,7 +16,6 @@ const ESTADOS = {
   cancelado: "Cancelado",
 };
 
-// Estado de la orden; "pendiente" si no tiene.
 function estadoOrden(orden) {
   return orden.estado || "pendiente";
 }
@@ -24,15 +26,12 @@ function formatearMonto(valor) {
 
 function formatearFecha(valor) {
   if (!valor) return "Sin fecha";
-
   const fecha = new Date(valor);
-
   return Number.isNaN(fecha.getTime())
     ? "Sin fecha"
     : fecha.toLocaleDateString("es-CL");
 }
 
-// Evita que los datos se interpreten como HTML al exportar a PDF.
 function escaparHTML(valor) {
   const equivalencias = {
     "&": "&amp;",
@@ -41,45 +40,47 @@ function escaparHTML(valor) {
     '"': "&quot;",
     "'": "&#39;",
   };
-
   return String(valor ?? "").replace(
     /[&<>"']/g,
-    (caracter) => equivalencias[caracter],
+    (caracter) => equivalencias[caracter]
   );
 }
 
-// Prepara un valor para el CSV (comillas y protección para Excel).
 function celdaCSV(valor) {
   let texto = String(valor ?? "");
-
   if (/^\s*[=+\-@]/.test(texto)) {
     texto = `'${texto}`;
   }
-
   return `"${texto.replace(/"/g, '""')}"`;
 }
 
-// Órdenes del panel: listado con filtros, cambio de estado y exportación CSV/PDF.
 export function OrdersAdmin({ puedeModificar = false }) {
-  const [ordenes, setOrdenes] = useState(() => obtenerOrdenes());
+  const [ordenes, setOrdenes] = useState([]);
+  const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [error, setError] = useState("");
   const [mensaje, setMensaje] = useState("");
 
-  // Vuelve a leer las órdenes desde db.js.
-  function actualizarListado() {
+  async function cargarOrdenes(mostrarAviso = false) {
     try {
-      setOrdenes(obtenerOrdenes());
+      setCargando(true);
+      const data = await listarBoletasAdmin();
+      setOrdenes(data);
       setError("");
-      setMensaje("Listado actualizado.");
-    } catch {
-      setError("No se pudo actualizar el listado.");
+      if (mostrarAviso) setMensaje("Listado actualizado.");
+    } catch (err) {
+      setError(mensajeError(err, "No se pudieron cargar las órdenes."));
+    } finally {
+      setCargando(false);
     }
   }
 
-  // Cambia el estado con db.js (al cancelar se devuelve el stock).
-  function cambiarEstado(id, nuevoEstado) {
+  useEffect(() => {
+    cargarOrdenes(false);
+  }, []);
+
+  async function cambiarEstado(id, nuevoEstado) {
     if (
       !puedeModificar ||
       !Object.prototype.hasOwnProperty.call(ESTADOS, nuevoEstado)
@@ -91,42 +92,26 @@ export function OrdersAdmin({ puedeModificar = false }) {
     setMensaje("");
 
     try {
-      const actualizada = actualizarEstadoOrden(id, nuevoEstado);
-
-      setOrdenes(obtenerOrdenes());
-
-      if (nuevoEstado === "cancelado") {
-        setMensaje(
-          actualizada.stockRestituido === true
-            ? "Orden cancelada. Las unidades fueron devueltas al inventario."
-            : "Orden cancelada. Es una orden sin registro de descuento de stock; el inventario no se modificó.",
-        );
-      } else {
-        setMensaje("Estado actualizado correctamente.");
-      }
-    } catch (errorEstado) {
+      await actualizarEstadoBoletaAdmin(id, nuevoEstado);
+      await cargarOrdenes(false);
+      setMensaje("Estado actualizado correctamente.");
+    } catch (err) {
       setError(
-        errorEstado instanceof Error
-          ? errorEstado.message
-          : "Ocurrió un error al actualizar la orden.",
+        mensajeError(err, "No se pudo actualizar el estado de la orden.")
       );
     }
   }
-  // Descarga todas las órdenes en un archivo CSV.
+
   function exportarCSV() {
     setError("");
-
-    const actuales = obtenerOrdenes();
-
-    if (actuales.length === 0) {
+    if (ordenes.length === 0) {
       setError("No hay órdenes para exportar.");
       return;
     }
 
-    // Primera fila: encabezados; luego una fila por orden.
     const filas = [
       ["ID", "Fecha", "Cliente", "Correo", "Dirección", "Total", "Estado"],
-      ...actuales.map((orden) => [
+      ...ordenes.map((orden) => [
         orden.id,
         formatearFecha(orden.fecha),
         orden.nombre,
@@ -141,46 +126,36 @@ export function OrdersAdmin({ puedeModificar = false }) {
       .map((fila) => fila.map(celdaCSV).join(","))
       .join("\r\n");
 
-    // Crea el archivo en memoria y simula un clic para descargarlo.
     const archivo = new Blob(["\uFEFF", contenido], {
       type: "text/csv;charset=utf-8;",
     });
 
     const url = URL.createObjectURL(archivo);
     const enlace = document.createElement("a");
-
     enlace.href = url;
     enlace.download = "reporte_ordenes_pasteleria.csv";
-
     document.body.appendChild(enlace);
     enlace.click();
     enlace.remove();
-
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
-  // Abre una ventana imprimible para guardar las órdenes como PDF.
   function exportarPDF() {
     setError("");
-
-    const actuales = obtenerOrdenes();
-
-    if (actuales.length === 0) {
+    if (ordenes.length === 0) {
       setError("No hay órdenes para exportar.");
       return;
     }
 
-    // Nueva ventana con una tabla HTML que luego se imprime.
     const ventana = window.open("", "", "height=700,width=1000");
-
     if (!ventana) {
       setError(
-        "Permite las ventanas emergentes del navegador para abrir el reporte.",
+        "Permite las ventanas emergentes del navegador para abrir el reporte."
       );
       return;
     }
 
-    const filas = actuales
+    const filas = ordenes
       .map(
         (orden) => `
           <tr>
@@ -191,16 +166,16 @@ export function OrdersAdmin({ puedeModificar = false }) {
             <td>${escaparHTML(orden.direccion)}</td>
             <td>${escaparHTML(formatearMonto(orden.total))}</td>
             <td>${escaparHTML(
-              ESTADOS[estadoOrden(orden)] || estadoOrden(orden),
+              ESTADOS[estadoOrden(orden)] || estadoOrden(orden)
             )}</td>
           </tr>
-        `,
+        `
       )
       .join("");
 
-    const monto = actuales.reduce(
+    const monto = ordenes.reduce(
       (suma, orden) => suma + (Number(orden.total) || 0),
-      0,
+      0
     );
 
     ventana.document.write(`
@@ -210,47 +185,19 @@ export function OrdersAdmin({ puedeModificar = false }) {
           <meta charset="UTF-8">
           <title>Reporte de Órdenes</title>
           <style>
-            body {
-              font-family: Arial, sans-serif;
-              color: #5d4037;
-              padding: 20px;
-            }
-
-            h1 {
-              font-size: 24px;
-              color: #8b4513;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px;
-              text-align: left;
-              font-size: 11px;
-              overflow-wrap: anywhere;
-            }
-
-            th {
-              background: #fff5e1;
-            }
-
-            @page {
-              size: landscape;
-              margin: 15mm;
-            }
+            body { font-family: Arial, sans-serif; color: #5d4037; padding: 20px; }
+            h1 { font-size: 24px; color: #8b4513; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 11px; overflow-wrap: anywhere; }
+            th { background: #fff5e1; }
+            @page { size: landscape; margin: 15mm; }
           </style>
         </head>
-
         <body>
           <h1>Órdenes — Pastelería 1000 Sabores</h1>
           <p>Fecha: ${new Date().toLocaleDateString("es-CL")}</p>
-          <p>Total de órdenes: ${actuales.length}</p>
+          <p>Total de órdenes: ${ordenes.length}</p>
           <p>Monto total registrado: ${formatearMonto(monto)}</p>
-
           <table>
             <thead>
               <tr>
@@ -271,13 +218,11 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
     ventana.document.close();
     ventana.focus();
-
     setTimeout(() => {
       if (!ventana.closed) ventana.print();
     }, 500);
   }
 
-  // Filtra por texto y estado, y ordena de la más nueva a la más antigua.
   const ordenesFiltradas = ordenes
     .filter((orden) => {
       const texto = [orden.id, orden.nombre, orden.email || orden.correo]
@@ -295,7 +240,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
       return fechaB - fechaA;
     });
 
-  // Contadores que se muestran arriba del listado.
   const indicadores = [
     { titulo: "Total de órdenes", valor: ordenes.length },
     {
@@ -314,7 +258,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
   function mostrarEstado(orden) {
     const estado = estadoOrden(orden);
-
     return (
       <span className={`orden-estado estado-${estado}`}>
         {ESTADOS[estado] || estado}
@@ -322,7 +265,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
     );
   }
 
-  // Select para cambiar el estado; sin permiso solo se muestra el texto.
   function selectorEstado(orden) {
     return puedeModificar ? (
       <Form.Select
@@ -344,15 +286,17 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
   return (
     <section className="ordenes-admin">
-      {/* Título y botones de exportar */}
       <div className="ordenes-cabecera">
         <div>
           <h1>Gestión de Órdenes</h1>
-          <p>Revisa las compras y actualiza el estado de los pedidos.</p>
+          <p>Revisa las compras y consulta el detalle de los pedidos.</p>
         </div>
 
         <div className="ordenes-exportaciones">
-          <Button variant="outline-secondary" onClick={actualizarListado}>
+          <Button
+            variant="outline-secondary"
+            onClick={() => cargarOrdenes(true)}
+          >
             Actualizar
           </Button>
 
@@ -368,7 +312,8 @@ export function OrdersAdmin({ puedeModificar = false }) {
 
       {!puedeModificar && (
         <Alert variant="info">
-          Tu acceso es de consulta. Puedes revisar y exportar órdenes.
+          Tu acceso es de consulta. Puedes revisar el listado y el detalle de
+          cada boleta.
         </Alert>
       )}
 
@@ -384,7 +329,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
         </Alert>
       )}
 
-      {/* Contadores por estado */}
       <div className="ordenes-indicadores">
         {indicadores.map((indicador) => (
           <article key={indicador.titulo}>
@@ -394,7 +338,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
         ))}
       </div>
 
-      {/* Búsqueda y filtro por estado */}
       <div className="ordenes-filtros">
         <Form.Group controlId="ordenes-busqueda">
           <Form.Label>Buscar orden</Form.Label>
@@ -413,7 +356,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
             onChange={(evento) => setFiltroEstado(evento.target.value)}
           >
             <option value="">Todos los estados</option>
-
             {Object.entries(ESTADOS).map(([valor, etiqueta]) => (
               <option key={valor} value={valor}>
                 {etiqueta}
@@ -438,8 +380,9 @@ export function OrdersAdmin({ puedeModificar = false }) {
         exportaciones incluyen todas las órdenes.
       </p>
 
-      {/* Mensaje vacío o tabla de órdenes */}
-      {ordenesFiltradas.length === 0 ? (
+      {cargando ? (
+        <p className="text-muted">Cargando órdenes...</p>
+      ) : ordenesFiltradas.length === 0 ? (
         <div className="ordenes-vacio">
           {ordenes.length === 0
             ? "Todavía no hay órdenes registradas."
@@ -447,7 +390,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
         </div>
       ) : (
         <>
-          {/* Vista de tabla (escritorio) */}
           <div className="ordenes-vista-tabla">
             <div
               className="ordenes-tabla-scroll"
@@ -463,7 +405,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
                     <th>Dirección</th>
                     <th>Total</th>
                     <th>Estado</th>
-                    <th>Cambiar estado</th>
+                    <th>Acción</th>
                   </tr>
                 </thead>
 
@@ -471,9 +413,11 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   {ordenesFiltradas.map((orden) => (
                     <tr key={orden.id}>
                       <td>
-                                                <strong className="orden-id">{orden.id}</strong>
+                        <strong className="orden-id">#{orden.id}</strong>
                         <small>{formatearFecha(orden.fecha)}</small>
-                        <Link to={`/admin/ordenes/${encodeURIComponent(orden.id)}`}>
+                        <Link
+                          to={`/admin/ordenes/${encodeURIComponent(orden.id)}`}
+                        >
                           Ver boleta
                         </Link>
                       </td>
@@ -483,9 +427,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
                         <small>{orden.email || orden.correo}</small>
                       </td>
 
-                      <td>
-                        {orden.direccion || "Sin registrar"}
-                      </td>
+                      <td>{orden.direccion || "Sin registrar"}</td>
 
                       <td className="orden-monto">
                         {formatearMonto(orden.total)}
@@ -500,7 +442,6 @@ export function OrdersAdmin({ puedeModificar = false }) {
             </div>
           </div>
 
-          {/* Vista de tarjetas (celular) */}
           <div className="ordenes-vista-tarjetas">
             {ordenesFiltradas.map((orden) => (
               <article className="orden-tarjeta" key={orden.id}>
@@ -509,8 +450,8 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   <span>{formatearFecha(orden.fecha)}</span>
                 </div>
 
-                                <h2>{orden.nombre}</h2>
-                <p className="orden-id">{orden.id}</p>
+                <h2>{orden.nombre}</h2>
+                <p className="orden-id">#{orden.id}</p>
                 <Link to={`/admin/ordenes/${encodeURIComponent(orden.id)}`}>
                   Ver boleta
                 </Link>
@@ -520,16 +461,14 @@ export function OrdersAdmin({ puedeModificar = false }) {
                   <dd>{orden.email || orden.correo || "Sin registrar"}</dd>
 
                   <dt>Dirección</dt>
-                  <dd>
-                    {orden.direccion || "Sin registrar"}
-                  </dd>
+                  <dd>{orden.direccion || "Sin registrar"}</dd>
 
                   <dt>Total</dt>
                   <dd className="orden-monto">{formatearMonto(orden.total)}</dd>
                 </dl>
 
                 <div className="orden-tarjeta-accion">
-                  <p>Cambiar estado</p>
+                  <p>Estado</p>
                   {selectorEstado(orden)}
                 </div>
               </article>

@@ -1,9 +1,10 @@
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { Alert, Badge, Button, Card, Col, Row, Table } from "react-bootstrap";
-import { obtenerOrdenPorId } from "../../data/db";
+import { obtenerBoletaAdmin } from "../../services/boletaAdminService";
+import { mensajeError } from "../../services/api";
 import { formatearPrecio } from "../../utils/precios";
 
-// Texto y color de cada estado de la orden.
 const ESTADOS = {
   pendiente: "Pendiente",
   procesando: "En preparación",
@@ -12,16 +13,34 @@ const ESTADOS = {
   cancelado: "Cancelado",
 };
 
-// Detalle (boleta) de una orden: /admin/ordenes/:id
 export default function BoletaAdmin() {
   const { id } = useParams();
-  // Busca la orden con el id de la URL.
-  const orden = obtenerOrdenPorId(id);
+  const [orden, setOrden] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
-  if (!orden) {
+  useEffect(() => {
+    setCargando(true);
+    obtenerBoletaAdmin(id)
+      .then((data) => {
+        setOrden(data);
+        setError("");
+      })
+      .catch((err) =>
+        setError(mensajeError(err, `No encontramos la orden ${id}.`))
+      )
+      .finally(() => setCargando(false));
+  }, [id]);
+
+  if (cargando) {
+    return <p className="text-muted">Cargando boleta...</p>;
+  }
+
+  if (error || !orden) {
     return (
       <Alert variant="warning">
-        No encontramos la orden {id}. <Link to="/admin/ordenes">Volver a órdenes</Link>
+        {error || `No encontramos la orden ${id}.`}{" "}
+        <Link to="/admin/ordenes">Volver a órdenes</Link>
       </Alert>
     );
   }
@@ -37,7 +56,6 @@ export default function BoletaAdmin() {
           <Button variant="outline-secondary" as={Link} to="/admin/ordenes">
             Volver
           </Button>
-          {/* Imprime la boleta (los botones se ocultan al imprimir) */}
           <Button variant="primary" onClick={() => window.print()}>
             Imprimir
           </Button>
@@ -48,20 +66,26 @@ export default function BoletaAdmin() {
         <Card.Body>
           <Row className="mb-3">
             <Col md={8}>
-              <p className="mb-1"><strong>N° de orden:</strong> {orden.id}</p>
+              <p className="mb-1">
+                <strong>N° de orden:</strong> #{orden.id}
+              </p>
               <p className="mb-1">
                 <strong>Fecha:</strong>{" "}
-                {orden.fecha ? new Date(orden.fecha).toLocaleString("es-CL") : "Sin fecha"}
+                {orden.fecha
+                  ? new Date(orden.fecha).toLocaleString("es-CL")
+                  : "Sin fecha"}
               </p>
             </Col>
             <Col md={4} className="text-md-end">
-              <Badge bg={estado === "cancelado" ? "danger" : "success"} className="fs-6">
+              <Badge
+                bg={estado === "cancelado" ? "danger" : "success"}
+                className="fs-6"
+              >
                 {ESTADOS[estado] || estado}
               </Badge>
             </Col>
           </Row>
 
-          {/* Datos del cliente y dirección de despacho */}
           <h2 className="h5">Cliente</h2>
           <p className="mb-1">{orden.nombre}</p>
           <p className="mb-1">{orden.email || orden.correo}</p>
@@ -71,7 +95,6 @@ export default function BoletaAdmin() {
             <p className="text-muted">Indicaciones: {orden.indicaciones}</p>
           )}
 
-          {/* Detalle de productos */}
           <Table responsive size="sm" className="mt-3 align-middle">
             <thead>
               <tr>
@@ -85,7 +108,9 @@ export default function BoletaAdmin() {
               {productos.map((item) => (
                 <tr key={item.id}>
                   <td>{item.nombre}</td>
-                  <td className="text-end">{formatearPrecio(item.precioFinal)}</td>
+                  <td className="text-end">
+                    {formatearPrecio(item.precioFinal)}
+                  </td>
                   <td className="text-end">{item.cantidad}</td>
                   <td className="text-end">
                     {formatearPrecio(item.precioFinal * item.cantidad)}
@@ -95,10 +120,11 @@ export default function BoletaAdmin() {
             </tbody>
           </Table>
 
-          {/* Totales */}
           <div className="text-end">
             {orden.ahorro > 0 && (
-              <p className="mb-1 text-success">Ahorro: {formatearPrecio(orden.ahorro)}</p>
+              <p className="mb-1 text-success">
+                Ahorro: {formatearPrecio(orden.ahorro)}
+              </p>
             )}
             <p className="fs-5 mb-0">
               <strong>Total: {formatearPrecio(orden.total)}</strong>

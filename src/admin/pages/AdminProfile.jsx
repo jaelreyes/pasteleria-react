@@ -51,8 +51,9 @@ export function AdminProfile() {
     },
     {
       modulo: "Órdenes",
-      descripcion:
-        "Consultar pedidos, cambiar sus estados y exportar reportes.",
+      descripcion: esAdministrador
+        ? "Consultar pedidos, cambiar sus estados y exportar reportes."
+        : "Consultar el listado de pedidos y revisar el detalle de cada boleta.",
     },
     ...(esAdministrador
       ? [

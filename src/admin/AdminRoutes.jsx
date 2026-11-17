@@ -266,7 +266,7 @@ export function AdminRoutes() {
 
             <Route
               path="ordenes"
-              element={<OrdersAdmin puedeModificar={true} />}
+              element={<OrdersAdmin puedeModificar={esAdministrador} />}
             />
 
             {/* Boleta de una orden */}
