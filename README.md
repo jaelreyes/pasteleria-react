@@ -72,4 +72,4 @@ Evaluación Parcial 3 (EV3)
 ## Enlaces
 
 - [Backend](https://github.com/krhisteel/pasteleria-backend).
-- [Documentación y evidencias EV3](docs/README.md).
+- [Documentación EV3](docs/)
