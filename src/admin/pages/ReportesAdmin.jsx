@@ -5,15 +5,16 @@ import { listarProductosAdmin } from "../../services/productoAdminService";
 import { mensajeError } from "../../services/api";
 import { resumenVentas, resumenStock } from "../../utils/reportes";
 import { formatearPrecio } from "../../utils/precios";
+import "../../styles/ReportesAdmin.css";
 
 function Indicador({ titulo, valor, detalle, color }) {
   return (
-    <Card bg={color} text="white" className="h-100 shadow-sm">
+    <Card className={`reporte-indicador reporte-indicador-${color}`}>
       <Card.Body>
         <Card.Title as="h2" className="h6">
           {titulo}
         </Card.Title>
-        <p className="fs-3 fw-bold mb-0">{valor}</p>
+        <p className="reporte-indicador-valor">{valor}</p>
         {detalle && <small>{detalle}</small>}
       </Card.Body>
     </Card>
@@ -42,7 +43,7 @@ export default function ReportesAdmin() {
   const stock = resumenStock(productos);
 
   return (
-    <section>
+    <section className="reportes-admin">
       <h1 className="admin-productos-titulo mb-4">Reportes</h1>
 
       {error && <Alert variant="danger">{error}</Alert>}
@@ -51,7 +52,7 @@ export default function ReportesAdmin() {
         <p className="text-muted">Calculando indicadores...</p>
       ) : (
         <>
-          <Row xs={1} sm={2} lg={4} className="g-3 mb-4">
+          <Row xs={1} sm={2} xl={4} className="g-3 mb-4">
             <Col>
               <Indicador
                 titulo="Total vendido"
@@ -88,18 +89,18 @@ export default function ReportesAdmin() {
             </Col>
           </Row>
 
-          <Row className="g-4">
-            <Col lg={5}>
-              <h2 className="h5">Productos más vendidos</h2>
+          <div className="reportes-detalle">
+            <section className="reporte-panel" aria-labelledby="reporte-ventas-titulo">
+              <h2 id="reporte-ventas-titulo">Productos más vendidos</h2>
 
               {ventas.masVendidos.length === 0 ? (
-                <p className="text-muted">Todavía no hay ventas registradas.</p>
+                <div className="reporte-sin-ventas"><p>Todavía no hay ventas registradas</p></div>
               ) : (
-                <Table size="sm" className="bg-white shadow-sm">
+                <Table responsive className="reporte-tabla">
                   <thead>
                     <tr>
-                      <th>Producto</th>
-                      <th className="text-end">Unidades</th>
+                      <th scope="col">Producto</th>
+                      <th scope="col" className="text-end">Unidades</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -112,39 +113,41 @@ export default function ReportesAdmin() {
                   </tbody>
                 </Table>
               )}
-            </Col>
+            </section>
 
-            <Col lg={7}>
-              <h2 className="h5">Stock por categoría</h2>
+            <section className="reporte-panel" aria-labelledby="reporte-stock-titulo">
+              <h2 id="reporte-stock-titulo">Stock por categoría</h2>
 
-              <Table responsive size="sm" className="bg-white shadow-sm">
+              <div className="reporte-tabla-scroll" tabIndex={0} role="region" aria-label="Stock por categoría, tabla desplazable">
+              <Table className="reporte-tabla reporte-tabla-stock">
                 <thead>
                   <tr>
-                    <th>Categoría</th>
-                    <th className="text-end">Productos</th>
-                    <th className="text-end">Unidades</th>
-                    <th className="text-end">Valor inventario</th>
-                    <th className="text-end">Críticos</th>
-                    <th className="text-end">Agotados</th>
+                    <th scope="col">Categoría</th>
+                    <th scope="col" className="text-end">Productos</th>
+                    <th scope="col" className="text-end">Unidades</th>
+                    <th scope="col" className="text-end">Valor inventario</th>
+                    <th scope="col" className="text-end">Críticos</th>
+                    <th scope="col" className="text-end">Agotados</th>
                   </tr>
                 </thead>
                 <tbody>
                   {stock.map((fila) => (
                     <tr key={fila.categoria}>
-                      <td>{fila.categoria}</td>
+                      <th scope="row">{fila.categoria}</th>
                       <td className="text-end">{fila.productos}</td>
                       <td className="text-end">{fila.unidades}</td>
                       <td className="text-end">
                         {formatearPrecio(fila.valorInventario)}
                       </td>
-                      <td className="text-end">{fila.criticos}</td>
-                      <td className="text-end">{fila.agotados}</td>
+                      <td className="text-end"><span className={fila.criticos > 0 ? "reporte-estado reporte-estado-critico" : ""}>{fila.criticos}</span></td>
+                      <td className="text-end"><span className={fila.agotados > 0 ? "reporte-estado reporte-estado-agotado" : ""}>{fila.agotados}</span></td>
                     </tr>
                   ))}
                 </tbody>
               </Table>
-            </Col>
-          </Row>
+              </div>
+            </section>
+          </div>
         </>
       )}
     </section>

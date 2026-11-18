@@ -1,5 +1,6 @@
 // Pruebas de los cálculos de reportes (utils/reportes.js) y de su vista.
 import { render, screen, cleanup } from "@testing-library/react";
+import api from "../services/api";
 import ReportesAdmin from "../admin/pages/ReportesAdmin";
 import { resumenVentas, resumenStock } from "../utils/reportes";
 
@@ -31,6 +32,15 @@ const productos = [
 ];
 
 describe("Reportes", () => {
+  beforeEach(() => {
+    spyOn(api, "get").and.callFake((ruta) => {
+      if (ruta === "/boletas") return Promise.resolve({ data: ordenes });
+      if (ruta === "/productos") return Promise.resolve({ data: productos });
+      throw new Error(`GET no previsto: ${ruta}`);
+    });
+    spyOn(XMLHttpRequest.prototype, "open").and.callFake(() => { throw new Error("Red real bloqueada"); });
+    spyOn(window, "fetch").and.callFake(() => Promise.reject(new Error("Red real bloqueada")));
+  });
   afterEach(cleanup);
 
   it("suma las ventas sin contar las órdenes canceladas", () => {
@@ -60,28 +70,30 @@ describe("Reportes", () => {
     ]);
   });
 
-  it("la vista muestra los indicadores y las tablas", () => {
-    spyOn(Storage.prototype, "getItem").and.callFake((clave) => {
-      if (clave === "ordenes") return JSON.stringify(ordenes);
-      if (clave === "productos") return JSON.stringify(productos);
-      return null;
-    });
-
+  it("la vista muestra los indicadores y las tablas con datos de la API", async () => {
     render(<ReportesAdmin />);
 
-    expect(screen.getByText("$40.000")).toBeTruthy();
+    expect(await screen.findByText("$40.000")).toBeTruthy();
     expect(screen.getByText("1 cancelada(s)")).toBeTruthy();
     expect(screen.getByRole("cell", { name: "Brownie" })).toBeTruthy();
-    expect(screen.getByRole("cell", { name: "Galletas" })).toBeTruthy();
+    expect(screen.getByRole("rowheader", { name: "Galletas" })).toBeTruthy();
+    expect(screen.getAllByRole("columnheader").slice(-6).map((celda) => celda.textContent)).toEqual([
+      "Categoría", "Productos", "Unidades", "Valor inventario", "Críticos", "Agotados",
+    ]);
+    expect(screen.getByText("$14.000")).toBeTruthy();
+    expect(document.querySelectorAll(".reporte-indicador").length).toBe(4);
+    expect(document.querySelectorAll(".reporte-estado-critico").length).toBe(1);
+    expect(document.querySelectorAll(".reporte-estado-agotado").length).toBe(1);
+    expect(screen.getByRole("region", { name: "Stock por categoría, tabla desplazable" }).tabIndex).toBe(0);
+    expect(api.get.calls.allArgs()).toEqual([["/boletas"], ["/productos"]]);
   });
 
-  it("avisa cuando todavía no hay ventas", () => {
-    spyOn(Storage.prototype, "getItem").and.callFake((clave) =>
-      clave === "productos" ? JSON.stringify(productos) : null
-    );
+  it("avisa cuando todavía no hay ventas", async () => {
+    api.get.and.callFake((ruta) => Promise.resolve({ data: ruta === "/boletas" ? [] : productos }));
 
     render(<ReportesAdmin />);
 
-    expect(screen.getByText("Todavía no hay ventas registradas.")).toBeTruthy();
+    expect(await screen.findByText("Todavía no hay ventas registradas")).toBeTruthy();
+    expect(screen.queryByText("Brownie")).toBeNull();
   });
 });

@@ -1,0 +1,151 @@
+.reportes-admin {
+  color: #5d4037;
+  min-width: 0;
+}
+
+.reportes-admin .reporte-indicador {
+  height: 100%;
+  min-height: 162px;
+  border: 1px solid #eadfd2;
+  border-radius: 16px;
+  color: #5d4037;
+  box-shadow: 0 3px 12px rgb(93 64 55 / 6%);
+}
+
+.reportes-admin .reporte-indicador .card-body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 1.25rem;
+}
+
+.reportes-admin .reporte-indicador .card-title {
+  margin-bottom: 0.75rem;
+  color: #715748;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.reportes-admin .reporte-indicador-valor {
+  margin: 0 0 0.4rem;
+  color: #593b2c;
+  font-size: clamp(1.5rem, 2.3vw, 2rem);
+  font-weight: 800;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.reportes-admin .reporte-indicador small {
+  margin-top: auto;
+  color: #756052;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.reportes-admin .reporte-indicador-success { background: #faf3e6; }
+.reportes-admin .reporte-indicador-primary { background: #f2e8dc; }
+.reportes-admin .reporte-indicador-info { background: #f7f3ed; }
+.reportes-admin .reporte-indicador-danger { background: #faede5; }
+
+.reportes-admin .reportes-detalle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.reportes-admin .reporte-panel {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid #eadfd2;
+  border-radius: 16px;
+  background: #fffdfa;
+  box-shadow: 0 3px 12px rgb(93 64 55 / 5%);
+}
+
+.reportes-admin .reporte-panel h2 {
+  margin: 0;
+  padding: 1.2rem 1.25rem;
+  color: #644532;
+  font-family: inherit;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.reportes-admin .reporte-sin-ventas {
+  display: grid;
+  min-height: 150px;
+  place-items: center;
+  padding: 1.5rem;
+  border-top: 1px solid #eee5db;
+  color: #756052;
+  text-align: center;
+}
+
+.reportes-admin .reporte-sin-ventas p { margin: 0; }
+
+.reportes-admin .reporte-tabla-scroll { overflow-x: auto; }
+
+.reportes-admin .reporte-tabla-scroll:focus-visible {
+  outline: 2px solid #8b4513;
+  outline-offset: -3px;
+}
+
+.reportes-admin .reporte-tabla {
+  --bs-table-bg: transparent;
+  --bs-table-color: #5d4037;
+  --bs-table-border-color: #eee5db;
+  width: 100%;
+  margin: 0;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.reportes-admin .reporte-tabla > thead > tr > th {
+  background: #f5eee4;
+  color: #715748;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.reportes-admin .reporte-tabla > :not(caption) > * > * {
+  padding: 0.9rem 1rem;
+  vertical-align: middle;
+}
+
+.reportes-admin .reporte-tabla > tbody > tr:last-child > * { border-bottom: 0; }
+
+.reportes-admin .reporte-tabla-stock { min-width: 710px; }
+
+.reportes-admin .reporte-tabla-stock tr > :first-child {
+  min-width: 190px;
+  width: 30%;
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: normal;
+  font-weight: 600;
+}
+
+.reportes-admin .reporte-tabla .text-end { white-space: nowrap; }
+
+.reportes-admin .reporte-estado {
+  display: inline-block;
+  min-width: 2rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.reportes-admin .reporte-estado-critico { background: #f8e9cc; color: #80591e; }
+.reportes-admin .reporte-estado-agotado { background: #f5e0d9; color: #894635; }
+
+@media (min-width: 1400px) {
+  .reportes-admin .reportes-detalle {
+    grid-template-columns: minmax(230px, 0.8fr) minmax(0, 2fr);
+  }
+}
