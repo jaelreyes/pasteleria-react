@@ -54,7 +54,7 @@ function celdaCSV(valor) {
   return `"${texto.replace(/"/g, '""')}"`;
 }
 
-export function OrdersAdmin({ puedeModificar = false }) {
+export function OrdersAdmin({ puedeModificar = false, puedeExportar = false }) {
   const [ordenes, setOrdenes] = useState([]);
   const [cargando, setCargando] = useState(true);
   const [filtroEstado, setFiltroEstado] = useState("");
@@ -103,6 +103,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
   }
 
   function exportarCSV() {
+    if (!puedeExportar) return;
     setError("");
     if (ordenes.length === 0) {
       setError("No hay órdenes para exportar.");
@@ -141,6 +142,7 @@ export function OrdersAdmin({ puedeModificar = false }) {
   }
 
   function exportarPDF() {
+    if (!puedeExportar) return;
     setError("");
     if (ordenes.length === 0) {
       setError("No hay órdenes para exportar.");
@@ -300,13 +302,16 @@ export function OrdersAdmin({ puedeModificar = false }) {
             Actualizar
           </Button>
 
-          <Button variant="outline-secondary" onClick={exportarCSV}>
-            Exportar CSV
-          </Button>
-
-          <Button className="ordenes-boton-principal" onClick={exportarPDF}>
-            Exportar PDF
-          </Button>
+          {puedeExportar && (
+            <>
+              <Button variant="outline-secondary" onClick={exportarCSV}>
+                Exportar CSV
+              </Button>
+              <Button className="ordenes-boton-principal" onClick={exportarPDF}>
+                Exportar PDF
+              </Button>
+            </>
+          )}
         </div>
       </div>
 
@@ -376,8 +381,8 @@ export function OrdersAdmin({ puedeModificar = false }) {
       </div>
 
       <p className="ordenes-contador" role="status">
-        Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes. Las
-        exportaciones incluyen todas las órdenes.
+          Mostrando {ordenesFiltradas.length} de {ordenes.length} órdenes.
+          {puedeExportar && " Las exportaciones incluyen todas las órdenes."}
       </p>
 
       {cargando ? (

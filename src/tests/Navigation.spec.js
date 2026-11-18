@@ -53,7 +53,7 @@ describe('Acceso según el rol', () => {
 
     expect(
       rutaInicioSegunRol({ tipo: 'Vendedor' })
-    ).toBe('/admin')
+    ).toBe('/admin/productos')
 
     expect(
       rutaInicioSegunRol({ tipo: 'Cliente' })
@@ -110,6 +110,8 @@ describe('Acceso según el rol', () => {
         name: /panel/i,
       })
     ).toBeTruthy()
+    expect(screen.getByRole('link', { name: /panel/i }).getAttribute('href'))
+      .toBe('/admin/productos')
   })
 
   it('no muestra acceso al panel al Cliente aunque abra su cuenta', () => {

@@ -13,7 +13,7 @@ const ESTADOS = {
   cancelado: "Cancelado",
 };
 
-export default function BoletaAdmin() {
+export default function BoletaAdmin({ puedeImprimir = false }) {
   const { id } = useParams();
   const [orden, setOrden] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -56,9 +56,11 @@ export default function BoletaAdmin() {
           <Button variant="outline-secondary" as={Link} to="/admin/ordenes">
             Volver
           </Button>
-          <Button variant="primary" onClick={() => window.print()}>
-            Imprimir
-          </Button>
+          {puedeImprimir && (
+            <Button variant="primary" onClick={() => { if (puedeImprimir) window.print(); }}>
+              Imprimir
+            </Button>
+          )}
         </div>
       </div>
 

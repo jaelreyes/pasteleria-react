@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { Navigate, Link } from "react-router-dom";
 import { Form, Button, Alert, Row, Col } from "react-bootstrap";
+import { obtenerRol } from "../utils/roles";
 import { obtenerUsuarioActivo } from "../data/db";
 import { comprar } from "../services/boletaService";
 import { mensajeError } from "../services/api";
@@ -85,6 +86,11 @@ export default function Checkout({
         replace
       />
     );
+  }
+
+  // El vendedor solo consulta; no accede al proceso de compra.
+  if (obtenerRol(obtenerUsuarioActivo()) === "vendedor") {
+    return <Navigate to="/admin/productos" replace />;
   }
 
   // Solo vuelve al carrito si no hay una compra recién confirmada.

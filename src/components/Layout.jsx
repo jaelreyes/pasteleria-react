@@ -8,6 +8,8 @@ function Layout({
   onVerCarrito,
   usuarioActivo,
   onCerrarSesion,
+  avisoCatalogo,
+  ocultarContenido = false,
 }) {
   const { pathname } = useLocation()
 
@@ -35,7 +37,8 @@ function Layout({
         className={`site-main${anchoCompleto ? ' site-main-home' : ''}`}
       >
         {/* Aquí se dibuja la página de la ruta actual */}
-        <Outlet />
+        {avisoCatalogo}
+        {!ocultarContenido && <Outlet />}
       </main>
 
       <Footer />

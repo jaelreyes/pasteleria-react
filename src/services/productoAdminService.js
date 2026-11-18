@@ -1,4 +1,5 @@
 import api from "./api";
+import { notificarCambioCatalogo } from "./eventosCatalogo";
 
 function normalizarProducto(p) {
   const esObjetoCat = p.categoria && typeof p.categoria === "object";
@@ -28,6 +29,7 @@ export async function crearProductoAdmin(producto) {
     categoria: { id: Number(producto.categoriaId) },
   };
   const { data } = await api.post("/productos", payload);
+  notificarCambioCatalogo();
   return normalizarProducto(data);
 }
 
@@ -45,9 +47,11 @@ export async function actualizarProductoAdmin(id, producto) {
     categoria: { id: Number(producto.categoriaId) },
   };
   const { data } = await api.put(`/productos/${id}`, payload);
+  notificarCambioCatalogo();
   return normalizarProducto(data);
 }
 
 export async function eliminarProductoAdmin(id) {
   await api.delete(`/productos/${id}`);
+  notificarCambioCatalogo();
 }

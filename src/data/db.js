@@ -1,6 +1,7 @@
 // Capa de datos de la app: CRUD en localStorage de usuarios,
 // productos, categorías y órdenes. Las vistas solo llaman a estas funciones.
 import productosIniciales from "./productos";
+import { puedeEntrarAlPanel as tieneAccesoAlPanel } from "../utils/roles";
 import { calcularPrecioProducto, calcularTotales } from "../utils/precios";
 
 // --- USUARIOS Y ROLES ---
@@ -75,17 +76,7 @@ export const eliminarUsuario = (email) => {
 };
 
 // Solo admin y vendedor pueden entrar al panel /admin.
-export const puedeEntrarAlPanel = () => {
-  const usuario = obtenerUsuarioActivo();
-
-  if (!usuario) return false;
-
-  const rol = String(usuario.rol || usuario.tipo || "")
-    .trim()
-    .toLowerCase();
-
-  return ["admin", "administrador", "vendedor"].includes(rol);
-};
+export const puedeEntrarAlPanel = () => tieneAccesoAlPanel(obtenerUsuarioActivo());
 
 // --- PRODUCTOS ---
 
