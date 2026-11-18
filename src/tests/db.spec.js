@@ -42,6 +42,7 @@ describe('Persistencia en db.js', () => {
       'vendedor',
       'cliente',
     ])
+    expect(usuarios.every(usuario => !Object.hasOwn(usuario, 'password'))).toBe(true)
 
     expect(JSON.parse(almacenamiento.usuarios)).toEqual(usuarios)
   })

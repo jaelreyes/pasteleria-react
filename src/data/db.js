@@ -6,7 +6,7 @@ import { calcularPrecioProducto, calcularTotales } from "../utils/precios";
 
 // --- USUARIOS Y ROLES ---
 
-// Lee los usuarios; la primera vez crea las 3 cuentas demo.
+// Perfiles locales heredados. El login real usa la API; nunca se guardan claves demo aquí.
 export const obtenerUsuarios = () => {
   try {
     const guardados = localStorage.getItem("usuarios");
@@ -16,21 +16,18 @@ export const obtenerUsuarios = () => {
         {
           nombre: "Administrador Demo",
           email: "admin@duoc.cl",
-          password: "admin123",
           rol: "admin",
           tipo: "Administrador",
         },
         {
           nombre: "Vendedor Demo",
           email: "vendedor@duoc.cl",
-          password: "venta123",
           rol: "vendedor",
           tipo: "Vendedor",
         },
         {
           nombre: "Cliente Demo",
           email: "cliente@gmail.com",
-          password: "cliente1",
           rol: "cliente",
           tipo: "Cliente",
         },

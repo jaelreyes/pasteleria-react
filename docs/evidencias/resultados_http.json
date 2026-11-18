@@ -1,0 +1,788 @@
+[
+  {
+    "prueba": "Login ADMIN",
+    "resultado": {
+      "jwtPresente": true,
+      "refreshPresente": true
+    },
+    "fecha": "2026-11-18T12:52:09.359Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Persistencia tras recarga",
+    "resultado": {
+      "sesionPresente": true,
+      "ruta": "/admin/ordenes"
+    },
+    "fecha": "2026-11-18T12:52:11.273Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Datos de ejemplo preparados mediante API",
+    "resultado": {
+      "categorias": 8,
+      "productos": 16
+    },
+    "fecha": "2026-11-18T12:52:12.512Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 201
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 201
+      }
+    ]
+  },
+  {
+    "prueba": "Crear categoria desde formulario React",
+    "resultado": {
+      "creada": true
+    },
+    "fecha": "2026-11-18T12:52:58.761Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 201
+      }
+    ]
+  },
+  {
+    "prueba": "Editar categoria desde formulario React",
+    "resultado": {
+      "id": 9,
+      "nombre": "EV3 - Categoria editada"
+    },
+    "fecha": "2026-11-18T12:53:39.955Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/categorias/9",
+        "status": 200
+      },
+      {
+        "metodo": "PUT",
+        "url": "http://localhost:8082/api/v1/categorias/9",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Eliminar categoria desde formulario React",
+    "resultado": {
+      "id": 9,
+      "totalCategorias": 8
+    },
+    "fecha": "2026-11-18T12:53:40.281Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "DELETE",
+        "url": "http://localhost:8082/api/v1/categorias/9",
+        "status": 204
+      }
+    ]
+  },
+  {
+    "prueba": "Crear producto desde formulario React",
+    "resultado": {
+      "id": 17,
+      "codigo": "EV3_QA"
+    },
+    "fecha": "2026-11-18T12:53:42.166Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 201
+      }
+    ]
+  },
+  {
+    "prueba": "Editar producto desde formulario React",
+    "resultado": {
+      "id": 17,
+      "nombre": "EV3 - Producto editado",
+      "precio": 1500
+    },
+    "fecha": "2026-11-18T12:53:43.951Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/productos/17",
+        "status": 200
+      },
+      {
+        "metodo": "PUT",
+        "url": "http://localhost:8082/api/v1/productos/17",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Desactivar producto desde React y excluirlo del catalogo",
+    "resultado": {
+      "id": 17,
+      "visibleEnCatalogo": false
+    },
+    "fecha": "2026-11-18T12:53:47.251Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "DELETE",
+        "url": "http://localhost:8082/api/v1/productos/17",
+        "status": 204
+      }
+    ]
+  },
+  {
+    "prueba": "Login CLIENTE",
+    "resultado": {
+      "rol": "cliente"
+    },
+    "fecha": "2026-11-18T12:54:12.326Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Compra real desde React y boleta persistida",
+    "resultado": {
+      "ruta": "/pago/exito/1",
+      "boletas": [
+        {
+          "id": 1,
+          "total": 90000,
+          "estado": "pendiente",
+          "productos": [
+            {
+              "cantidad": 2,
+              "precioFinal": 45000
+            }
+          ]
+        }
+      ]
+    },
+    "fecha": "2026-11-18T12:54:48.561Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 201
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas/mis-boletas",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas/mis-boletas",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "CLIENTE sin acceso administrativo",
+    "resultado": {
+      "apiListadoBoletas": 403,
+      "rutaFinal": "/"
+    },
+    "fecha": "2026-11-18T12:54:50.725Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas/mis-boletas",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 403
+      }
+    ]
+  },
+  {
+    "prueba": "Renovacion JWT real mediante interceptor Axios",
+    "resultado": {
+      "tokenExpiradoAntes": false,
+      "tokenRenovado": false,
+      "perfilHTTP": 200
+    },
+    "fecha": "2026-11-18T12:56:03.093Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "API protegida sin sesion",
+    "resultado": {
+      "status": 401
+    },
+    "fecha": "2026-11-18T12:56:03.103Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 401
+      }
+    ]
+  },
+  {
+    "prueba": "VENDEDOR solo consulta",
+    "resultado": {
+      "menus": [
+        {
+          "texto": "Listado de Productos",
+          "ruta": "/admin/productos"
+        },
+        {
+          "texto": "Gestión de Órdenes",
+          "ruta": "/admin/ordenes"
+        },
+        {
+          "texto": "Volver a la tienda",
+          "ruta": "/"
+        }
+      ],
+      "controles": {
+        "editar": 0,
+        "eliminar": 0
+      },
+      "permisos": {
+        "exportar": false,
+        "cambiarEstado": 0
+      },
+      "imprimir": false,
+      "rutaReportes": "/admin/productos",
+      "api": {
+        "comprar": 403,
+        "editarProducto": 403,
+        "eliminarProducto": 403,
+        "cambiarEstado": 403
+      }
+    },
+    "fecha": "2026-11-18T12:56:10.077Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas/1",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas/1",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 403
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/productos/1",
+        "status": 200
+      },
+      {
+        "metodo": "PUT",
+        "url": "http://localhost:8082/api/v1/productos/1",
+        "status": 403
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/productos/999999",
+        "status": 200
+      },
+      {
+        "metodo": "DELETE",
+        "url": "http://localhost:8082/api/v1/productos/999999",
+        "status": 403
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/boletas/1/estado",
+        "status": 200
+      },
+      {
+        "metodo": "PATCH",
+        "url": "http://localhost:8082/api/v1/boletas/1/estado",
+        "status": 403
+      }
+    ]
+  },
+  {
+    "prueba": "ADMIN conserva funciones administrativas",
+    "resultado": {
+      "exportar": [
+        "Exportar CSV",
+        "Exportar PDF"
+      ],
+      "cambiarEstado": 2
+    },
+    "fecha": "2026-11-18T12:56:13.126Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/login",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/boletas",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Swagger y OpenAPI reales",
+    "resultado": {
+      "status": 200,
+      "paths": [
+        "/api/v1/usuarios/{id}",
+        "/api/v1/productos/{id}",
+        "/api/v1/categorias/{id}",
+        "/api/v1/usuarios",
+        "/api/v1/productos",
+        "/api/v1/categorias",
+        "/api/v1/boletas",
+        "/api/v1/auth/registro",
+        "/api/v1/auth/refresh",
+        "/api/v1/auth/login",
+        "/api/v1/boletas/{id}/estado",
+        "/api/v1/productos/categoria/{categoriaId}",
+        "/api/v1/productos/buscar",
+        "/api/v1/boletas/{id}",
+        "/api/v1/boletas/mis-boletas",
+        "/api/v1/auth/me"
+      ]
+    },
+    "fecha": "2026-11-18T12:56:15.388Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/index.html",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/index.css",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/swagger-ui.css",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/swagger-ui-standalone-preset.js",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/swagger-initializer.js",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/swagger-ui-bundle.js",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/v3/api-docs/swagger-config",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/swagger-ui/favicon-32x32.png",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/v3/api-docs",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "Renovacion automatica al recuperar sesion",
+    "resultado": {
+      "renovacionesHTTP200": 0,
+      "perfilHTTP200": true,
+      "sesionPresente": true
+    },
+    "fecha": "2026-11-18T12:57:52.350Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/categorias",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/productos",
+        "status": 200
+      }
+    ]
+  },
+  {
+    "prueba": "JWT vencido: 401, refresh 200 y reintento 200",
+    "resultado": {
+      "tokenVencidoAntes": true,
+      "tokenRenovado": true,
+      "perfilHTTP": 200
+    },
+    "fecha": "2026-11-18T12:58:29.734Z",
+    "http": [
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 401
+      },
+      {
+        "metodo": "OPTIONS",
+        "url": "http://localhost:8082/api/v1/auth/refresh",
+        "status": 200
+      },
+      {
+        "metodo": "POST",
+        "url": "http://localhost:8082/api/v1/auth/refresh",
+        "status": 200
+      },
+      {
+        "metodo": "GET",
+        "url": "http://localhost:8082/api/v1/auth/me",
+        "status": 200
+      }
+    ]
+  }
+]

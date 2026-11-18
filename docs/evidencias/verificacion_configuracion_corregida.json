@@ -1,0 +1,121 @@
+{
+  "fecha": "2026-11-18",
+  "etapa": "Verificación funcional posterior a las correcciones de seguridad y recuperación autorizada de contraseñas",
+  "origen": "Registro sanitizado de la ejecución real; no son pruebas nuevas ni capturas nuevas.",
+  "entorno": {
+    "frontend": "http://localhost:5175",
+    "backend": "http://localhost:8082",
+    "base": "pasteleria_ev3_e2e_test",
+    "host": "127.0.0.1",
+    "puerto": 3309,
+    "ddl-auto": "validate",
+    "java": "Temurin JDK 17",
+    "access_token_pruebas_segundos": 120
+  },
+  "resultados": [
+    {
+      "prueba": "Swagger UI y OpenAPI",
+      "resultado": {
+        "status": 200,
+        "rutas": 16
+      }
+    },
+    {
+      "prueba": "Login, /auth/me y recarga ADMIN",
+      "resultado": {
+        "loginHTTP": 200,
+        "perfilHTTP": 200,
+        "sesionPersistente": true
+      }
+    },
+    {
+      "prueba": "ADMIN consulta panel y administracion",
+      "resultado": {
+        "usuariosHTTP": 200,
+        "ordenesHTTP": 200,
+        "menuCompleto": true
+      }
+    },
+    {
+      "prueba": "Login, /auth/me y recarga VENDEDOR",
+      "resultado": {
+        "loginHTTP": 200,
+        "perfilHTTP": 200,
+        "sesionPersistente": true
+      }
+    },
+    {
+      "prueba": "VENDEDOR solo consulta",
+      "resultado": {
+        "productosYDetalles": true,
+        "ordenesYDetalle": true,
+        "sinEdicionExportacionImpresion": true,
+        "usuariosHTTP": 403,
+        "reportesRedirigidos": true
+      }
+    },
+    {
+      "prueba": "Login, /auth/me y recarga CLIENTE",
+      "resultado": {
+        "loginHTTP": 200,
+        "perfilHTTP": 200,
+        "sesionPersistente": true
+      }
+    },
+    {
+      "prueba": "Catalogo HTTP",
+      "resultado": {
+        "productosHTTP": 200,
+        "productosActivos": 16,
+        "categoriasHTTP": 200,
+        "categorias": 8
+      }
+    },
+    {
+      "prueba": "CLIENTE tienda y pedidos propios",
+      "resultado": {
+        "misPedidosHTTP": 200,
+        "pedidos": 1,
+        "listadoAdministrativoHTTP": 403,
+        "sinAccesoAlPanel": true
+      }
+    },
+    {
+      "prueba": "API protegida sin token",
+      "resultado": {
+        "status": 401
+      }
+    },
+    {
+      "prueba": "Renovacion JWT real",
+      "resultado": {
+        "vencido": true,
+        "refreshHTTP": 200,
+        "reintentoHTTP": 200,
+        "sesionConservada": true
+      }
+    }
+  ],
+  "integridad": {
+    "comparacion_completa": "Sin diferencias antes/después en las cinco tablas, incluidas las contraseñas ya recuperadas.",
+    "conteos": {
+      "usuario": 3,
+      "categoria": 8,
+      "producto": 17,
+      "boleta": 1,
+      "detalle_boleta": 1
+    },
+    "sin_nuevas_compras_o_crud": true
+  },
+  "datos_personales": {
+    "integrantes": [
+      "Jael Reyes",
+      "Aileen Oyaneder",
+      "Benjamin Riquelme Pozo"
+    ],
+    "docente": "VICTOR HUGO GOMEZ ATABALES",
+    "seccion": "003D",
+    "asignatura": "Desarrollo Fullstack II",
+    "evaluacion": "Evaluación Parcial 3 (EV3)"
+  }
+}
